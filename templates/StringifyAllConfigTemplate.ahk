@@ -7,11 +7,11 @@ class StringifyAllConfig {
     static ExcludeMethods := unset
     static ExcludeProps := unset
     static Filter := unset
-    static FilterMap := unset
+    static FilterTypeMap := unset
     static MaxDepth := unset
     static PropsCondition := unset
     static PropsTypeMap := unset
-    static StopAtMap := unset
+    static StopAtTypeMap := unset
 
 ; ==== Callbacks -----------------------------------------------------------------------------------
     static CallbackGeneral := unset
@@ -30,7 +30,6 @@ class StringifyAllConfig {
 ; ==== Print options -------------------------------------------------------------------------------
     static ItemProp := unset
     static PrintErrors := unset
-    static PrintTypeTag := unset
     static QuoteNumericKeys := unset
     static RootName := unset
     static UnsetArrayItem := unset
