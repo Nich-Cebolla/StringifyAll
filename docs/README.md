@@ -33,7 +33,10 @@ There are some conditions which will cause `Stringify` to skip stringifying an o
 # Parameters
 
 <ol type="1">
-  <span style="font-size:13px;"><span style="font-size:15px;"><li><b>{*} Obj</b> - The object to stringify.<span style="font-size:13px;"><span style="font-size:15px;"></li><li><b>{Object} [Options]</b> - The options object with zero or more options as property : value pairs.<span style="font-size:13px;"><span style="font-size:15px;"></li><br><b>{VarRef} [OutStr]</b> - A variable that will receive the JSON string. The string is also returned as a return value, but for very long strings, or for loops that process thousands of objects, it will be slightly faster to use the `OutStr` variable since the JSON string would not need to be copied.</ol>
+  <span style="font-size:15px;"><li><b>{*} Obj</b> - The object to stringify.<span style="font-size:13px;"></li>
+  <span style="font-size:15px;"><li><b>{Object} [Options]</b> - The options object with zero or more options as property : value pairs.</li>
+  <span style="font-size:15px;"><li><b>{VarRef} [OutStr]</b> - A variable that will receive the JSON string. The string is also returned as a return value, but for very long strings, or for loops that process thousands of objects, it will be slightly faster to use the `OutStr` variable since the JSON string would not need to be copied.</li>
+</ol>
 
 # Returns
 
