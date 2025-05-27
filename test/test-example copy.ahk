@@ -38,110 +38,98 @@ test() {
     problems := []
     i := 0
 
-    ; -------- 1
-
+    ; 1 -------------
     containerObj := Container('key1', 'val1', 'key2', 'val2')
-    StringifyAllConfig.EnumTypeMap := Map('Array', 1, 'Map', 2, 'Container', 2)
+    StringifyAllConfig.EnumTypeMap := Map('Container', 2)
     if (result := StringifyAll(containerObj)) !== test_content[++i] {
         problems.Push({ index: i, result__: result, expected: test_content[i] })
     }
 
-    ; -------- 2
-
-    StringifyAllConfig.EnumTypeMap.Set('Map', 0)
+    ; 2 -------------
+    StringifyAllConfig.EnumTypeMap.Default := 0
     if (result := StringifyAll(containerObj)) !== test_content[++i] {
         problems.Push({ index: i, result__: result, expected: test_content[i] })
     }
 
-    ; -------- 3
-
+    ; 3 -------------
     enumTypeMap := StringifyAllConfig.EnumTypeMap
     StringifyAllConfig.DeleteProp('EnumTypeMap')
     if (result := StringifyAll(containerObj)) !== test_content[++i] {
         problems.Push({ index: i, result__: result, expected: test_content[i] })
     }
 
-    ; -------- 4
-
-    StringifyAllConfig.PropsTypeMap := Map('Array', 0, 'Map', 0, 'Container', 1)
+    ; 4 -------------
+    StringifyAllConfig.PropsTypeMap := Map('Array', 0, 'Map', 0)
     if (result := StringifyAll(containerObj)) !== test_content[++i] {
         problems.Push({ index: i, result__: result, expected: test_content[i] })
     }
 
-    ; -------- 5
-
+    ; 5 -------------
     StringifyAllConfig.PropsTypeMap.Set('Container', 0)
     if (result := StringifyAll(containerObj)) !== test_content[++i] {
         problems.Push({ index: i, result__: result, expected: test_content[i] })
     }
 
-    ; -------- 6
-
+    ; 6 -------------
     StringifyAllConfig.EnumTypeMap := enumTypeMap
     if (result := StringifyAll(containerObj)) !== test_content[++i] {
         problems.Push({ index: i, result__: result, expected: test_content[i] })
     }
 
-    ; -------- 7
-
+    ; 7 -------------
     Content := FileRead('..\example\example.ahk')
     RegExMatch(Content, '((?<=\n); --- C.)([^-]+)-([^-]+)', &Match1)
-    StringifyAllConfig.PropsTypeMap.Set('RegExMatchInfo', 1)
     if (result := StringifyAll(Match1)) !== test_content[++i] {
         problems.Push({ index: i, result__: result, expected: test_content[i] })
     }
 
-    ; -------- 8
-
-    StringifyAllConfig.EnumTypeMap.Set('RegExMatchInfo', 2)
+    ; 8 -------------
+    StringifyAllConfig.DeleteProp('EnumTypeMap')
     if (result := StringifyAll(Match1)) !== test_content[++i] {
         problems.Push({ index: i, result__: result, expected: test_content[i] })
     }
 
-    ; -------- 9
-
+    ; 9 -------------
     RegExMatch(Content, 'There we go!.+', &Match2, InStr(Content, 'There we go!', , , 2) - 1)
     EnumCondition(Obj) {
-        return Obj.Count ? 2 : 0
+        if Obj is RegExMatchInfo {
+            if  Obj.Count {
+                return 2
+            }
+        } else if Obj is Array {
+            return 1
+        }
     }
-    StringifyAllConfig.EnumTypeMap.Set('RegExMatchInfo', EnumCondition)
+    StringifyAllConfig.EnumCondition := EnumCondition
     arr := [Match1, Match2]
     if (result := StringifyAll(arr)) !== test_content[++i] {
         problems.Push({ index: i, result__: result, expected: test_content[i] })
     }
 
-    ; -------- 10
-
+    ; 10 -------------
     RegExMatch(Content, 'that have a value for ``Mark``.(*MARK:PropsCondition)', &Match3)
     arr.Push(Match3)
     PropsCondition(Obj) {
-        return Obj.Mark
+        if Obj is RegExMatchInfo {
+            return Obj.Mark
+        }
     }
-    StringifyAllConfig.PropsTypeMap := Map('RegExMatchInfo', PropsCondition)
+    StringifyAllConfig.PropsCondition := PropsCondition
     if (result := StringifyAll(arr)) !== test_content[++i] {
         problems.Push({ index: i, result__: result, expected: test_content[i] })
     }
 
-    ; -------- 11
-
+    ; 11 -------------
     Filter := PropsInfo.FilterGroup('Mark,Count')
-    StringifyAllConfig.FilterTypeMap := Map('RegExMatchInfo', Filter)
-    StringifyAllConfig.DeleteProp('PropsTypeMap')
+    StringifyAllConfig.Filter := Filter
+    StringifyAllConfig.DeleteProp('PropsCondition')
     if (result := StringifyAll(arr)) !== test_content[++i] {
         problems.Push({ index: i, result__: result, expected: test_content[i] })
     }
 
-    ; -------- 12
-
+    ; 12 -------------
     Filter.RemoveFromExclude('Mark')
     FilterFunc1(Item) {
-        ; This expression is directing `PropsInfo.Prototype.FilterActivate` to exclude properties
-        ; named "Mark" that have a value of 0 or an empty string.
-        ; `Item.GetValue` sets the `VarRef` variable with the value of the property. In the case of
-        ; `RegExMatchInfoObj.Mark`, it will always have a value because that is how it is designed.
-        ; But the default value is an empty string, which is what we want to exclude. So to direct
-        ; `StringifyAll` to skip the `Mark` property for `RegExMatchInfo` objects that do not have
-        ; a significant `Mark` value, we can use this code.
         if Item.Name == 'Mark' {
             Item.GetValue(&Value)
             return !Value
@@ -152,11 +140,10 @@ test() {
         problems.Push({ index: i, result__: result, expected: test_content[i] })
     }
 
-    ; -------- 13
-
+    ; 13 -------------
     StringifyAllConfig.PropsTypeMap := Map('Array', 1, 'Map', 1)
-    StringifyAllConfig.FilterTypeMap := Map('Array', PropsInfo.FilterGroup('Capacity,__Class'))
-    StringifyAllConfig.FilterTypeMap.Default := PropsInfo.FilterGroup('__Class')
+    filterTypeMap := Map('Array', PropsInfo.FilterGroup('Capacity'))
+    StringifyAllConfig.FilterTypeMap := filterTypeMap
     arr := [
         [1, 2, 3, 4, 5]
       , Map('key1', 'val1', 'key2', 'val2')
@@ -165,8 +152,7 @@ test() {
         problems.Push({ index: i, result__: result, expected: test_content[i] })
     }
 
-    ; -------- 14
-
+    ; 14 -------------
     props := []
     for prop in StringifyAllConfig.OwnProps() {
         if prop !== 'Prototype' {
@@ -209,14 +195,11 @@ test() {
             return 1
         }
     }
-    propsTypeMap := Map('Array', PropsCondition2)
-    propsTypeMap.Default := 1
-    if (result := RegExReplace(StringifyAll(arr, { CallbackGeneral: CallbackGeneral, PropsTypeMap: propsTypeMap }), '\d+', 'numbers')) !== RegExReplace(test_content[++i], '\d+', 'numbers') {
+    if (result := RegExReplace(StringifyAll(arr, { CallbackGeneral: CallbackGeneral, PropsCondition: PropsCondition2 }), '\d+', 'numbers')) !== RegExReplace(test_content[++i], '\d+', 'numbers') {
         problems.Push({ index: i, result__: result, expected: test_content[i] })
     }
 
-    ; -------- 15
-
+    ; 15 -------------
     CallbackGeneral2(Obj, *) {
         if Obj is Map {
             if Obj.Capacity <= 1000 {
@@ -233,20 +216,18 @@ test() {
             return '"Index: ' Name '"'
         }
     }
-    if (result := StringifyAll(arr, { CallbackGeneral: CallbackGeneral2, PropsTypeMap: propsTypeMap })) !== test_content[++i] {
+    if (result := StringifyAll(arr, { CallbackGeneral: CallbackGeneral2, PropsCondition: PropsCondition2 })) !== test_content[++i] {
         problems.Push({ index: i, result__: result, expected: test_content[i] })
     }
 
-    ; -------- 16
-
+    ; 16 -------------
     CallbackGeneral3(Obj, *) {
         if ((not Obj is Map && not Obj is Array) || Obj.Capacity <= 1000) && not Obj is DataItem {
             return -1
         }
     }
-    if (result := StringifyAll(arr, { CallbackGeneral: CallbackGeneral3, PropsTypeMap: propsTypeMap })) !== test_content[++i] {
+    if (result := StringifyAll(arr, { CallbackGeneral: CallbackGeneral3, PropsCondition: PropsCondition2 })) !== test_content[++i] {
         problems.Push({ index: i, result__: result, expected: test_content[i] })
     }
-
     return problems.Length ? problems : ''
 }

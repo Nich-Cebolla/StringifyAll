@@ -2,14 +2,11 @@
 class StringifyAllConfig {
 
 ; ==== Enum options --------------------------------------------------------------------------------
-    static EnumCondition := unset
     static EnumTypeMap := unset
     static ExcludeMethods := unset
     static ExcludeProps := unset
-    static Filter := unset
     static FilterTypeMap := unset
     static MaxDepth := unset
-    static PropsCondition := unset
     static PropsTypeMap := unset
     static StopAtTypeMap := unset
 

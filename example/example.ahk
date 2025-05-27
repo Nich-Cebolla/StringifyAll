@@ -68,10 +68,8 @@ containerObj := Container('key1', 'val1', 'key2', 'val2')
 ; we direct `StringifyAll` to call `containerObj.__Enum`, it will be a copy of the items in
 ; `containerObj.__Item`. Let's see what this looks like.
 
-; To tell `StringifyAll` it should call `containerObj.__Enum`, we can set `EnumTypeMap` thusly.
 ; The "2" tells `StringifyAll` to call the enumerator in 2-param mode.
-StringifyAllConfig.EnumTypeMap := Map('Container', 2)
-
+StringifyAllConfig.EnumTypeMap := Map('Array', 1, 'Map', 2, 'Container', 2)
 
 OutputDebug('`n' A_LineNumber '=========================`n' StringifyAll(containerObj))
 /*
@@ -110,13 +108,7 @@ OutputDebug('`n' A_LineNumber '=========================`n' StringifyAll(contain
 ; We can address the duplication in a number of ways.
 
 ; We can skip enumerating `containerObj.__Item` since its already called by `containerObj`'s enumerator.
-; To do this using `EnumTypeMap`, we have to set the `Default` property of the `Map` object. If we
-; do not do this, `StringifyAll` will defer to the `EnumCondition` option, which, by default, will
-; still direct `StringifyAll` to call `containerObj.__Item.__Enum`. This is explained more in section
-; I.C "Enum options - `EnumCondition`".
-
-; Set the default.
-StringifyAllConfig.EnumTypeMap.Default := 0
+StringifyAllConfig.EnumTypeMap.Set('Map', 0)
 
 OutputDebug('`n' A_LineNumber '=========================`n' StringifyAll(containerObj))
 /*
@@ -187,7 +179,7 @@ OutputDebug('`n' A_LineNumber '=========================`n' StringifyAll(contain
 ; For general usage, we typically don't want array or map built-in properties represented in the
 ; JSON string. It's simple to direct `StringifyAll` to ignore them. Here's how to do it with
 ; `PropsTypeMap`:
-StringifyAllConfig.PropsTypeMap := Map('Array', 0, 'Map', 0)
+StringifyAllConfig.PropsTypeMap := Map('Array', 0, 'Map', 0, 'Container', 1)
 
 OutputDebug('`n' A_LineNumber '=========================`n' StringifyAll(containerObj))
 /*
@@ -249,23 +241,13 @@ OutputDebug('`n' A_LineNumber '=========================`n' StringifyAll(contain
 ; complexity when trying to get the input parameters just right.
 ; - Set `EnumTypeMap` to direct `StringifyAll` to call, or not to call, the enumerator for objects
 ; of a specified type.
-; - Set the default value of `EnumTypeMap` to direct `StringifyAll` to ignore `EnumCondition`.
-; - Set `PropsTypeMap` to direct `StringifyAll` to process or skip objects of a specified type.
+; - Set `PropsTypeMap` to direct `StringifyAll` to iterate or to skip an object's properties.
+; - Both `EnumTypeMap` and `PropsTypeMap` can be set with a default value that will be applied to
+; all objects that do not have an associated item within the container.
 
-; --- C. Enum options - `EnumCondition` and `PropsCondition` ---------------------------------------
+; --- C. Enum options - Using functions ------------------------------------------------------------
 
-; `EnumCondition` serves the same purpose as `EnumTypeMap`, and `PropsCondition` serves the same
-; purpose as `PropsTypeMap`, just using a different method.
-
-; `EnumTypeMap` and `PropsTypeMap` are restricted to a single input: the object's type. This is
-; sufficient in many cases.
-
-; For greater flexibility, you can simply define a function to inspect the object and return a value.
-
-; Note that if you use `EnumCondition`, you will overwrite the default function which handles
-; `Map`, `Array`, and `RegExMatchInfo` objects. If any of those are significant to your project
-; or are present among the objects that you expect will be stringified, remember to include them
-; in your function.
+; `EnumTypeMap` and `PropsTypeMap` can use functions as well as integers for the items.
 
 ; Let's us a `RegExMatchInfo` object as an example. Say I'm doing some string parsing and need to
 ; later visually inspect the results for errors.
@@ -274,33 +256,35 @@ OutputDebug('`n' A_LineNumber '=========================`n' StringifyAll(contain
 Content := FileRead(A_ScriptFullpath)
 RegExMatch(Content, '((?<=\n); --- C.)([^-]+)-([^-]+)', &Match1)
 
+; Let's see what the object looks like without the enumerator.
+StringifyAllConfig.PropsTypeMap.Set('RegExMatchInfo', 1)
+
 OutputDebug('`n' A_LineNumber '=========================`n' StringifyAll(Match1))
 /*
 {
     "__Class": "RegExMatchInfo",
-    "__Item": "; --- C. Enum options - `EnumCondition` and `PropsCondition` ",
+    "__Item": "; --- C. Enum options - Using functions ",
     "Count": 3,
     "Mark": ""
 }
 */
 
 ; Okay, so we see the match there, that's good. But I'd really like to see the subcapture groups
-; as well. Since we set `EnumTypeMap` earlier, and set its default value, `StringifyAll` is no
-; longer using the default `EnumCondition`, which normally would direct `StringifyAll` to process
-; the enumerator of a `RegExMatchInfo` object. Let's delete that and see what we get.
+; as well. Earlier we set `enumTypeMap` with an object that specifies values for `Array` and `Map`.
+; We can add `RegExMatchInfo` onto it.
+StringifyAllConfig.EnumTypeMap.Set('RegExMatchInfo', 2)
 
-StringifyAllConfig.DeleteProp('EnumTypeMap')
 OutputDebug('`n' A_LineNumber '=========================`n' StringifyAll(Match1))
 /*
 {
     "__Class": "RegExMatchInfo",
-    "__Item": "; --- C. Enum options - `EnumCondition` and `PropsCondition` ",
+    "__Item": "; --- C. Enum options - Using functions ",
     "Count": 3,
     "Mark": "",
     "__Items__": [
         [
             0,
-            "; --- C. Enum options - `EnumCondition` and `PropsCondition` "
+            "; --- C. Enum options - Using functions "
         ],
         [
             1,
@@ -312,7 +296,7 @@ OutputDebug('`n' A_LineNumber '=========================`n' StringifyAll(Match1)
         ],
         [
             3,
-            " `EnumCondition` and `PropsCondition` "
+            " Using functions "
         ]
     ]
 }
@@ -323,28 +307,20 @@ OutputDebug('`n' A_LineNumber '=========================`n' StringifyAll(Match1)
 ; subcapture groups don't actually exist as properties on the `RegExMatchInfo` object in a way
 ; that is accessible to a function that knows nothing else about the object.
 
-; Where `EnumCondition` comes in is when we want to conditionally direct `StrigifyAll` whether
-; it should process an object's enumerator using something more complex than the object type.
 ; Going along with this example, let's direct `StringifyAll` to call the enumerator only in cases
 ; where the `RegExMatchInfo` object has one or more subcapture groups, and to skip the enumerator
 ; otherwise.
 
-; Get a match object.
+; Get a match object with no subcapture groups.
 RegExMatch(Content, 'There we go!.+', &Match2, InStr(Content, 'There we go!', , , 2) - 1)
 
 ; Define the function.
 EnumCondition(Obj) {
-    if Obj is RegExMatchInfo {
-        if  Obj.Count {
-            return 2
-        }
-    } else if Obj is Array {
-        return 1
-    }
+    return Obj.Count ? 2 : 0
 }
 
 ; Set the option.
-StringifyAllConfig.EnumCondition := EnumCondition
+StringifyAllConfig.EnumTypeMap.Set('RegExMatchInfo', EnumCondition)
 
 ; Add the matches to an array.
 arr := [Match1, Match2]
@@ -354,13 +330,13 @@ OutputDebug('`n' A_LineNumber '=========================`n' StringifyAll(arr))
 [
     {
         "__Class": "RegExMatchInfo",
-        "__Item": "; --- C. Enum options - `EnumCondition` and `PropsCondition` ",
+        "__Item": "; --- C. Enum options - Using functions ",
         "Count": 3,
         "Mark": "",
         "__Items__": [
             [
                 0,
-                "; --- C. Enum options - `EnumCondition` and `PropsCondition` "
+                "; --- C. Enum options - Using functions "
             ],
             [
                 1,
@@ -372,7 +348,7 @@ OutputDebug('`n' A_LineNumber '=========================`n' StringifyAll(arr))
             ],
             [
                 3,
-                " `EnumCondition` and `PropsCondition` "
+                " Using functions "
             ]
         ]
     },
@@ -385,8 +361,8 @@ OutputDebug('`n' A_LineNumber '=========================`n' StringifyAll(arr))
 ]
 */
 
-; Looks good to me. `PropsCondition` is similar. Let's say I only want to process the properties
-; of match objects that have a value for `Mark`.
+; `PropsTypeMap` is similar. Let's say I only want to process the properties of match objects that
+; have a value for `Mark`.
 
 ; Get a match object with a `Mark` value.
 RegExMatch(Content, 'that have a value for ``Mark``.(*MARK:PropsCondition)', &Match3)
@@ -394,13 +370,11 @@ arr.Push(Match3)
 
 ; Define the function.
 PropsCondition(Obj) {
-    if Obj is RegExMatchInfo {
-        return Obj.Mark
-    }
+    return Obj.Mark
 }
 
 ; Set the option.
-StringifyAllConfig.PropsCondition := PropsCondition
+StringifyAllConfig.PropsTypeMap := Map('RegExMatchInfo', PropsCondition)
 
 OutputDebug('`n' A_LineNumber '=========================`n' StringifyAll(arr))
 /*
@@ -408,7 +382,7 @@ OutputDebug('`n' A_LineNumber '=========================`n' StringifyAll(arr))
     [
         [
             0,
-            "; --- C. Enum options - `EnumCondition` and `PropsCondition` "
+            "; --- C. Enum options - Using functions "
         ],
         [
             1,
@@ -420,7 +394,7 @@ OutputDebug('`n' A_LineNumber '=========================`n' StringifyAll(arr))
         ],
         [
             3,
-            " `EnumCondition` and `PropsCondition` "
+            " Using functions "
         ]
     ],
     {},
@@ -434,34 +408,28 @@ OutputDebug('`n' A_LineNumber '=========================`n' StringifyAll(arr))
 */
 
 ; That's not quite what I was imagining. It's missing that entire second object, and now I don't
-; really know what the first object is just by looking at it; some type of map? Maybe I actually
-; do want at least the `__Class` property included there, and the `__Item` property too. Before
-; we move on to that functionality, let's summarize this section:
+; really know what the first object is just by looking at it. Maybe I actually do want at least the
+; `__Class` property included there, and the `__Item` property too.
 
 ; === === === To summarize:
 
-; - `EnumTypeMap` and `PropsTypeMap` are limited to responding to object types.
-; - `EnumCondition` and `PropsCondition` fill the same role, but can respond to any condition defined
-; by the function.
-; - If `EnumTypeMap` and/or `PropsTypeMap` are set, and if the `Default` property of the `Map` object
-; is unset, `StringifyAll` will still defer to `EnumCondition` and `PropsCondition` for object
-; types not respresented in the `Map`.
-; - If the `Default` property is set, the associated `...Condition` option is ignored.
+; - `EnumTypeMap` and `PropsTypeMap` can be defined with either an integer or a function. The value
+; is used only for the specified types.
 
-; --- D. Enum options - `Filter` -------------------------------------------------------------------
+; --- D. Enum options - `FilterTypeMap` -------------------------------------------------------------------
 
 ; I wrote `StringifyAll` to make use of the "Inheritance" library. Since `Object.Prototype.OwnProps`
 ; only iterates an object's own properties, it was often challenging to serialize information I needed
 ; for later use.
 
-; However, as `StringifyAll` makes use of "Inheritance", it now often includes information I do not
-; want included.
+; However, since `StringifyAll` makes use of "Inheritance", it now often includes information I do
+; not want included.
 
 ; Before proceeding, you might consider working through "inheritance\example-Inheritance.ahk" to
 ; understand the `PropsInfo` class. It's probably not necessary, but may help.
 
-; When I wrote "example-Inheritance.ahk", that was before I added the `PropsInfo.FilterGroup` class,
-; so information about it is absent in the example.
+; I wrote "example-Inheritance.ahk" before I added the `PropsInfo.FilterGroup` class, so information
+; about `PropsInfo.FilterGroup` is absent in the example.
 
 ; `PropsInfo.FilterGroup` allows us to create a custom filter independently from any `PropsInfo`
 ; object to be reused across any number of `PropsInfo` objects.
@@ -469,47 +437,50 @@ OutputDebug('`n' A_LineNumber '=========================`n' StringifyAll(arr))
 ; We can call the constructor with any number of valid filter values. For example, we can filter
 ; properties by name, which is the simplest and most direct way to fine-tune our JSON string.
 Filter := PropsInfo.FilterGroup('Mark,Count')
+StringifyAllConfig.FilterTypeMap := Map('RegExMatchInfo', Filter)
 
-; Set the filter.
-StringifyAllConfig.Filter := Filter
-
-; Delete the previous `PropsCondition` since that actually didn't help.
-StringifyAllConfig.DeleteProp('PropsCondition')
+; Delete the previous `PropsTypeMap` since that actually didn't help.
+StringifyAllConfig.DeleteProp('PropsTypeMap')
 
 OutputDebug('`n' A_LineNumber '=========================`n' StringifyAll(arr))
 /*
-[
-    {
-        "__Class": "RegExMatchInfo",
-        "__Item": "; --- C. Enum options - `EnumCondition` and `PropsCondition` ",
-        "__Items__": [
-            [
-                0,
-                "; --- C. Enum options - `EnumCondition` and `PropsCondition` "
-            ],
-            [
-                1,
-                "; --- C."
-            ],
-            [
-                2,
-                " Enum options "
-            ],
-            [
-                3,
-                " `EnumCondition` and `PropsCondition` "
+{
+    "__Class": "Array",
+    "Capacity": 4,
+    "Length": 3,
+    "__Items__": [
+        {
+            "__Class": "RegExMatchInfo",
+            "__Item": "; --- C. Enum options - Using functions ",
+            "__Items__": [
+                [
+                    0,
+                    "; --- C. Enum options - Using functions "
+                ],
+                [
+                    1,
+                    "; --- C."
+                ],
+                [
+                    2,
+                    " Enum options "
+                ],
+                [
+                    3,
+                    " Using functions "
+                ]
             ]
-        ]
-    },
-    {
-        "__Class": "RegExMatchInfo",
-        "__Item": "There we go! That's what we were expecting."
-    },
-    {
-        "__Class": "RegExMatchInfo",
-        "__Item": "that have a value for `Mark`."
-    }
-]
+        },
+        {
+            "__Class": "RegExMatchInfo",
+            "__Item": "There we go! That's what we were expecting."
+        },
+        {
+            "__Class": "RegExMatchInfo",
+            "__Item": "that have a value for `Mark`."
+        }
+    ]
+}
 */
 
 ; Looks great! Clean, has the needed information, but we did lose the `Mark` value from the third
@@ -539,58 +510,58 @@ Filter.Add(FilterFunc1)
 
 OutputDebug('`n' A_LineNumber '=========================`n' StringifyAll(arr))
 /*
-[
-    {
-        "__Class": "RegExMatchInfo",
-        "__Item": "; --- C. Enum options - `EnumCondition` and `PropsCondition` ",
-        "__Items__": [
-            [
-                0,
-                "; --- C. Enum options - `EnumCondition` and `PropsCondition` "
-            ],
-            [
-                1,
-                "; --- C."
-            ],
-            [
-                2,
-                " Enum options "
-            ],
-            [
-                3,
-                " `EnumCondition` and `PropsCondition` "
+{
+    "__Class": "Array",
+    "Capacity": 4,
+    "Length": 3,
+    "__Items__": [
+        {
+            "__Class": "RegExMatchInfo",
+            "__Item": "; --- C. Enum options - Using functions ",
+            "__Items__": [
+                [
+                    0,
+                    "; --- C. Enum options - Using functions "
+                ],
+                [
+                    1,
+                    "; --- C."
+                ],
+                [
+                    2,
+                    " Enum options "
+                ],
+                [
+                    3,
+                    " Using functions "
+                ]
             ]
-        ]
-    },
-    {
-        "__Class": "RegExMatchInfo",
-        "__Item": "There we go! That's what we were expecting."
-    },
-    {
-        "__Class": "RegExMatchInfo",
-        "__Item": "that have a value for `Mark`.",
-        "Mark": "PropsCondition"
-    }
-]
+        },
+        {
+            "__Class": "RegExMatchInfo",
+            "__Item": "There we go! That's what we were expecting."
+        },
+        {
+            "__Class": "RegExMatchInfo",
+            "__Item": "that have a value for `Mark`.",
+            "Mark": "PropsCondition"
+        }
+    ]
+}
 */
 
 ; Perfect. The string contains only the information I need, nothing more, nothing less.
 
-; --- E. Enum options - `FilterTypeMap` ------------------------------------------------------------
-
-; `FilterTypeMap`, as you may guess, allows us to define filters that will be used only for the
-; specified object type.
-
-; For a quick example, let's use `Array` and `Map`, which both have `Capacity`.
+; For one more quick example, let's use `Array` and `Map`, which both have `Capacity`.
 
 ; We need to tell `StringifyAll` to iterate the properties for `Map` and `Array` objects.
 StringifyAllConfig.PropsTypeMap := Map('Array', 1, 'Map', 1)
 
-; Set up the `Map` object.
-filterTypeMap := Map('Array', PropsInfo.FilterGroup('Capacity'))
+; Set the option. I also don't want to include "__Class".
+StringifyAllConfig.FilterTypeMap := Map('Array', PropsInfo.FilterGroup('Capacity,__Class'))
 
-; Set the option.
-StringifyAllConfig.FilterTypeMap := filterTypeMap
+; We can set the default value to exclude "__Class" for all objects.
+StringifyAllConfig.FilterTypeMap.Default := PropsInfo.FilterGroup('__Class')
 
 ; Create the objects.
 arr := [
@@ -601,11 +572,9 @@ arr := [
 OutputDebug('`n' A_LineNumber '=========================`n' StringifyAll(arr))
 /*
 {
-    "__Class": "Array",
     "Length": 2,
     "__Items__": [
         {
-            "__Class": "Array",
             "Length": 5,
             "__Items__": [
                 1,
@@ -616,7 +585,6 @@ OutputDebug('`n' A_LineNumber '=========================`n' StringifyAll(arr))
             ]
         },
         {
-            "__Class": "Map",
             "Capacity": 2,
             "CaseSense": "On",
             "Count": 2
@@ -625,16 +593,11 @@ OutputDebug('`n' A_LineNumber '=========================`n' StringifyAll(arr))
 }
 */
 
-; There we go. `Capacity` is only seen for the `Map` object, and excluded for the `Array` objects.
-
 ; === === === To summarize:
 
-; - `Filter` allows us to use a single `PropsInfo.FilterGroup` object to direct `StringifyAll` to
-; include or exclude properties based on any conditions we define.
 ; - `FilterTypeMap` allows us to define `PropsInfo.FilterGroup` objects that will be applied only
 ; for objects of the specified type.
-; - These options, when combiend with the other options, give us complete control over what we want
-; included in the JSON string.
+; - Set the `Default` property to define a filter for objects of all types not included in the `Map`.
 
 ; === II. Callbacks ================================================================================
 
@@ -710,11 +673,17 @@ PropsCondition2(Obj) {
         return 1
     }
 }
+propsTypeMap := Map('Array', PropsCondition2)
+; Set `1` as the default so other objects have their properties stringified.
+propsTypeMap.Default := 1
 
 ; Up to this point, I've been using `StringifyAllConfig` for the options to highlight its usage,
 ; but we can use any regular object too, so I'll demonstrate that here.
 
-OutputDebug('`n' A_LineNumber '=========================`n' StringifyAll(arr, { CallbackGeneral: CallbackGeneral, PropsCondition: PropsCondition2 }))
+OutputDebug('`n' A_LineNumber '=========================`n' StringifyAll(arr, {
+    CallbackGeneral: CallbackGeneral
+  , PropsTypeMap: propsTypeMap
+}))
 /*
 [
     {
@@ -774,7 +743,7 @@ CallbackGeneral2(Obj, *) {
     }
 }
 
-OutputDebug('`n' A_LineNumber '=========================`n' StringifyAll(arr, { CallbackGeneral: CallbackGeneral2, PropsCondition: PropsCondition2 }))
+OutputDebug('`n' A_LineNumber '=========================`n' StringifyAll(arr, { CallbackGeneral: CallbackGeneral2, PropsTypeMap: propsTypeMap }))
 /*
 [
     {

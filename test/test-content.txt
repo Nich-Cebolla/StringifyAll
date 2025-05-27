@@ -1,3 +1,4 @@
+
 {
     "__Class": "Container",
     "__Item": {
@@ -109,7 +110,7 @@
 
 {
     "__Class": "RegExMatchInfo",
-    "__Item": "; --- C. Enum options - `EnumCondition` and `PropsCondition` ",
+    "__Item": "; --- C. Enum options - Using functions ",
     "Count": 3,
     "Mark": ""
 }
@@ -118,13 +119,13 @@
 
 {
     "__Class": "RegExMatchInfo",
-    "__Item": "; --- C. Enum options - `EnumCondition` and `PropsCondition` ",
+    "__Item": "; --- C. Enum options - Using functions ",
     "Count": 3,
     "Mark": "",
     "__Items__": [
         [
             0,
-            "; --- C. Enum options - `EnumCondition` and `PropsCondition` "
+            "; --- C. Enum options - Using functions "
         ],
         [
             1,
@@ -136,7 +137,7 @@
         ],
         [
             3,
-            " `EnumCondition` and `PropsCondition` "
+            " Using functions "
         ]
     ]
 }
@@ -146,13 +147,13 @@
 [
     {
         "__Class": "RegExMatchInfo",
-        "__Item": "; --- C. Enum options - `EnumCondition` and `PropsCondition` ",
+        "__Item": "; --- C. Enum options - Using functions ",
         "Count": 3,
         "Mark": "",
         "__Items__": [
             [
                 0,
-                "; --- C. Enum options - `EnumCondition` and `PropsCondition` "
+                "; --- C. Enum options - Using functions "
             ],
             [
                 1,
@@ -164,7 +165,7 @@
             ],
             [
                 3,
-                " `EnumCondition` and `PropsCondition` "
+                " Using functions "
             ]
         ]
     },
@@ -182,7 +183,7 @@
     [
         [
             0,
-            "; --- C. Enum options - `EnumCondition` and `PropsCondition` "
+            "; --- C. Enum options - Using functions "
         ],
         [
             1,
@@ -194,7 +195,7 @@
         ],
         [
             3,
-            " `EnumCondition` and `PropsCondition` "
+            " Using functions "
         ]
     ],
     {},
@@ -208,83 +209,91 @@
 
 ####
 
-[
-    {
-        "__Class": "RegExMatchInfo",
-        "__Item": "; --- C. Enum options - `EnumCondition` and `PropsCondition` ",
-        "__Items__": [
-            [
-                0,
-                "; --- C. Enum options - `EnumCondition` and `PropsCondition` "
-            ],
-            [
-                1,
-                "; --- C."
-            ],
-            [
-                2,
-                " Enum options "
-            ],
-            [
-                3,
-                " `EnumCondition` and `PropsCondition` "
+{
+    "__Class": "Array",
+    "Capacity": 4,
+    "Length": 3,
+    "__Items__": [
+        {
+            "__Class": "RegExMatchInfo",
+            "__Item": "; --- C. Enum options - Using functions ",
+            "__Items__": [
+                [
+                    0,
+                    "; --- C. Enum options - Using functions "
+                ],
+                [
+                    1,
+                    "; --- C."
+                ],
+                [
+                    2,
+                    " Enum options "
+                ],
+                [
+                    3,
+                    " Using functions "
+                ]
             ]
-        ]
-    },
-    {
-        "__Class": "RegExMatchInfo",
-        "__Item": "There we go! That's what we were expecting."
-    },
-    {
-        "__Class": "RegExMatchInfo",
-        "__Item": "that have a value for `Mark`."
-    }
-]
-
-####
-
-[
-    {
-        "__Class": "RegExMatchInfo",
-        "__Item": "; --- C. Enum options - `EnumCondition` and `PropsCondition` ",
-        "__Items__": [
-            [
-                0,
-                "; --- C. Enum options - `EnumCondition` and `PropsCondition` "
-            ],
-            [
-                1,
-                "; --- C."
-            ],
-            [
-                2,
-                " Enum options "
-            ],
-            [
-                3,
-                " `EnumCondition` and `PropsCondition` "
-            ]
-        ]
-    },
-    {
-        "__Class": "RegExMatchInfo",
-        "__Item": "There we go! That's what we were expecting."
-    },
-    {
-        "__Class": "RegExMatchInfo",
-        "__Item": "that have a value for `Mark`.",
-        "Mark": "PropsCondition"
-    }
-]
+        },
+        {
+            "__Class": "RegExMatchInfo",
+            "__Item": "There we go! That's what we were expecting."
+        },
+        {
+            "__Class": "RegExMatchInfo",
+            "__Item": "that have a value for `Mark`."
+        }
+    ]
+}
 
 ####
 
 {
     "__Class": "Array",
+    "Capacity": 4,
+    "Length": 3,
+    "__Items__": [
+        {
+            "__Class": "RegExMatchInfo",
+            "__Item": "; --- C. Enum options - Using functions ",
+            "__Items__": [
+                [
+                    0,
+                    "; --- C. Enum options - Using functions "
+                ],
+                [
+                    1,
+                    "; --- C."
+                ],
+                [
+                    2,
+                    " Enum options "
+                ],
+                [
+                    3,
+                    " Using functions "
+                ]
+            ]
+        },
+        {
+            "__Class": "RegExMatchInfo",
+            "__Item": "There we go! That's what we were expecting."
+        },
+        {
+            "__Class": "RegExMatchInfo",
+            "__Item": "that have a value for `Mark`.",
+            "Mark": "PropsCondition"
+        }
+    ]
+}
+
+####
+
+{
     "Length": 2,
     "__Items__": [
         {
-            "__Class": "Array",
             "Length": 5,
             "__Items__": [
                 1,
@@ -295,7 +304,6 @@
             ]
         },
         {
-            "__Class": "Map",
             "Capacity": 2,
             "CaseSense": "On",
             "Count": 2

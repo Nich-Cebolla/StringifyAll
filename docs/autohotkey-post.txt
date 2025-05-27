@@ -48,21 +48,10 @@ There are some conditions which will cause [c]Stringify[/c] to skip stringifying
 
 [color=#800000][size=135][b]Enum options[/b][/size][/color]
 
-[b][color=#008000]{*}[/color] [EnumCondition = [c](Obj) => Obj is Array ? 1 : Obj is Map || Obj is RegExMatchInfo ? 2 : 0[/c]][/b] - A function or callable object that returns an indicator if an object should be enumerated, and if so, to use 1-param mode or 2-param mode. The function should accept one parameter, the object that is being evaluated, and should return one of:
-[list][*][b]1[/b] - Directs [c]StringifyAll[/c] to call [c]Obj.__Enum[/c] in 1-parameter mode.
-[*][b]2[/b] - Directs [c]StringifyAll[/c] to call [c]Obj.__Enum[/c] in 2-parameter mode.
-[*][b]0 / empty string[/b] - Directs [c]StringifyAll[/c] not to call [c]Obj.__Enum[/c].[/list]
-
 [b][color=#008000]{Map}[/color] [EnumTypeMap = ""][/b] - A [c]Map[/c] object where the keys are object types and the values are either:
 [list][*]An integer indicating how [c]StringifyAll[/c] should enumerate objects of that type.
 [*]A function or callable object that takes the object being evaluated as its only parameter and returns an integer indicating how [c]StringifyAll[/c] should enumerate the object.
-Both [c]EnumCondition[/c] and [c]EnumTypeMap[/c] are used for the same purpose. Their roles intersect following these rules:
-[*]When [c]EnumTypeMap[/c] is unset, [c]StringifyAll[/c] only uses [c]EnumCondition[/c] to determine how to handle enumeration.
-[*]When [c]EnumTypeMap[/c] is set, [c]StringifyAll[/c] checks if the [c]Default[/c] property has been set on the [c]EnumTypeMap[/c] object.
-[list][*]If [c]Default[/c] is set, then [c]StringifyAll[/c] ignores [c]EnumCondition[/c] completely and calls [c]EnumTypeMap.Get(Type(Obj))[/c] for all objects that [c]StringifyAll[/c] processes.
-[list][*]If [c]Default[/c] is not set, then [c]StringifyAll[/c] calls [c]EnumTypeMap.Has(Type(Obj))[/c].
-[list][*]If true, [c]StringifyAll[/c] uses the item's value.
-[*]If false, [c]StringifyAll[/c] uses the return value from [c]EnumCondition[/c].[/list][/list][/list][/list]
+
 
 [b][color=#008000]{Boolean}[/color] [ExcludeMethods = true][/b] - If true, properties with a [c]Call[/c] accessor and properties with only a [c]Set[/c] accessor are excluded from stringification. If false or unset, those kinds of properties are included in the JSON string with the name of the function object.
 

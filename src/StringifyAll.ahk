@@ -72,31 +72,42 @@
  * @param {*} Obj - The object to stringify.
  *
  * @param {Object} [Options] - The options object with zero or more of the following properties.
- * @param {*} [Options.EnumCondition=(Obj) => Obj is Array ? 1 : Obj is Map || Obj is RegExMatchInfo ? 2 : 0] -
- * A function or callable object that returns an indicator if an object should be enumerated, and if
- * so, to use 1-param mode or 2-param mode. Also see `Options.EnumTypeMap`.
- * @param {Map} [Options.EnumTypeMap=''] - A `Map` object where the keys are object types
- * and the values are an integer indicating how `StringifyAll` should enumerate objects of that type.
+ * @param {Map} [Options.EnumTypeMap=Map('Array', 1, 'Map', 2, 'RegExMatchInfo', 2)] - A `Map` object
+ * where the keys are object types and the values are either:
+ * - An integer:
+ *   - 1: Directs `StringifyAll` to call the object's enumerator in 1-param mode.
+ *   - 2: Directs `StringifyAll` to call the object's enumerator in 2-param mode.
+ *   - 0: Directs `StringifyAll` to not call the object's enumerator.
+ * - A function or callable object:
+ *   - The function should accept the object being evaluated as its only parameter.
+ *   - The function should return one of the above listed integers.
+ * Use the `Map`'s `Default` property to set a condition for all types not included within the `Map`.
  * @param {Boolean} [Options.ExcludeMethods=true] - If true, properties with a `Call`
  * accessor and properties with only a `Set` accessor are excluded from stringification.
  * @param {String} [Options.ExcludeProps=''] - A comma-delimited, case-insensitive list of
  * property names to exclude from stringification. Also see `Options.Filter` and
  * `Options.FilterTypeMap`.
- * @param {PropsInfo.FilterGroup} [Options.Filter=''] - A single `PropsInfo.FilterGroup`
- * object that will be applied to all `PropsInfo` objects iterated during stringification. If
- * `Options.FilterTypeMap` is set, this is ignored.
  * @param {Map} [Options.FilterTypeMap=''] - A `Map` object where the keys are object types
  * and the values are `PropsInfo.FilterGroup` objects. `StringifyAll` will apply the filter when
  * iterating the properties of an object of the indicated types.
  * @param {Integer} [Options.MaxDepth=0] - The maximum depth `StringifyAll` will recurse
  * into. The root depth is 1. Note "Depth" and "indent level" do not necessarily line up.
- * @param {*} [Options.PropsCondition=''] - A function or callable object that returns an
- * indicator if an object's properties should be stringified.
  * @param {Map} [Options.PropsTypeMap=''] - A `Map` object where the keys are object types
- * and the values are a boolean indicating whether or not `StringifyAll` should process the object's
- * properties.
+ * and the values are either:
+ * - A boolean indicating whether or not `StringifyAll` should process the object's properties. A
+ * nonzero value directs `StringifyAll` to process the properties. A falsy value directs `StringifyAll`
+ * to skip the properties.
+ * - A function or callable object:
+ *   - The function should accept the object being evaluated as its only parameter.
+ *   - The function should return a boolean value described above.
  * @param {Map} [Options.StopAtTypeMap=''] - A `Map` object where the keys are object types and
- * the values are strings or numbers that will be passed to the `StopAt` parameter of `GetPropsInfo`.
+ * the values are either:
+ * - A string or number that will be passed to the `StopAt` parameter of `GetPropsInfo`.
+ * - A function or callable object:
+ *   - The function should accept the object being evaluated as its only parameter.
+ *   - The function should return a string or number to be passed to the `StopAt` parameter of
+ * `GetPropsInfo`.
+ * Use the `Map`'s `Default` property to set a condition for all types not included within the `Map`.
  * @param {*} [Options.CallbackGeneral=''] - A function or callable object, or an array of
  * one or more functions or callable objects, that will be called for each object prior to processing.
  * @param {*} [Options.CallbackPlaceholder=''] - When `StringifyAll` skips processing an
@@ -158,46 +169,27 @@ class StringifyAll {
         controllerBase.GetPlaceholder := ObjBindMethod(this, 'GetPlaceholder')
 
         ; Enum options
-        EnumCondition := Options.EnumCondition
         if enumTypeMap := Options.EnumTypeMap {
-            CheckEnum := enumTypeMap.HasOwnProp('Default') ? _CheckEnum3 : _CheckEnum1
+            CheckEnum := enumTypeMap.HasOwnProp('Default') ? _CheckEnum1 : _CheckEnum2
         } else {
-            CheckEnum := _CheckEnum2
+            CheckEnum := (*) => 0
         }
         excludeMethods := Options.ExcludeMethods
         excludeProps := Options.ExcludeProps
-        if filterTypeMap := Options.FilterTypeMap {
-            _GetPropsInfo := _GetPropsInfo1
-            if !filterTypeMap.HasOwnProp('Default') {
-                filterTypeMap.Default := 0
-            }
-        } else if filter := Options.Filter {
-            _GetPropsInfo := _GetPropsInfo2
-        } else {
-            _GetPropsInfo := _GetPropsInfo3
-        }
+        filterTypeMap := Options.FilterTypeMap
         maxDepth := Options.MaxDepth > 0 ? Options.MaxDepth : 9223372036854775807
-        PropsCondition := Options.PropsCondition
         if propsTypeMap := Options.PropsTypeMap {
-            if propsTypeMap.HasOwnProp('Default') {
-                CheckProps := _CheckProps1
-            } else if PropsCondition {
-                CheckProps := _CheckProps2
-            } else {
-                CheckProps := _CheckProps3
-            }
-        } else if PropsCondition {
-            CheckProps := _CheckProps4
+            CheckProps := propsTypeMap.HasOwnProp('Default') ? _CheckProps1 : _CheckProps2
         } else {
             CheckProps := (*) => 1
         }
-        if StopAtTypeMap := Options.StopAtTypeMap {
-            if !stopAtTypeMap.HasOwnProp('Default') {
-                stopAtTypeMap.Default := '-Object'
-            }
+        stopAtTypeMap := Options.StopAtTypeMap
+        if filterTypeMap {
+            _GetPropsInfo := stopAtTypeMap ? _GetPropsInfo1 : _GetPropsInfo2
+        } else if stopAtTypeMap {
+            _GetPropsInfo := _GetPropsInfo3
         } else {
-            StopAtTypeMap := Map()
-            stopAtTypeMap.Default := '-Object'
+            _GetPropsInfo := _GetPropsInfo4
         }
         ; Callbacks
         if CallbackGeneral := Options.CallbackGeneral {
@@ -346,30 +338,23 @@ class StringifyAll {
             IncDepth(-1)
         }
         _CheckEnum1(Obj) {
-            if enumTypeMap.Has(Type(Obj)) {
-                Item := enumTypeMap.Get(Type(Obj))
-                if IsObject(Item) {
-                    return Item(Obj)
-                } else {
-                    return Item
-                }
-            }
-            return EnumCondition(Obj)
-        }
-        _CheckEnum2(Obj) {
-            return EnumCondition(Obj)
-        }
-        _CheckEnum3(Obj) {
-            Item := enumTypeMap.Get(Type(Obj))
-            if IsObject(Item) {
+            if IsObject(Item := enumTypeMap.Get(Type(Obj))) {
                 return Item(Obj)
             } else {
                 return Item
             }
         }
+        _CheckEnum2(Obj) {
+            if enumTypeMap.Has(Type(Obj)) {
+                if IsObject(Item := enumTypeMap.Get(Type(Obj))) {
+                    return Item(Obj)
+                } else {
+                    return Item
+                }
+            }
+        }
         _CheckProps1(Obj) {
-            Item := propsTypeMap.Get(Type(Obj))
-            if IsObject(Item) {
+            if IsObject(Item := propsTypeMap.Get(Type(Obj))) {
                 return Item(Obj)
             } else {
                 return Item
@@ -377,29 +362,12 @@ class StringifyAll {
         }
         _CheckProps2(Obj) {
             if propsTypeMap.Has(Type(Obj)) {
-                Item := propsTypeMap.Get(Type(Obj))
-                if IsObject(Item) {
-                    return Item(Obj)
-                } else {
-                    return Item
-                }
-            } else {
-                return PropsCondition(Obj)
-            }
-        }
-        _CheckProps3(Obj) {
-            if propsTypeMap.Has(Type(Obj)) {
-                Item := propsTypeMap.Get(Type(Obj))
-                if IsObject(Item) {
+                if IsObject(Item := propsTypeMap.Get(Type(Obj))) {
                     return Item(Obj)
                 } else {
                     return Item
                 }
             }
-            return 1
-        }
-        _CheckProps4(Obj) {
-            return PropsCondition(Obj)
         }
         _CloseEnum11(Self, &OutStr) {
             indentLevel--
@@ -452,8 +420,12 @@ class StringifyAll {
             }
         }
         _GetPropsInfo1(Obj) {
-            if stopAtTypeMap.Has(Type(Obj)) {
-                pi := GetPropsInfo(Obj, stopAtTypeMap.Get(Type(Obj)), excludeProps, false, , excludeMethods)
+            if stopAtTypeMap.Has(Type(Obj)) || stopAtTypeMap.HasOwnProp('Default') {
+                if IsObject(Item := stopAtTypeMap.Get(Type(Obj))) {
+                    pi := GetPropsInfo(Obj, Item(Obj), excludeProps, false, , excludeMethods)
+                } else {
+                    pi := GetPropsInfo(Obj, Item, excludeProps, false, , excludeMethods)
+                }
             } else {
                 pi := GetPropsInfo(Obj, '-Object', excludeProps, false, , excludeMethods)
             }
@@ -466,17 +438,28 @@ class StringifyAll {
             return pi
         }
         _GetPropsInfo2(Obj) {
-            if stopAtTypeMap.Has(Type(Obj)) {
-                pi := GetPropsInfo(Obj, stopAtTypeMap.Get(Type(Obj)), excludeProps, false, , excludeMethods)
-            } else {
-                pi := GetPropsInfo(Obj, '-Object', excludeProps, false, , excludeMethods)
+            pi := GetPropsInfo(Obj, '-Object', excludeProps, false, , excludeMethods)
+            if filterTypeMap.Has(Type(Obj)) || filterTypeMap.HasOwnProp('Default') {
+                if val := filterTypeMap.Get(Type(Obj)) {
+                    pi.DefineProp('Filter', { Value: val })
+                    pi.FilterActivate()
+                }
             }
-            pi.DefineProp('Filter', { Value: filter })
-            pi.FilterActivate()
             return pi
         }
         _GetPropsInfo3(Obj) {
-            return GetPropsInfo(Obj, stopAtTypeMap.Get(Type(Obj)), excludeProps, false, , excludeMethods)
+            if stopAtTypeMap.Has(Type(Obj)) || stopAtTypeMap.HasOwnProp('Default') {
+                if IsObject(Item := stopAtTypeMap.Get(Type(Obj))) {
+                    return GetPropsInfo(Obj, Item(Obj), excludeProps, false, , excludeMethods)
+                } else {
+                    return GetPropsInfo(Obj, Item, excludeProps, false, , excludeMethods)
+                }
+            } else {
+                return GetPropsInfo(Obj, '-Object', excludeProps, false, , excludeMethods)
+            }
+        }
+        _GetPropsInfo4(Obj) {
+            return GetPropsInfo(Obj, '-Object', excludeProps, false, , excludeMethods)
         }
         _GetVal(&Val, flag_quote_number := false) {
             if IsNumber(Val) {
@@ -884,14 +867,12 @@ class StringifyAll {
     class Options {
         static Default := {
             ; Enum options
-            EnumCondition: (Obj) => Obj is Array ? 1 : Obj is Map || Obj is RegExMatchInfo ? 2 : 0
-          , EnumTypeMap: ''
+            EnumTypeMap: Map('Array', 1, 'Map', 2, 'RegExMatchInfo', 2)
           , ExcludeMethods: true
           , ExcludeProps: ''
           , Filter: ''
           , FilterTypeMap: ''
           , MaxDepth: 0
-          , PropsCondition: ''
           , PropsTypeMap: ''
           , StopAtTypeMap: ''
 
