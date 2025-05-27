@@ -9,7 +9,7 @@ A customizable solution for serializing AutoHotkey (AHK) object properties, incl
 - Define a class `StringifyAllConfig` anywhere in your code.
 - Pass an object to the `Options` parameter.
 
-The options defined by the `Options` parameter supercede options defined by the `StringifyConfig` class. This is convenient for setting your own defaults based on your personal preferences / project needs using the class object, and then passing an object to the `Options` parameter to adjust your defaults on-the-fly.
+The options defined by the `Options` parameter supercede options defined by the `StringifyAllConfig` class. This is convenient for setting your own defaults based on your personal preferences / project needs using the class object, and then passing an object to the `Options` parameter to adjust your defaults on-the-fly.
 
 For usage examples, see "example\example.ahk".
 
