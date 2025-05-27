@@ -5,7 +5,7 @@ A customizable solution for serializing AutoHotkey (AHK) object properties, incl
 `StringifyAll` works in conjunction with `GetPropsInfo` (https://github.com/Nich-Cebolla/AutoHotkey-LibV2/tree/main/inheritance) to allow us to include all of an object's properties in the JSON string, not just the items or own properties.
 
 `StringifyAll` exposes many options to programmatically restrict what gets included in the JSON string. It also includes options for adjusting the spacing in the string. To set your options, you can:
-- Copy one of the template files into your project directory and set the options using the template.
+- Copy the template file into your project directory and set the options using the template.
 - Define a class `StringifyAllConfig` anywhere in your code.
 - Pass an object to the `Options` parameter.
 

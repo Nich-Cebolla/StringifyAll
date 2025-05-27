@@ -9,7 +9,7 @@ A customizable solution for serializing object properties, including inherited p
 [c]StringifyAll[/c] works in conjunction with [url=https://www.autohotkey.com/boards/viewtopic.php?f=83&t=137065&p=603092#p603092]GetPropsInfo[/url] to allow us to include all of an object's properties in the JSON string, not just the items or own properties.
 
 [c]StringifyAll[/c] exposes many options to programmatically restrict what gets included in the JSON string. It also includes options for adjusting the spacing in the string. To set your options, you can:
-[list][*]Copy one of the template files into your project directory and set the options using the template.
+[list][*]Copy the template file into your project directory and set the options using the template.
 [*]Define a class [c]StringifyAllConfig[/c] anywhere in your code.
 [*]Pass an object to the [c]Options[/c] parameter.[/list]
 
