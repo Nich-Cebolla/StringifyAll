@@ -18,8 +18,8 @@
  * `StringifyAll` exposes many options to programmatically restrict what gets included in the JSON
  * string. It also includes options for adjusting the spacing in the string. To set your options, you
  * can:
- * - Copy one of the template files into your project directory and set the options using the
- * template.
+ * - Copy "templates\StringifyAllConfigTemplate.ahk" into your project directory and set the options
+ * using the template.
  * - Define a class `StringifyAllConfig` anywhere in your code.
  * - Pass an object to the `Options` parameter.
  *
@@ -67,7 +67,7 @@
  * receive in exchange the potential to fine-tune precisely what will be present in the JSON string.
  *
  * Note that these are short descriptions of the options. For complete details about the options,
- * see the documentation within "StringifyAllConfig-details.ahk".
+ * see the documentation within "docs\README.md".
  *
  * @param {*} Obj - The object to stringify.
  *
@@ -912,7 +912,6 @@ class StringifyAll {
             ; Print options
           , ItemProp: '__Items__'
           , PrintErrors: false
-        ;   , PrintTypeTag: false
           , QuoteNumericKeys: false
           , RootName: '$'
           , UnsetArrayItem: '""'
