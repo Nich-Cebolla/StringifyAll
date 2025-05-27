@@ -1,0 +1,416 @@
+{
+    "__Class": "Container",
+    "__Item": {
+        "__Class": "Map",
+        "Capacity": 2,
+        "CaseSense": "On",
+        "Count": 2,
+        "__Items__": [
+            [
+                "key1",
+                "val1"
+            ],
+            [
+                "key2",
+                "val2"
+            ]
+        ]
+    },
+    "__Items__": [
+        [
+            "key1",
+            "val1"
+        ],
+        [
+            "key2",
+            "val2"
+        ]
+    ]
+}
+
+####
+
+{
+    "__Class": "Container",
+    "__Item": {
+        "__Class": "Map",
+        "Capacity": 2,
+        "CaseSense": "On",
+        "Count": 2
+    },
+    "__Items__": [
+        [
+            "key1",
+            "val1"
+        ],
+        [
+            "key2",
+            "val2"
+        ]
+    ]
+}
+
+####
+
+{
+    "__Class": "Container",
+    "__Item": {
+        "__Class": "Map",
+        "Capacity": 2,
+        "CaseSense": "On",
+        "Count": 2,
+        "__Items__": [
+            [
+                "key1",
+                "val1"
+            ],
+            [
+                "key2",
+                "val2"
+            ]
+        ]
+    }
+}
+
+####
+
+{
+    "__Class": "Container",
+    "__Item": [
+        [
+            "key1",
+            "val1"
+        ],
+        [
+            "key2",
+            "val2"
+        ]
+    ]
+}
+
+####
+
+{}
+
+####
+
+[
+    [
+        "key1",
+        "val1"
+    ],
+    [
+        "key2",
+        "val2"
+    ]
+]
+
+####
+
+{
+    "__Class": "RegExMatchInfo",
+    "__Item": "; --- C. Enum options - `EnumCondition` and `PropsCondition` ",
+    "Count": 3,
+    "Mark": ""
+}
+
+####
+
+{
+    "__Class": "RegExMatchInfo",
+    "__Item": "; --- C. Enum options - `EnumCondition` and `PropsCondition` ",
+    "Count": 3,
+    "Mark": "",
+    "__Items__": [
+        [
+            0,
+            "; --- C. Enum options - `EnumCondition` and `PropsCondition` "
+        ],
+        [
+            1,
+            "; --- C."
+        ],
+        [
+            2,
+            " Enum options "
+        ],
+        [
+            3,
+            " `EnumCondition` and `PropsCondition` "
+        ]
+    ]
+}
+
+####
+
+[
+    {
+        "__Class": "RegExMatchInfo",
+        "__Item": "; --- C. Enum options - `EnumCondition` and `PropsCondition` ",
+        "Count": 3,
+        "Mark": "",
+        "__Items__": [
+            [
+                0,
+                "; --- C. Enum options - `EnumCondition` and `PropsCondition` "
+            ],
+            [
+                1,
+                "; --- C."
+            ],
+            [
+                2,
+                " Enum options "
+            ],
+            [
+                3,
+                " `EnumCondition` and `PropsCondition` "
+            ]
+        ]
+    },
+    {
+        "__Class": "RegExMatchInfo",
+        "__Item": "There we go! That's what we were expecting.",
+        "Count": 0,
+        "Mark": ""
+    }
+]
+
+####
+
+[
+    [
+        [
+            0,
+            "; --- C. Enum options - `EnumCondition` and `PropsCondition` "
+        ],
+        [
+            1,
+            "; --- C."
+        ],
+        [
+            2,
+            " Enum options "
+        ],
+        [
+            3,
+            " `EnumCondition` and `PropsCondition` "
+        ]
+    ],
+    {},
+    {
+        "__Class": "RegExMatchInfo",
+        "__Item": "that have a value for `Mark`.",
+        "Count": 0,
+        "Mark": "PropsCondition"
+    }
+]
+
+####
+
+[
+    {
+        "__Class": "RegExMatchInfo",
+        "__Item": "; --- C. Enum options - `EnumCondition` and `PropsCondition` ",
+        "__Items__": [
+            [
+                0,
+                "; --- C. Enum options - `EnumCondition` and `PropsCondition` "
+            ],
+            [
+                1,
+                "; --- C."
+            ],
+            [
+                2,
+                " Enum options "
+            ],
+            [
+                3,
+                " `EnumCondition` and `PropsCondition` "
+            ]
+        ]
+    },
+    {
+        "__Class": "RegExMatchInfo",
+        "__Item": "There we go! That's what we were expecting."
+    },
+    {
+        "__Class": "RegExMatchInfo",
+        "__Item": "that have a value for `Mark`."
+    }
+]
+
+####
+
+[
+    {
+        "__Class": "RegExMatchInfo",
+        "__Item": "; --- C. Enum options - `EnumCondition` and `PropsCondition` ",
+        "__Items__": [
+            [
+                0,
+                "; --- C. Enum options - `EnumCondition` and `PropsCondition` "
+            ],
+            [
+                1,
+                "; --- C."
+            ],
+            [
+                2,
+                " Enum options "
+            ],
+            [
+                3,
+                " `EnumCondition` and `PropsCondition` "
+            ]
+        ]
+    },
+    {
+        "__Class": "RegExMatchInfo",
+        "__Item": "There we go! That's what we were expecting."
+    },
+    {
+        "__Class": "RegExMatchInfo",
+        "__Item": "that have a value for `Mark`.",
+        "Mark": "PropsCondition"
+    }
+]
+
+####
+
+{
+    "__Class": "Array",
+    "Length": 2,
+    "__Items__": [
+        {
+            "__Class": "Array",
+            "Length": 5,
+            "__Items__": [
+                1,
+                2,
+                3,
+                4,
+                5
+            ]
+        },
+        {
+            "__Class": "Map",
+            "Capacity": 2,
+            "CaseSense": "On",
+            "Count": 2
+        }
+    ]
+}
+
+####
+
+[
+    {
+        "__Class": "DataItem",
+        "Index": 1
+    },
+    "{ Instance:Map:23769936 }",
+    {
+        "__Class": "Array",
+        "Capacity": 1001,
+        "Length": 1,
+        "__Items__": [
+            3
+        ]
+    },
+    "{ Instance:Object:2088880 }",
+    "{ Instance:Object:2089072 }",
+    {
+        "__Class": "DataItem",
+        "Index": 6
+    },
+    {
+        "__Class": "Map",
+        "Capacity": 1001,
+        "CaseSense": "On",
+        "Count": 1,
+        "__Items__": [
+            [
+                "Index",
+                7
+            ]
+        ]
+    },
+    "{ Instance:Array:23768080 }",
+    "{ Instance:Object:2088544 }",
+    "{ Instance:Object:2087776 }"
+]
+
+####
+
+[
+    {
+        "__Class": "DataItem",
+        "Index": 1
+    },
+    "Index: 2",
+    {
+        "__Class": "Array",
+        "Capacity": 1001,
+        "Length": 1,
+        "__Items__": [
+            3
+        ]
+    },
+    "Index: 4",
+    "Index: 5",
+    {
+        "__Class": "DataItem",
+        "Index": 6
+    },
+    {
+        "__Class": "Map",
+        "Capacity": 1001,
+        "CaseSense": "On",
+        "Count": 1,
+        "__Items__": [
+            [
+                "Index",
+                7
+            ]
+        ]
+    },
+    "Index: 8",
+    "Index: 9",
+    "Index: 10"
+]
+
+####
+
+[
+    {
+        "__Class": "DataItem",
+        "Index": 1
+    },
+    {
+        "__Class": "Array",
+        "Capacity": 1001,
+        "Length": 1,
+        "__Items__": [
+            3
+        ]
+    },
+    {
+        "__Class": "DataItem",
+        "Index": 6
+    },
+    {
+        "__Class": "Map",
+        "Capacity": 1001,
+        "CaseSense": "On",
+        "Count": 1,
+        "__Items__": [
+            [
+                "Index",
+                7
+            ]
+        ]
+    }
+]
+
