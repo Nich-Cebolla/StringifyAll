@@ -3,8 +3,7 @@
 A customizable solution for serializing object properties, including inherited properties, and/or items into a 100% valid JSON string.
 
 [color=#800000][size=145][b]Github link[/b][/size][/color]
-
-
+[url]https://github.com/Nich-Cebolla/StringifyAll[/url]
 
 [color=#800000][size=145][b]Introduction[/b][/size][/color]
 [c]StringifyAll[/c] works in conjunction with [url=https://www.autohotkey.com/boards/viewtopic.php?f=83&t=137065&p=603092#p603092]GetPropsInfo[/url] to allow us to include all of an object's properties in the JSON string, not just the items or own properties.
