@@ -13,7 +13,7 @@ A customizable solution for serializing object properties, including inherited p
 [*]Define a class [c]StringifyAllConfig[/c] anywhere in your code.
 [*]Pass an object to the [c]Options[/c] parameter.[/list]
 
-The options defined by the [c]Options[/c] parameter supercede options defined by the [c]StringifyConfig[/c] class. This is convenient for setting your own defaults based on your personal preferences / project needs using the class object, and then passing an object to the [c]Options[/c] parameter to adjust your defaults on-the-fly.
+The options defined by the [c]Options[/c] parameter supercede options defined by the [c]StringifyAllConfig[/c] class. This is convenient for setting your own defaults based on your personal preferences / project needs using the class object, and then passing an object to the [c]Options[/c] parameter to adjust your defaults on-the-fly.
 
 For usage examples, see "example\example.ahk".
 
@@ -49,40 +49,38 @@ There are some conditions which will cause [c]Stringify[/c] to skip stringifying
 [color=#800000][size=135][b]Enum options[/b][/size][/color]
 
 [b][color=#008000]{Map}[/color] [EnumTypeMap = ""][/b] - A [c]Map[/c] object where the keys are object types and the values are either:
-[list][*]An integer indicating how [c]StringifyAll[/c] should enumerate objects of that type.
-[*]A function or callable object that takes the object being evaluated as its only parameter and returns an integer indicating how [c]StringifyAll[/c] should enumerate the object.
+[list][*]An integer:
+[list][*]1: Directs [c]StringifyAll[/c] to call the object's enumerator in 1-param mode.
+[*]2: Directs [c]StringifyAll[/c] to call the object's enumerator in 2-param mode.
+[*]0: Directs [c]StringifyAll[/c] to not call the object's enumerator.[/list]
+[*]A function or callable object:
+[list][*]The function should accept the object being evaluated as its only parameter.
+[*]The function should return one of the above listed integers.[/list][/list]
+[indent=1]Use the [c]Map[/c]'s [c]Default[/c] property to set a condition for all types not included within the [c]Map[/c].[/indent]
 
 
 [b][color=#008000]{Boolean}[/color] [ExcludeMethods = true][/b] - If true, properties with a [c]Call[/c] accessor and properties with only a [c]Set[/c] accessor are excluded from stringification. If false or unset, those kinds of properties are included in the JSON string with the name of the function object.
 
 [b][color=#008000]{String}[/color] [ExcludeProps = ""][/b] - A comma-delimited, case-insensitive list of property names to exclude from stringification.
 
-[b][color=#008000]{PropsInfo.FilterGroup}[/color] [Filter = ""][/b] - A single [c]PropsInfo.FilterGroup[/c] object that will be applied to all [c]PropsInfo[/c] objects iterated during stringification. If [c]FilterTypeMap[/c] is set, this is ignored.
-
-[b][color=#008000]{Map}[/color] [FilterTypeMap = ""][/b] - A [c]Map[/c] object where the keys are object types and the values are [c]PropsInfo.FilterGroup[/c] objects. [c]StringifyAll[/c] will apply the filter when iterating the properties of an object of the indicated types. You can use the [c]Default[/c] property of the map object to specify a default [c]PropsInfo.FilterGroup[/c] to use for all objects, and then add additional items to the map for specific object types.
+[b][color=#008000]{Map}[/color] [FilterTypeMap = ""][/b] - A [c]Map[/c] object where the keys are object types and the values are [c]PropsInfo.FilterGroup[/c] objects. [c]StringifyAll[/c] will apply the filter when iterating the properties of an object of the indicated types.
 
 [b][color=#008000]{Integer}[/color] [MaxDepth = 0][/b] - The maximum depth [c]StringifyAll[/c] will recurse into. The root depth is 1. Note "Depth" and "indent level" do not necessarily line up. At any given point, the indentation level can be as large as 3x the depth level. This is due to how [c]StringifyAll[/c] handles map and array items.
 
-[b][color=#008000]{*}[/color] [PropsCondition = ""][/b] - A function or callable object that returns an indicator if an object's properties should be stringified. The function should accept one parameter, the object being evaluated, and should return a nonzero value if the object's properties should be stringified, or a falsy value if the object's properties should not be stringified.
+[b][color=#008000]{Map}[/color] [PropsTypeMap = ""][/b] - A [c]Map[/c] object where the keys are object types and the values are either:
+[list][*]A boolean indicating whether or not [c]StringifyAll[/c] should process the object's properties. A nonzero value directs [c]StringifyAll[/c] to process the properties. A falsy value directs [c]StringifyAll[/c] to skip the properties.
+[*]A function or callable object:
+[list][*]The function should accept the object being evaluated as its only parameter.
+[*]The function should return a boolean value described above.[/list][/list]
 
-[b][color=#008000]{Map}[/color] [PropsTypeMap = ""][/b] - A [c]Map[/c] object where the keys are object types and the values and the values are one of:
-[list][*][b]A nonzero value[/b] - Directs [c]StringifyAll[/c] to process the object's properties.
-[*][b]Zero or an empty string[/b] - Directs [c]StringifyAll[/c] to skip the object's properties.
-[*][b]A function or callable object[/b] - The function should accept the object being evaluated as its only parameter and returns either indicator described above.[/list]
+[indent=1]The baseline behavior for [c]StringifyAll[/c] is to create a [c]PropsInfo[/c] object for all objects that are stringified. If [c]PropsInfoObj.Count > 0[/c], then [c]StringifyAll[/c] will process the properties included among the [c]PropsInfo[/c] object. If [c]PropsInfoObj.Count == 0[/c], [c]StringifyAll[/c] does not process properties for the object.[/indent]
 
-[indent=1]The baseline behavior for [c]StringifyAll[/c] is to create a [c]PropsInfo[/c] object for all objects that are stringified. If [c]PropsInfoObj.Count > 0[/c], then [c]StringifyAll[/c] will process the properties included among the [c]PropsInfo[/c] object. If [c]PropsInfoObj.Count == 0[/c], [c]StringifyAll[/c] does not process properties for the object.
-
-Both [c]PropsCondition[/c] and [c]PropsTypeMap[/c] are used for the same purpose. Their roles intersect following these rules:[/indent]
-[list][*]When [c]PropsTypeMap[/c] and [c]PropsCondition[/c] are both unset, [c]StringifyAll[/c] uses the baseline process described above for all objects.
-[*]When [c]PropsTypeMap[/c] is set, [c]StringifyAll[/c]'s behavior adapts in these ways:
-[list][*]During initialization, [c]StringifyAll[/c] checks if the [c]Default[/c] property has been set on the [c]Map[/c] object.
-[list][*]If [c]Default[/c] is set, then [c]StringifyAll[/c] ignores [c]PropsCondition[/c] completely and calls [c]PropsTypeMap.Get(Type(Obj))[/c] for all objects that [c]StringifyAll[/c] processes.
-[*]If [c]Default[/c] is not set, then [c]StringifyAll[/c] calls [c]PropsTypeMap.Has(Type(Obj))[/c].
-[list][*]If true, [c]StringifyAll[/c] uses the item's value.
-[*]If false, [c]StringifyAll[/c] uses the return value from [c]PropsCondition[/c] if it is in use. If not in use, [c]StringifyAll[/c] uses the baseline behavior described above.[/list][/list][/list][/list]
-
-[b][color=#008000]{Map}[/color] [StopAtTypeMap = ""][/b] - A [c]Map[/c] object where the keys are object types and the values are strings or numbers that will be passed to the [c]StopAt[/c] parameter of [c]GetPropsInfo[/c]. For example, if I don't want [c]StringifyAll[/c] to include the [c]Length[/c], [c]Capacity[/c], or [c]__Item[/c] properties when processing [c]Array[/c] objects, one way to do this would be to define [c]StopAtTypeMap[/c] to direct [c]GetPropsInfo[/c] not to include properties owned by [c]Array.Prototype[/c]: [c]StringifyAllConfig.StopAtMap := Map('Array', '-Array')[/c]
-[indent=1]See the parameter hints for [c]GetBaseObjects[/c] within the file "inheritance\GetBaseObjects.ahk" for full details about this parameter.[/indent]
+[b][color=#008000]{Map}[/color] [StopAtTypeMap = ""][/b] - A [c]Map[/c] object where the keys are object types and the values are either:
+[list][*]A string or number that will be passed to the [c]StopAt[/c] parameter of [c]GetPropsInfo[/c].
+[*]A function or callable object:
+[list][*]The function should accept the object being evaluated as its only parameter.
+[*]The function should return a string or number to be passed to the [c]StopAt[/c] parameter of [c]GetPropsInfo[/c].[/list][/list]
+[indent=1]Use the [c]Map[/c]'s [c]Default[/c] property to set a condition for all types not included within the [c]Map[/c].[/indent]
 
 
 [color=#800000][size=135][b]Callbacks[/b][/size][/color]

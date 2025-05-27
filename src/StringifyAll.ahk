@@ -100,6 +100,7 @@
  * - A function or callable object:
  *   - The function should accept the object being evaluated as its only parameter.
  *   - The function should return a boolean value described above.
+ * Use the `Map`'s `Default` property to set a condition for all types not included within the `Map`.
  * @param {Map} [Options.StopAtTypeMap=''] - A `Map` object where the keys are object types and
  * the values are either:
  * - A string or number that will be passed to the `StopAt` parameter of `GetPropsInfo`.
