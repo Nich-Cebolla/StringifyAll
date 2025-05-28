@@ -26,8 +26,6 @@ There are some conditions which will cause `Stringify` to skip stringifying an o
 - Your callback function returned a value directing `Stringify` to skip the object.
 - The object has been stringified already. The placeholder for this condition is separate from the others; it is a string representation of the object path at which the object was first encountered. This is so one's code or one's self can identify the correct object that was at that location when `Stringify` was processing.
 
-`StringifyAll` does not inherently direct the flow of action as a condition of whether an object is a map, array, or some other type of object. Instead, the options can be used to specify precisely what should be included in the JSON string and what should not be included.
-
 `StringifyAll` will require more setup to be useful compared to other stringify functions, because we usually don't need information about every property. `StringifyAll` is not intended to be a replacement for other stringify functions. Where `StringifyAll` shines is in cases where we need a way to programmatically define specifically what properties we want represented in the JSON string and what we want to exclude; at the cost of requiring greater setup time investment, we receive in exchange the potential to fine-tune precisely what will be present in the JSON string.
 
 # Parameters
@@ -77,7 +75,7 @@ Name|Type|Default|Description
 <span id="excludeprops" style="font-size:16px;"><b>ExcludeProps</b></span>|String|""|A comma-delimited, case-insensitive list of property names to exclude from stringification.
 <span id="filtertypemap" style="font-size:16px;"><b>FilterTypeMap</b></span>|Map|""|A <code>Map</code> object where the keys are object types and the values are <code>PropsInfo.FilterGroup</code> objects. <code>StringifyAll</code> will apply the filter when iterating the properties of an object of the indicated types.
 <span id="maxdepth" style="font-size:16px;"><b>MaxDepth</b>|Integer|0|The maximum depth <code>StringifyAll</code> will recurse into. The root depth is 1. Note "Depth" and "indent level" do not necessarily line up. At any given point, the indentation level can be as large as 3x the depth level. This is due to how <code>StringifyAll</code> handles map and array items.
-<span id="propstypemap" style="font-size:16px;"><b>PropsTypeMap</b></span>|Map|""|A <code>Map</code> object where the keys are object types and the values are either:<ul><li>A boolean indicating whether or not <code>StringifyAll</code> should process the object's properties. A nonzero value directs <code>StringifyAll</code> to process the properties. A falsy value directs <code>StringifyAll</code> to skip the properties.</li><li>A function or callable object:</li><ul><li>The function should accept the object being evaluated as its only parameter.</li><li>The function should return a boolean value described above.</li></ul></ul>
+<span id="propstypemap" style="font-size:16px;"><b>PropsTypeMap</b></span>|Map|{ __Class: "Map", Default: 1, Count: 0 }|A <code>Map</code> object where the keys are object types and the values are either:<ul><li>A boolean indicating whether or not <code>StringifyAll</code> should process the object's properties. A nonzero value directs <code>StringifyAll</code> to process the properties. A falsy value directs <code>StringifyAll</code> to skip the properties.</li><li>A function or callable object:</li><ul><li>The function should accept the object being evaluated as its only parameter.</li><li>The function should return a boolean value described above.</li></ul>The default value is a `Map` object with zero items and a `Default` property value of 1, directing `StringifyAll` to process the properties of all object types. Keep this in mind when you set `PropsTypeMap`; if you intend to direct `StringifyAll` to process object properties by default while using `PropsTypeMap` to exclude certain object types, you'll need to set the `Default` value to 1 as well. If you want `StringifyAll` to not process any properties by default, and to use `PropsTypeMap` to specify which object types should have their properties processed, you can leave the `Default` property unset, or set it with `0`.</ul>
 <span id="stopattypemap" style="font-size:16px;"><b>StopAtTypeMap</b></span>|Map|""|A <code>Map</code> object where the keys are object types and the values are either: <ul><li>A string or number that will be passed to the <code>StopAt</code> parameter of <code>GetPropsInfo</code>.</li><li>A function or callable object:</li><ul><li>The function should accept the object being evaluated as its only parameter.</li><li>The function should return a string or number to be passed to the <code>StopAt</code> parameter of <code>GetPropsInfo</code>.</li></ul></ul>Use the <code>Map</code>'s <code>Default</code> property to set a condition for all types not included within the <code>Map</code>.
 
 
@@ -115,3 +113,56 @@ Name|Type|Default|Description
 ----------|----|-------|-----
 <span id="initialptrlistcapacity" style="font-size:16px;"><b>InitialPtrListCapacity</b></span>|Integer|64|<code>StringifyAll</code> tracks the ptr addresses of every object it stringifies to prevent infinite recursion. <code>StringifyAll</code> will set the initial capacity of the <code>Map</code> object used for this purpose to <code>InitialPtrListCapacity</code>.
 <span id="initialstrcapacity" style="font-size:16px;"><b>InitialStrCapacity</b>|Integer|65536|<code>StringifyAll</code> calls <code>VarSetStrCapacity</code> using <code>InitialStrCapacity</code> for the output string during the initialization stage. For the best performance, you can overestimate the approximate length of the string; <code>StringifyAll</code> calls <code>VarSetStrCapacity(&OutStr, -1)</code> at the end of the function to release any unused memory.
+
+<h1>StringifyAll's process</h1>
+
+This section describes `StringifyAll`'s process. This section is intended to help you better understand how the options will impact the output string. This section is not complete.
+
+<b>Properties</b>
+
+For every object, prior to adding the object's open brace to the string, <code>StringifyAll</code> proceeds through these steps:
+<ul>
+  <li>If <code>Options.PropsTypeMap.HasOwnProp('Default')</code> then this code is used:</li>
+
+```
+if IsObject(Item := propsTypeMap.Get(Type(Obj))) {
+    return Item(Obj)
+} else {
+    return Item
+}
+```
+
+  <li>Else, this code is used:</li>
+
+```
+if propsTypeMap.Has(Type(Obj)) {
+    if IsObject(Item := propsTypeMap.Get(Type(Obj))) {
+        return Item(Obj)
+    } else {
+        return Item
+    }
+}
+```
+
+  <li>If the return value is nonzero:</li>
+    <ul>
+      <li><code>StringifyAll</code> calls <code>PropsInfoObj := GetPropsInfo(Obj, StopAt, excludeProps, false, , excludeMethods)</code>.</li>
+      <li>If <code>PropsInfoObj.Count > 0</code>, <code>StringifyAll</code> processes only the properties exposed by <code>PropsInfoObj</code>. You can control this with two options.</li>
+      <ul>
+        <li><code>Options.ExcludeProps</code> is effective and straightforward. Write a comma-delimited string of property names to exclude. This would apply to all objects.</li>
+        <li><code>Options.FilterTypeMap</code> affords greater flexibility. <code>PropsInfo</code> objects are designed with a filter system to make it easy to programmatically include a set of properties, and exclude the other, from whatever one's code is doing with the <code>PropsInfo</code> object. See "example\example.ahk" and/or "inheritance\example-Inheritance.ahk" for examples.</li>
+      </ul>
+      <li>Else, <code>StringifyAll</code> skips the properties for that object and goes on to check if the enumerator will be called.</li>
+    </ul>
+    <li>If the return value is falsy, <code>StringifyAll</code> skips the properties for that object and goes on to check if the enumerator will be called.</li>
+  </ul>
+</ul>
+
+This will come into play if you want an <code>Array</code> or <code>Map</code> object's string representation to have the appearance of what we typically expect for arrays and maps. To accomplish this, <code>StringifyAll</code> must not process any properties for those objects. You can accomplish this by simply defining two items in the map: <code>Options.PropsTypeMap := Map("Array", 0, "Map", 0)</code>. Don't forget to set <code>Options.PropsTypeMap.Default := 1</code> if you still want other objects to have their properties processed.
+
+
+<h1>Changelog</h1>
+
+2025-05-28 v1.0.1
+- Adjusted how `Options.PropsTypeMap` is handled. This change did not modify `StringifyAll`'s behavior, but it is now more clear both in the code and in the documentation what the default value is and what the default value does.
+- Added "StringifyAll's process" to the docs.

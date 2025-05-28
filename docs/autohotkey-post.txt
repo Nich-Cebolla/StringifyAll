@@ -30,8 +30,6 @@ There are some conditions which will cause [c]Stringify[/c] to skip stringifying
 [*]Your callback function returned a value directing [c]Stringify[/c] to skip the object.
 [*]The object has been stringified already. The placeholder for this condition is separate from the others; it is a string representation of the object path at which the object was first encountered. This is so one's code or one's self can identify the correct object that was at that location when [c]Stringify[/c] was processing.[/list]
 
-[c]StringifyAll[/c] does not inherently direct the flow of action as a condition of whether an object is a map, array, or some other type of object. Instead, the options can be used to specify precisely what should be included in the JSON string and what should not be included.
-
 [c]StringifyAll[/c] will require more setup to be useful compared to other stringify functions, because we usually don't need information about every property. [c]StringifyAll[/c] is not intended to be a replacement for other stringify functions. Where [c]StringifyAll[/c] shines is in cases where we need a way to programmatically define specifically what properties we want represented in the JSON string and what we want to exclude; at the cost of requiring greater setup time investment, we receive in exchange the potential to fine-tune precisely what will be present in the JSON string.
 
 [color=#800000][size=145][b]Parameters[/b][/size][/color]
@@ -46,9 +44,9 @@ There are some conditions which will cause [c]Stringify[/c] to skip stringifying
 
 [color=#800000][size=145][b]Options[/b][/size][/color]
 
-[color=#800000][size=135][b]Enum options[/b][/size][/color]
+[size=135][b]Enum options[/b][/size]
 
-[b][color=#008000]{Map}[/color] [EnumTypeMap = ""][/b] - A [c]Map[/c] object where the keys are object types and the values are either:
+[b][color=#008000]{Map}[/color] [EnumTypeMap = Map("Array", 1, "Map", 2, "RegExMatchInfo", 2)][/b] - A [c]Map[/c] object where the keys are object types and the values are either:
 [list][*]An integer:
 [list][*]1: Directs [c]StringifyAll[/c] to call the object's enumerator in 1-param mode.
 [*]2: Directs [c]StringifyAll[/c] to call the object's enumerator in 2-param mode.
@@ -67,13 +65,14 @@ There are some conditions which will cause [c]Stringify[/c] to skip stringifying
 
 [b][color=#008000]{Integer}[/color] [MaxDepth = 0][/b] - The maximum depth [c]StringifyAll[/c] will recurse into. The root depth is 1. Note "Depth" and "indent level" do not necessarily line up. At any given point, the indentation level can be as large as 3x the depth level. This is due to how [c]StringifyAll[/c] handles map and array items.
 
-[b][color=#008000]{Map}[/color] [PropsTypeMap = ""][/b] - A [c]Map[/c] object where the keys are object types and the values are either:
+[b][color=#008000]{Map}[/color] [PropsTypeMap = { __Class: "Map", Default: 1, Count: 0 }][/b] - A [c]Map[/c] object where the keys are object types and the values are either:
 [list][*]A boolean indicating whether or not [c]StringifyAll[/c] should process the object's properties. A nonzero value directs [c]StringifyAll[/c] to process the properties. A falsy value directs [c]StringifyAll[/c] to skip the properties.
 [*]A function or callable object:
 [list][*]The function should accept the object being evaluated as its only parameter.
 [*]The function should return a boolean value described above.[/list][/list]
 
-[indent=1]The baseline behavior for [c]StringifyAll[/c] is to create a [c]PropsInfo[/c] object for all objects that are stringified. If [c]PropsInfoObj.Count > 0[/c], then [c]StringifyAll[/c] will process the properties included among the [c]PropsInfo[/c] object. If [c]PropsInfoObj.Count == 0[/c], [c]StringifyAll[/c] does not process properties for the object.[/indent]
+[indent=1]The default value is a [c]Map[/c] object with zero items and a [c]Default[/c] property value of 1, directing [c]StringifyAll[/c] to process the properties of all object types. Keep this in mind when you set [c]PropsTypeMap[/c]; if you intend to direct [c]StringifyAll[/c] to process object properties by default while using [c]PropsTypeMap[/c] to exclude certain object types, you'll need to set the [c]Default[/c] value to 1 as well. If you want [c]StringifyAll[/c] to not process any properties by default, and to use [c]PropsTypeMap[/c] to specify which object types should have their properties processed, you can leave the [c]Default[/c] property unset, or set it with [c]0[/c].[/indent]
+
 
 [b][color=#008000]{Map}[/color] [StopAtTypeMap = ""][/b] - A [c]Map[/c] object where the keys are object types and the values are either:
 [list][*]A string or number that will be passed to the [c]StopAt[/c] parameter of [c]GetPropsInfo[/c].
@@ -83,7 +82,7 @@ There are some conditions which will cause [c]Stringify[/c] to skip stringifying
 [indent=1]Use the [c]Map[/c]'s [c]Default[/c] property to set a condition for all types not included within the [c]Map[/c].[/indent]
 
 
-[color=#800000][size=135][b]Callbacks[/b][/size][/color]
+[size=135][b]Callbacks[/b][/size]
 
 [b][color=#008000]{*}[/color] [CallbackGeneral = ""][/b] - A function or callable object, or an array of one or more functions or callable objects, that will be called for each object prior to processing. The function should accept up to two parameters:
 [list][*][b]{*}[/b] - The object about to be processed.
@@ -145,7 +144,7 @@ It does not matter if the function modifies the two [c]VarRef[/c] parameters as 
 If your function will not use one or more parameters, specify the "*" operator to exclude them.[/indent]
 
 
-[color=#800000][size=135][b]Newline and indent options[/b][/size][/color]
+[size=135][b]Newline and indent options[/b][/size]
 
 [b][color=#008000]{Integer}[/color] [CondenseCharLimit
 CondenseCharLimitEnum1
@@ -160,7 +159,7 @@ CondenseCharLimitProps = 0][/b] - Sets a threshold which [c]StringifyAll[/c] use
 
 [b][color=#008000]{Boolean}[/color] [Singleline = false][/b] - If true, the JSON string is printed without line breaks or indentation. All other "Newline and indent options" are ignored.
 
-[color=#800000][size=135][b]Print options[/b][/size][/color]
+[size=135][b]Print options[/b][/size]
 
 [b][color=#008000]{String}[/color] [ItemProp = "__Items__"][/b] - The name that [c]StringifyAll[/c] will use as a faux-property for including an object's items returned by its enumerator.
 
@@ -172,8 +171,46 @@ CondenseCharLimitProps = 0][/b] - Sets a threshold which [c]StringifyAll[/c] use
 
 [b][color=#008000]{String}[/color] [UnsetArrayItem = "`"`""][/b] - The string to print for unset array items.
 
-[color=#800000][size=135][b]General options[/b][/size][/color]
+[size=135][b]General options[/b][/size]
 
 [b][color=#008000]{Integer}[/color] [InitialPtrListCapacity = 64][/b] - [c]StringifyAll[/c] tracks the ptr addresses of every object it stringifies to prevent infinite recursion. [c]StringifyAll[/c] will set the initial capacity of the [c]Map[/c] object used for this purpose to [c]InitialPtrListCapacity[/c].
 
 [b][color=#008000]{Integer}[/color] [InitialStrCapacity = 65536][/b] - [c]StringifyAll[/c] calls [c]VarSetStrCapacity[/c] using [c]InitialStrCapacity[/c] for the output string during the initialization stage. For the best performance, you can overestimate the approximate length of the string; [c]StringifyAll[/c] calls [c]VarSetStrCapacity(&OutStr, -1)[/c] at the end of the function to release any unused memory.
+
+[color=#800000][size=145][b]StringifyAll's process[/b][/size][/color]
+
+This section describes [c]StringifyAll[/c]'s process. This section is intended to help you better understand how the options will impact the output string. This section is not complete.
+
+[size=135][b]Properties[/b][/size]
+For every object, prior to adding the object's open brace to the string, [c]StringifyAll[/c] proceeds through these steps:
+[list][*]If [c]Options.PropsTypeMap.HasOwnProp('Default')[/c] then this code is used:
+[code]
+if IsObject(Item := propsTypeMap.Get(Type(Obj))) {
+    return Item(Obj)
+} else {
+    return Item
+}
+[/code]
+[*]Else, this code is used:
+[code]
+if propsTypeMap.Has(Type(Obj)) {
+    if IsObject(Item := propsTypeMap.Get(Type(Obj))) {
+        return Item(Obj)
+    } else {
+        return Item
+    }
+}
+[/code]
+[*]If the return value is nonzero:
+[list][*][c]StringifyAll[/c] calls [c]PropsInfoObj := GetPropsInfo(Obj, StopAt, excludeProps, false, , excludeMethods)[/c].
+[*]If [c]PropsInfoObj.Count > 0[/c], [c]StringifyAll[/c] processes only the properties exposed by [c]PropsInfoObj[/c]. You can control this with two options.
+[list][*][c]Options.ExcludeProps[/c] is effective and straightforward. Write a comma-delimited string of property names to exclude. This would apply to all objects.
+[*][c]Options.FilterTypeMap[/c] affords greater flexibility. [c]PropsInfo[/c] objects are designed with a filter system to make it easy to programmatically include a set of properties, and exclude the other, from whatever one's code is doing with the [c]PropsInfo[/c] object. See "example\example.ahk" and/or "inheritance\example-Inheritance.ahk" for examples.[/list]
+[*]Else, [c]StringifyAll[/c] skips the properties for that object and goes on to check if the enumerator will be called.[/list]
+[*]If the return value is falsy, [c]StringifyAll[/c] skips the properties for that object and goes on to check if the enumerator will be called.[/list]
+[indent=1]This will come into play if you want an [c]Array[/c] or [c]Map[/c] object's string representation to have the appearance of what we typically expect for arrays and maps. To accomplish this, [c]StringifyAll[/c] must not process any properties for those objects. You can accomplish this by simply defining two items in the map: [c]Options.PropsTypeMap := Map("Array", 0, "Map", 0)[/c]. Don't forget to set [c]Options.PropsTypeMap.Default := 1[/c] if you still want other objects to have their properties processed.[/indent]
+
+
+[color=#800000][size=145]Changelog[/size][/color]
+[color=#000000][size=100][b]2025-05-28 - v1.0.1[/b][/size][/color]
+[list][*]Adjusted how [c]Options.PropsTypeMap[/c] is handled.  This change did not modify [c]StringifyAll[/c]'s behavior, but it is now more clear both in the code and in the documentation what the default value is and what the default value does.[/list]
