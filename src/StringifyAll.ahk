@@ -1,7 +1,7 @@
 ﻿/*
-   Github: https://github.com/Nich-Cebolla/AutoHotkey-StringifyAll
+    Github: https://github.com/Nich-Cebolla/AutoHotkey-StringifyAll
     Author: Nich-Cebolla
-    Version: 1.0.0
+    Version: 1.0.1
     License: MIT
 */
 
@@ -92,7 +92,7 @@
  * iterating the properties of an object of the indicated types.
  * @param {Integer} [Options.MaxDepth=0] - The maximum depth `StringifyAll` will recurse
  * into. The root depth is 1. Note "Depth" and "indent level" do not necessarily line up.
- * @param {Map} [Options.PropsTypeMap=''] - A `Map` object where the keys are object types
+ * @param {Map} [Options.PropsTypeMap={ __Class: "Map", Default: 1, Count: 0 }] - A `Map` object where the keys are object types
  * and the values are either:
  * - A boolean indicating whether or not `StringifyAll` should process the object's properties. A
  * nonzero value directs `StringifyAll` to process the properties. A falsy value directs `StringifyAll`
@@ -179,11 +179,10 @@ class StringifyAll {
         excludeProps := Options.ExcludeProps
         filterTypeMap := Options.FilterTypeMap
         maxDepth := Options.MaxDepth > 0 ? Options.MaxDepth : 9223372036854775807
-        if propsTypeMap := Options.PropsTypeMap {
-            CheckProps := propsTypeMap.HasOwnProp('Default') ? _CheckProps1 : _CheckProps2
-        } else {
-            CheckProps := (*) => 1
+        if !(propsTypeMap := Options.PropsTypeMap) {
+            throw ValueError('The option ``PropsTypeMap`` must be set with an object value.', -1)
         }
+        CheckProps := propsTypeMap.HasOwnProp('Default') ? _CheckProps1 : _CheckProps2
         stopAtTypeMap := Options.StopAtTypeMap
         if filterTypeMap {
             _GetPropsInfo := stopAtTypeMap ? _GetPropsInfo1 : _GetPropsInfo2
@@ -861,6 +860,12 @@ class StringifyAll {
         return '"{ ' this.GetType(Obj) ':' ObjPtr(Obj) ' }"'
     }
 
+    static __New() {
+        this.DeleteProp('__New')
+        this.Options.Default.PropsTypeMap := m := Map()
+        m.Default := 1
+    }
+
 
     /**
      * @classdesc - Handles the input options.
@@ -874,6 +879,7 @@ class StringifyAll {
           , Filter: ''
           , FilterTypeMap: ''
           , MaxDepth: 0
+          ; `PropsTypeMap` is set by `StringifyAll.__New`.
           , PropsTypeMap: ''
           , StopAtTypeMap: ''
 
