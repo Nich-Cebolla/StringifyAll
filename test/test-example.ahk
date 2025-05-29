@@ -28,9 +28,10 @@ class DataItem {
 }
 
 result := test()
-
+M := Map('Array', 0, 'Map', 0)
+M.Default := 1
 if result {
-    outputdebug(stringifyall(result))
+    outputdebug(stringifyall(result, { PropsTypeMap: M }))
 }
 
 test() {
