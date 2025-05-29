@@ -19,7 +19,7 @@ There are some considerations to keep in mind when using `StringifyAll` with the
 - A parser would need to handle read-only properties in some way.
 - Some properties don't necessarily need to be parsed. For example, if I stringified an array object including its native properties, a parser setting the `Length` property would be redundant.
 
-The above considerations are mitigated by keeping separate configuration files for separate purposes. For example, keep one configuration to use when intending to later parse the string back into AHK data, and keep another configuration to use when intending to visually inspect the string.
+The above considerations are mitigated by keeping separate configurations for separate purposes. For example, keep one configuration to use when intending to later parse the string back into AHK data, and keep another configuration to use when intending to visually inspect the string.
 
 There are some conditions which will cause `Stringify` to skip stringifying an object. When this occurs, `Stringify` prints a placeholder string instead. The conditions are:
 - The object is a `ComObject` or `ComValue`.
