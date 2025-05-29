@@ -175,6 +175,8 @@ class StringifyAll {
                     throw Error('``ConfigLibrary`` is not loaded into the project. String options are invalid.', -1)
                 }
             }
+        } else {
+            Options := this.Options({})
         }
         controllerBase := {}
         controllerBase.PrepareNextProp := _PrepareNextProp1
