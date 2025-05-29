@@ -10,6 +10,7 @@ A customizable solution for serializing object properties, including inherited p
 
 [c]StringifyAll[/c] exposes many options to programmatically restrict what gets included in the JSON string. It also includes options for adjusting the spacing in the string. To set your options, you can:
 [list][*]Copy the template file into your project directory and set the options using the template.
+[*]Prepare the [c]ConfigLibrary[/c] class and reference the configuration by name. See the file "templates\ConfigLibrary.ahk". (Added 1.0.3).
 [*]Define a class [c]StringifyAllConfig[/c] anywhere in your code.
 [*]Pass an object to the [c]Options[/c] parameter.[/list]
 
@@ -22,7 +23,7 @@ There are some considerations to keep in mind when using [c]StringifyAll[/c] wit
 [*]A parser would need to handle read-only properties in some way.
 [*]Some properties don't necessarily need to be parsed. For example, if I stringified an array object including its native properties, a parser setting the [c]Length[/c] property would be redundant.[/list]
 
-The above considerations are mitigated by keeping separate configuration files for separate purposes. For example, keep one configuration to use when intending to later parse the string back into AHK data, and keep another configuration to use when intending to visually inspect the string.
+The above considerations are mitigated by keeping separate configurations for separate purposes. For example, keep one configuration to use when intending to later parse the string back into AHK data, and keep another configuration to use when intending to visually inspect the string.
 
 There are some conditions which will cause [c]Stringify[/c] to skip stringifying an object. When this occurs, [c]Stringify[/c] prints a placeholder string instead. The conditions are:
 [list][*]The object is a [c]ComObject[/c] or [c]ComValue[/c].
@@ -35,7 +36,7 @@ There are some conditions which will cause [c]Stringify[/c] to skip stringifying
 [color=#800000][size=145][b]Parameters[/b][/size][/color]
 
 [b][color=#008000]{*}[/color] Obj[/b] - The object to stringify.
-[b][color=#008000]{Object}[/color] [Options][/b] - The options object with zero or more options as property : value pairs.
+[b][color=#008000]{Object|String}[/color] [Options][/b] - If you are using `ConfigLibrary`, the name of the configuration. Or, the options object with zero or more options as property : value pairs.
 [b][color=#008000]{VarRef}[/color] [OutStr][/b] - A variable that will receive the JSON string. The string is also returned as a return value, but for very long strings, or for loops that process thousands of objects, it will be slightly faster to use the [c]OutStr[/c] variable since the JSON string would not need to be copied.
 
 [color=#800000][size=145][b]Returns[/b][/size][/color]
@@ -212,5 +213,9 @@ if propsTypeMap.Has(Type(Obj)) {
 
 
 [color=#800000][size=145]Changelog[/size][/color]
+
+[color=#000000][size=100][b]2025-05-29 - 1.0.3[/b][/size][/color]
+[list][*]Implemented `ConfigLibrary`.[/list]
+
 [color=#000000][size=100][b]2025-05-28 - v1.0.1[/b][/size][/color]
 [list][*]Adjusted how [c]Options.PropsTypeMap[/c] is handled.  This change did not modify [c]StringifyAll[/c]'s behavior, but it is now more clear both in the code and in the documentation what the default value is and what the default value does.[/list]

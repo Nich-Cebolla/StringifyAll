@@ -6,6 +6,7 @@ A customizable solution for serializing AutoHotkey (AHK) object properties, incl
 
 `StringifyAll` exposes many options to programmatically restrict what gets included in the JSON string. It also includes options for adjusting the spacing in the string. To set your options, you can:
 - Copy the template file into your project directory and set the options using the template.
+- Prepare the `ConfigLibrary` class and reference the configuration by name. See the file "templates\ConfigLibrary.ahk". (Added 1.0.3).
 - Define a class `StringifyAllConfig` anywhere in your code.
 - Pass an object to the `Options` parameter.
 
@@ -32,7 +33,7 @@ There are some conditions which will cause `Stringify` to skip stringifying an o
 
 <ol type="1">
   <span style="font-size:15px;"><li><b>{*} Obj</b> - The object to stringify.<span style="font-size:13px;"></li>
-  <span style="font-size:15px;"><li><b>{Object} [Options]</b> - The options object with zero or more options as property : value pairs.</li>
+  <span style="font-size:15px;"><li><b>{Object|String} [Options]</b> - If you are using `ConfigLibrary`, the name of the configuration. Or, the options object with zero or more options as property : value pairs.</li>
   <span style="font-size:15px;"><li><b>{VarRef} [OutStr]</b> - A variable that will receive the JSON string. The string is also returned as a return value, but for very long strings, or for loops that process thousands of objects, it will be slightly faster to use the `OutStr` variable since the JSON string would not need to be copied.</li>
 </ol>
 
@@ -163,6 +164,9 @@ This will come into play if you want an <code>Array</code> or <code>Map</code> o
 
 <h1>Changelog</h1>
 
-2025-05-28 v1.0.1
+2025-05-29 - 1.0.3
+- Implemented `ConfigLibrary`.
+
+2025-05-28 - 1.0.1
 - Adjusted how `Options.PropsTypeMap` is handled. This change did not modify `StringifyAll`'s behavior, but it is now more clear both in the code and in the documentation what the default value is and what the default value does.
 - Added "StringifyAll's process" to the docs.

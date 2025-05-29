@@ -1,9 +1,11 @@
 ﻿/*
     Github: https://github.com/Nich-Cebolla/AutoHotkey-StringifyAll
     Author: Nich-Cebolla
-    Version: 1.0.1
+    Version: 1.0.3
     License: MIT
 */
+
+#include *i <ConfigLibrary>
 
 ; https://github.com/Nich-Cebolla/AutoHotkey-LibV2/tree/main/inheritance
 #include <Inheritance>
@@ -20,6 +22,8 @@
  * can:
  * - Copy "templates\StringifyAllConfigTemplate.ahk" into your project directory and set the options
  * using the template.
+ * - Prepare the `ConfigLibrary` class and reference the configuration by name. See the file
+ * "templates\ConfigLibrary.ahk".
  * - Define a class `StringifyAllConfig` anywhere in your code.
  * - Pass an object to the `Options` parameter.
  *
@@ -71,7 +75,8 @@
  *
  * @param {*} Obj - The object to stringify.
  *
- * @param {Object} [Options] - The options object with zero or more of the following properties.
+ * @param {Object|String} [Options] - If you are using `ConfigLibrary, the name of the configuration.
+ * Or, the options object with zero or more of the following properties.
  * @param {Map} [Options.EnumTypeMap=Map('Array', 1, 'Map', 2, 'RegExMatchInfo', 2)] - A `Map` object
  * where the keys are object types and the values are either:
  * - An integer:
@@ -160,7 +165,17 @@
 class StringifyAll {
 
     static Call(Obj, Options?, &OutStr?) {
-        Options := this.Options(Options ?? {})
+        if IsSet(Options) {
+            if IsObject(Options) {
+                Options := this.Options(Options)
+            } else {
+                if IsSet(ConfigLibrary) {
+                    Options := this.Options(ConfigLibrary(Options))
+                } else {
+                    throw Error('``ConfigLibrary`` is not loaded into the project. String options are invalid.', -1)
+                }
+            }
+        }
         controllerBase := {}
         controllerBase.PrepareNextProp := _PrepareNextProp1
         controllerBase.PrepareNextEnum1 := _PrepareNextEnum11
