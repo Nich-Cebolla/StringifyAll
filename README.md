@@ -1,7 +1,8 @@
 
-# Introduction
+# StringifyAll - v1.0.4
 A customizable solution for serializing AutoHotkey (AHK) object properties, including inherited properties, and/or items into a 100% valid JSON string.
 
+# Introduction
 `StringifyAll` works in conjunction with `GetPropsInfo` (https://github.com/Nich-Cebolla/AutoHotkey-LibV2/tree/main/inheritance) to allow us to include all of an object's properties in the JSON string, not just the items or own properties.
 
 `StringifyAll` exposes many options to programmatically restrict what gets included in the JSON string. It also includes options for adjusting the spacing in the string. To set your options, you can:
@@ -163,6 +164,9 @@ This will come into play if you want an <code>Array</code> or <code>Map</code> o
 
 
 <h1>Changelog</h1>
+
+2025-05-29 - 1.0.4
+- Corrected the order of operations in `StringifyAll.StrUnescapeJson`.
 
 2025-05-29 - 1.0.3
 - Implemented `ConfigLibrary`.
