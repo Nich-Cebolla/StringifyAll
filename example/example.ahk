@@ -556,11 +556,18 @@ OutputDebug('`n' A_LineNumber '=========================`n' StringifyAll(arr))
 ; We need to tell `StringifyAll` to iterate the properties for `Map` and `Array` objects.
 StringifyAllConfig.PropsTypeMap := Map('Array', 1, 'Map', 1)
 
-; Set the option. I also don't want to include "__Class".
+; For some reason I am only interested in `Capacity` on `Map` objects, so I want to skip it for
+; `Array` objects only.
 StringifyAllConfig.FilterTypeMap := Map('Array', PropsInfo.FilterGroup('Capacity,__Class'))
 
-; We can set the default value to exclude "__Class" for all objects.
+; Also, I don't want the `__Class` property for any objects. Note how "__Class" is added to
+; the above filter. The default is only called for object types not represented in the map's items,
+; so to exclude it from all types, "__Class" must be represented among any items as well as the
+; default.
 StringifyAllConfig.FilterTypeMap.Default := PropsInfo.FilterGroup('__Class')
+
+; Call `Array` and `Map` object enumerators.
+StringifyAllConfig.EnumTypeMap := Map('Array', 1, 'Map', 2)
 
 ; Create the objects.
 arr := [
@@ -586,11 +593,24 @@ OutputDebug('`n' A_LineNumber '=========================`n' StringifyAll(arr))
         {
             "Capacity": 2,
             "CaseSense": "On",
-            "Count": 2
+            "Count": 2,
+            "__Items__": [
+                [
+                    "key1",
+                    "val1"
+                ],
+                [
+                    "key2",
+                    "val2"
+                ]
+            ]
         }
     ]
 }
 */
+
+; As we see, `StringifyAll` has skipped `__Class` for all objects, and skips `Capacity` for `Array`
+; objects.
 
 ; === === === To summarize:
 

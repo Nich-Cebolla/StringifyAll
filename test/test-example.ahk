@@ -158,6 +158,7 @@ test() {
     StringifyAllConfig.PropsTypeMap := Map('Array', 1, 'Map', 1)
     StringifyAllConfig.FilterTypeMap := Map('Array', PropsInfo.FilterGroup('Capacity,__Class'))
     StringifyAllConfig.FilterTypeMap.Default := PropsInfo.FilterGroup('__Class')
+    StringifyAllConfig.EnumTypeMap := Map('Array', 1, 'Map', 2)
     arr := [
         [1, 2, 3, 4, 5]
       , Map('key1', 'val1', 'key2', 'val2')

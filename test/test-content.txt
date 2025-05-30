@@ -306,7 +306,17 @@
         {
             "Capacity": 2,
             "CaseSense": "On",
-            "Count": 2
+            "Count": 2,
+            "__Items__": [
+                [
+                    "key1",
+                    "val1"
+                ],
+                [
+                    "key2",
+                    "val2"
+                ]
+            ]
         }
     ]
 }
