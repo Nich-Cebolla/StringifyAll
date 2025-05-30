@@ -837,7 +837,7 @@ class StringifyAll {
         if AddQuotes {
             Str := '"' StrReplace(StrReplace(StrReplace(StrReplace(StrReplace(Str, '\', '\\'), '`n', '\n'), '`r', '\r'), '"', '\"'), '`t', '\t') '"'
         } else {
-            Str := StrReplace(StrReplace(StrReplace(StrReplace(StrReplace(Str, '`n', '\n'), '`r', '\r'), '"', '\"'), '`t', '\t'), '\', '\\')
+            Str := StrReplace(StrReplace(StrReplace(StrReplace(StrReplace(Str, '\', '\\'), '`n', '\n'), '`r', '\r'), '"', '\"'), '`t', '\t')
         }
     }
 
@@ -846,7 +846,7 @@ class StringifyAll {
      * @param {VarRef} Str - The string to unescape.
      */
     static StrUnescapeJson(&Str) {
-        Str := StrReplace(StrReplace(StrReplace(StrReplace(StrReplace(Str, '\\', '\'), '\n', '`n'), '\r', '`r'), '\"', '"'), '\t', '`t')
+        Str := StrReplace(StrReplace(StrReplace(StrReplace(StrReplace(Str, '\n', '`n'), '\r', '`r'), '\"', '"'), '\t', '`t'), '\\', '\')
     }
 
     /**
