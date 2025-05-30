@@ -133,10 +133,11 @@ MyPlaceholderFunc(controller, obj, &prop?, &key?) {
             ; make something
         } else {
             key := Trim(key, '"')
-        if InStr(key, '\') {
-            StringifyAll.StrUnescapeJson(&key)
+            if InStr(key, '\') {
+                StringifyAll.StrUnescapeJson(&key)
+            }
+            ; make something
         }
-        ; make something
     }
 }
 [/code]
