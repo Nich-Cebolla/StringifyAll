@@ -6,14 +6,13 @@
 ; work in `StringifyAll`.
 
 ; `StringifyAll`'s options are categorized into "Enum options", "Callbacks", "Newline and indent
-; options", "Print options", and "General options". This walkthrough covers "Enum options", "Callbacks",
-; and some "Print options".
+; options", "Print options", and "General options". This walkthrough covers "Enum options" and "Callbacks".
 
-; `StringifyAll`, like many functions I write, exposes a way to define your personal defaults using
-; a class object, so you don't have to modify the original script. This allows us to use a tiered
-; options system, layering preferences on top of others to minimize repeated code and accelerate
-; development. Define a `StringifyAllConfig` class object somewhere in your project to set your
-; defaults, and if you need to change an option, pass an options object to `StringifyAll` directly.
+; `StringifyAll` exposes a way to define your personal defaults using a class object, so you don't
+; have to modify the original script. This allows us to use a tiered options system, layering
+; preferences on top of others to minimize repeated code and accelerate development. Define a
+; `StringifyAllConfig` class object somewhere in your project to set your defaults, and if you need
+; to change an option, pass an options object to `StringifyAll` directly.
 
 ; In this walkthrough we will start with a blank class object and add options to it as needed.
 
@@ -249,7 +248,7 @@ OutputDebug('`n' A_LineNumber '=========================`n' StringifyAll(contain
 
 ; `EnumTypeMap` and `PropsTypeMap` can use functions as well as integers for the items.
 
-; Let's us a `RegExMatchInfo` object as an example. Say I'm doing some string parsing and need to
+; Let's use a `RegExMatchInfo` object as an example. Say I'm doing some string parsing and need to
 ; later visually inspect the results for errors.
 
 ; Get the match object.
@@ -491,16 +490,16 @@ OutputDebug('`n' A_LineNumber '=========================`n' StringifyAll(arr))
 Filter.RemoveFromExclude('Mark')
 
 ; Define our function.
-FilterFunc1(Item) {
-    ; This expression is directing `PropsInfo.Prototype.FilterActivate` to exclude properties
+FilterFunc1(InfoItem) {
+    ; This block is directing `PropsInfo.Prototype.FilterActivate` to exclude properties
     ; named "Mark" that have a value of 0 or an empty string.
     ; `Item.GetValue` sets the `VarRef` variable with the value of the property. In the case of
     ; `RegExMatchInfoObj.Mark`, it will always have a value because that is how it is designed.
     ; But the default value is an empty string, which is what we want to exclude. So to direct
     ; `StringifyAll` to skip the `Mark` property for `RegExMatchInfo` objects that do not have
     ; a significant `Mark` value, we can use this code.
-    if Item.Name == 'Mark' {
-        Item.GetValue(&Value)
+    if InfoItem.Name == 'Mark' {
+        InfoItem.GetValue(&Value)
         return !Value
     }
 }

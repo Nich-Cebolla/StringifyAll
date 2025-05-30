@@ -870,7 +870,9 @@ class StringifyAll {
     /**
      * @description - The function that produces the default placeholder string for skipped objects.
      * @param {Object} Controller - An internal mechanism used by `Stringify`. It has a property `Path`
-     * that has a string value representing the object path up to but not including `Obj`.
+     * that has a string value representing the object path up to but not including `Obj`. The
+     * `controller` is not used by this function, but exists as a parameter because the function is
+     * set as a method to the `controller` object.
      * @param {*} Obj - The object being evaluated.
      */
     static GetPlaceholder(Controller, Obj, *) {
