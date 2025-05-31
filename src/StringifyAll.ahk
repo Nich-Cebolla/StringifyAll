@@ -1,7 +1,7 @@
 ﻿/*
     Github: https://github.com/Nich-Cebolla/AutoHotkey-StringifyAll
     Author: Nich-Cebolla
-    Version: 1.1.1
+    Version: 1.1.2
     License: MIT
 */
 
@@ -220,7 +220,7 @@ class StringifyAll {
         excludeProps := Options.ExcludeProps
         filterTypeMap := Options.FilterTypeMap
         maxDepth := Options.MaxDepth > 0 ? Options.MaxDepth : 9223372036854775807
-        controllerBase.HandleMultiple := Options.Multiple ? (controller, Val) => InStr('$$$.' controller.Path, '$$$.' ptrList.Get(ObjPtr(Val)).Path) : (*) => 1
+        controllerBase.HandleMultiple := Options.Multiple ? (controller, Val) => InStr('$.' controller.Path, '$.' ptrList.Get(ObjPtr(Val)).Path) : (*) => 1
         if !(propsTypeMap := Options.PropsTypeMap) {
             throw ValueError('The option ``PropsTypeMap`` must be set with an object value.', -1)
         }
@@ -364,6 +364,8 @@ class StringifyAll {
                     OutStr .= ',' nl() ind() '"' itemProp '": '
                     controller.OpenEnum2(&OutStr)
                     controller.CloseEnum2(controller.ProcessEnum2(Obj, &OutStr), &OutStr)
+                } else if flag_enum {
+                    throw Error('Invalid return value from ``Options.EnumTypeMap``.', -1, flag_enum)
                 }
                 controller.CloseProps(&OutStr)
             } else if flag_enum == 1 {
@@ -372,7 +374,9 @@ class StringifyAll {
             } else if flag_enum == 2 {
                 controller.OpenEnum2(&OutStr)
                 controller.CloseEnum2(controller.ProcessEnum2(Obj, &OutStr), &OutStr)
-            } else {
+            } else if flag_enum {
+                throw Error('Invalid return value from ``Options.EnumTypeMap``.', -1, flag_enum)
+            }else {
                 OutStr .= '{}'
             }
             if IsSet(PropsInfoObj) {

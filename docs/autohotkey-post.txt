@@ -1,4 +1,4 @@
-[color=#800000][size=165][b]StringifyAll - v1.1.1[/b][/size][/color]
+[color=#800000][size=165][b]StringifyAll - v1.1.2[/b][/size][/color]
 A customizable solution for serializing object properties, including inherited properties, and/or items into a 100% valid JSON string.
 
 [color=#800000][size=145][b]Github link[/b][/size][/color]
@@ -40,3 +40,221 @@ When [c]StringifyAll[/c] encounters an object multiple times, it may skip the ob
 [color=#800000][size=145][b]Function details[/b][/size][/color]
 
 Please view the function details from the [url=https://github.com/Nich-Cebolla/StringifyAll]Github[/url] webpage.
+
+[color=#800000][size=145][b]Example output[/b][/size][/color]
+
+A bit below is the output produced using a [c]UIA.IUIAutomationElement[/c], which was a VSCode editor tab opened to a markdown preview. When using [c]StringifyAll[/c] to stringify [c]UIA.IUIAutomationElement[/c] objects, there's a number of properties that can be problematic which either need to be excluded, or a [c]MaxDepth[/c] must be set. This is the code I used to produce the output:
+[code]
+#include <UIA>
+#include <StringifyAll>
+
+CodeEl := UIA.ElementFromHandle("Preview changelog.md ahk_exe Code - Insiders.exe")
+el := CodeEl.ElementFromPath({T:30}, {T:32}, {T:33}, {T:30}, {T:30}, {T:33}, {T:30}, {T:30})
+m := Map('Array', 0, 'Map', 0)
+m.default := 1
+options := { PropsTypeMap: m, MaxDepth: 2 }
+A_Clipboard := StringifyAll(el, options)
+[/code]
+
+This is the output:
+[code]
+{
+    "__Class": "UIA.IUIAutomationElement",
+    "__Item": "{ $ }",
+    "AcceleratorKey": "",
+    "AccessKey": "",
+    "AnnotationObjects": [],
+    "AnnotationTypes": "{ Instance:ComObjArray:59587904 }",
+    "AriaProperties": "",
+    "AriaRole": "document",
+    "AutomationId": "",
+    "BoundingRectangle": {
+        "b": -200,
+        "l": -946,
+        "r": -60,
+        "t": -986
+    },
+    "CachedChildren": [],
+    "CachedRuntimeId": "2A.809F2.4.FFFFFFFFFFF1C1FF",
+    "Children": [
+        "{ Instance:UIA.IUIAutomationElement:59588144 }",
+        "{ Instance:UIA.IUIAutomationElement:59589968 }",
+        "{ Instance:UIA.IUIAutomationElement:59586944 }",
+        "{ Instance:UIA.IUIAutomationElement:59588624 }",
+        "{ Instance:UIA.IUIAutomationElement:59589104 }",
+        "{ Instance:UIA.IUIAutomationElement:59590544 }"
+    ],
+    "ClassName": "",
+    "ControlId": 526834,
+    "ControllerFor": [],
+    "ControlType": 50030,
+    "Culture": 0,
+    "DescribedBy": [],
+    "Exists": 1,
+    "FlowsFrom": [],
+    "FlowsTo": [],
+    "FrameworkId": "Chrome",
+    "FullDescription": "",
+    "HasKeyboardFocus": 0,
+    "HeadingLevel": 80050,
+    "HelpText": "",
+    "Id": "2A.809F2.4.FFFFFFFFFFF1C1FF",
+    "InvokePattern": {
+        "__Class": "UIA.IUIAutomationInvokePattern",
+        "__Item": "{ Instance:ComValue:59598608 }",
+        "ptr": 59869552
+    },
+    "IsContentElement": 1,
+    "IsControlElement": 1,
+    "IsDataValidForForm": 1,
+    "IsDialog": 0,
+    "IsEnabled": 1,
+    "IsKeyboardFocusable": 0,
+    "IsOffscreen": 0,
+    "IsPassword": 0,
+    "IsPeripheral": 0,
+    "IsRequiredForForm": 0,
+    "ItemStatus": "",
+    "ItemType": "",
+    "LandmarkType": 0,
+    "LegacyIAccessiblePattern": {
+        "__Class": "UIA.IUIAutomationLegacyIAccessiblePattern",
+        "__Item": "{ Instance:ComValue:59596160 }",
+        "ChildId": 0,
+        "DefaultAction": "click ancestor",
+        "Description": "",
+        "Help": "",
+        "KeyboardShortcut": "",
+        "Name": "",
+        "ptr": 59870336,
+        "Role": 15,
+        "State": 64,
+        "Value": ""
+    },
+    "Length": 6,
+    "Level": 0,
+    "LiveSetting": 0,
+    "LocalizedControlType": "document",
+    "LocalizedLandmarkType": "",
+    "LocalizedType": "document",
+    "Location": {
+        "h": 786,
+        "w": 886,
+        "x": -946,
+        "y": -986
+    },
+    "Name": "",
+    "NativeWindowHandle": 0,
+    "OptimizeForVisualContent": 0,
+    "Orientation": 0,
+    "Parent": {
+        "__Class": "UIA.IUIAutomationElement",
+        "__Item": "{ $.Parent }",
+        "AcceleratorKey": "",
+        "AccessKey": "",
+        "AnnotationObjects": "{ Instance:Array:59344704 }",
+        "AnnotationTypes": "{ Instance:ComObjArray:59945984 }",
+        "AriaProperties": "",
+        "AriaRole": "",
+        "AutomationId": "",
+        "BoundingRectangle": "{ Instance:Object:59945168 }",
+        "CachedChildren": "{ Instance:Array:59776960 }",
+        "CachedRuntimeId": "2A.809F2.4.FFFFFFFFFFF1C201",
+        "Children": "{ Instance:Array:59777856 }",
+        "ClassName": "",
+        "ControlId": 526834,
+        "ControllerFor": "{ Instance:Array:59777088 }",
+        "ControlType": 50030,
+        "Culture": 0,
+        "DescribedBy": "{ Instance:Array:59778432 }",
+        "Exists": 1,
+        "FlowsFrom": "{ Instance:Array:59775168 }",
+        "FlowsTo": "{ Instance:Array:59777856 }",
+        "FrameworkId": "Chrome",
+        "FullDescription": "",
+        "HasKeyboardFocus": 1,
+        "HeadingLevel": 80050,
+        "HelpText": "",
+        "Id": "2A.809F2.4.FFFFFFFFFFF1C201",
+        "IsContentElement": 1,
+        "IsControlElement": 1,
+        "IsDataValidForForm": 1,
+        "IsDialog": 0,
+        "IsEnabled": 1,
+        "IsKeyboardFocusable": 1,
+        "IsOffscreen": 0,
+        "IsPassword": 0,
+        "IsPeripheral": 0,
+        "IsRequiredForForm": 0,
+        "ItemStatus": "",
+        "ItemType": "",
+        "LandmarkType": 0,
+        "LegacyIAccessiblePattern": "{ Instance:UIA.IUIAutomationLegacyIAccessiblePattern:59945984 }",
+        "Length": 1,
+        "Level": 0,
+        "LiveSetting": 0,
+        "LocalizedControlType": "document",
+        "LocalizedLandmarkType": "",
+        "LocalizedType": "document",
+        "Location": "{ Instance:Object:59943872 }",
+        "Name": "",
+        "NativeWindowHandle": 0,
+        "OptimizeForVisualContent": 0,
+        "Orientation": 0,
+        "Parent": "{ Instance:UIA.IUIAutomationElement:59943872 }",
+        "PositionInSet": 0,
+        "ProcessId": 10320,
+        "ProviderDescription": "[pid:10320,providerId:0x0 Main(parent link):Microsoft: MSAA Proxy (IAccessible2) (unmanaged:uiautomationcore.dll)]",
+        "ptr": 59321120,
+        "ReversedCachedChildren": "{ Instance:Array:59778304 }",
+        "ReversedChildren": "{ Instance:Array:59776128 }",
+        "RuntimeId": "2A.809F2.4.FFFFFFFFFFF1C201",
+        "ScrollItemPattern": "{ Instance:UIA.IUIAutomationScrollItemPattern:59945600 }",
+        "SizeOfSet": 0,
+        "TextChildPattern": "{ Instance:UIA.IUIAutomationTextChildPattern:59949584 }",
+        "TextPattern": "{ Instance:UIA.IUIAutomationTextPattern:59947232 }",
+        "Type": 50030,
+        "Value": "vscode-webview://0drbl39ai3i641si6932t751lg1fg6b12318t33labmhn9hv7gkc/index.html?id=e7c5f723-d123-4809-94c7-5cac45fa8e2d&parentId=2&origin=f8fc9efc-fc50-4b09-87fc-166acd66d003&swVersion=4&extensionId=vscode.markdown-language-features&platform=electron&vscode-resource-base-authority=vscode-resource.vscode-cdn.net&parentOrigin=vscode-file%3A%2F%2Fvscode-app",
+        "ValuePattern": "{ Instance:UIA.IUIAutomationValuePattern:59947616 }",
+        "WinId": 525552
+    },
+    "PositionInSet": 0,
+    "ProcessId": 10320,
+    "ProviderDescription": "[pid:10320,providerId:0x0 Main(parent link):Microsoft: MSAA Proxy (IAccessible2) (unmanaged:uiautomationcore.dll)]",
+    "ptr": 59328176,
+    "ReversedCachedChildren": [],
+    "ReversedChildren": [
+        "{ Instance:UIA.IUIAutomationElement:59953808 }",
+        "{ Instance:UIA.IUIAutomationElement:59954528 }",
+        "{ Instance:UIA.IUIAutomationElement:59954384 }",
+        "{ Instance:UIA.IUIAutomationElement:59954336 }",
+        "{ Instance:UIA.IUIAutomationElement:59956016 }",
+        "{ Instance:UIA.IUIAutomationElement:59953136 }"
+    ],
+    "RuntimeId": "2A.809F2.4.FFFFFFFFFFF1C1FF",
+    "ScrollItemPattern": {
+        "__Class": "UIA.IUIAutomationScrollItemPattern",
+        "__Item": "{ Instance:ComValue:59953952 }",
+        "ptr": 60007904
+    },
+    "SizeOfSet": 0,
+    "TextChildPattern": {
+        "__Class": "UIA.IUIAutomationTextChildPattern",
+        "__Item": "{ Instance:ComValue:59954768 }",
+        "ptr": 60013392,
+        "TextContainer": "{ Instance:UIA.IUIAutomationElement:59953424 }",
+        "TextRange": "{ Instance:UIA.IUIAutomationTextRange:59953424 }"
+    },
+    "TextPattern": {
+        "__Class": "UIA.IUIAutomationTextPattern",
+        "__Item": "{ Instance:ComValue:59955968 }",
+        "DocumentRange": "{ Instance:UIA.IUIAutomationTextRange:59955008 }",
+        "ptr": 60012608,
+        "SelectionRange": "{ Instance:UIA.IUIAutomationTextRange:59954144 }",
+        "SupportedTextSelection": 1
+    },
+    "Type": 50030,
+    "Value": "",
+    "WinId": 525552
+}
+[/code]

@@ -1,4 +1,8 @@
 
+<h4>2025-05-31 - 1.1.2</h4>
+
+- Added error for invalid return values from `Options.EnumTypeMap`.
+
 <h4>2025-05-31 - 1.1.1</h4>
 
 - Fixed: If an object's enumerator is called in 1-param mode but returns zero valid items, the empty object no longer has a line break between the open and close bracket.
