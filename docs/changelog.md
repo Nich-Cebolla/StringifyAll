@@ -1,8 +1,14 @@
 <h4>2025-05-31 - 1.1.0</h4>
 
-- Implemented `CallbackError`.
-- Adjusted `PrintErrors` to allow specifying what properties to be included in the output string.
+- **Breaking:** Increased the number of values passed to `CallbackGeneral`.
+- Implemented `Options.CallbackError`.
+- Implemented `Options.Multiple`.
+- Created "test\test-errors.ahk" to test the error-related options.
+- Created "test\test-recursion.ahk" to test `Options.Multiple`.
+- Created "test\test.ahk" to run all tests.
+- Adjusted `Options.PrintErrors` to allow specifying what properties to be included in the output string.
 - Fixed an error causing a small chance for `StringifyAll` to incorrectly apply a property value to the subsequent property.
+- Fixed an error that occurred when using `Options.CallbackGeneral` and `StringifyAll` encounters a duplicate object resulting in an invalid JSON string.
 
 <h4>2025-05-30 - 1.0.5</h4>
 

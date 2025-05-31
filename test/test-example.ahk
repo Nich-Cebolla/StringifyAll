@@ -27,14 +27,8 @@ class DataItem {
     }
 }
 
-result := test()
-M := Map('Array', 0, 'Map', 0)
-M.Default := 1
-if result {
-    outputdebug(stringifyall(result, { PropsTypeMap: M }))
-}
 
-test() {
+test_example() {
     test_content := StrSplit(FileRead('test-content.txt'), '####', '`s`r`t`n')
     problems := []
     i := 0
@@ -200,7 +194,7 @@ test() {
                 arr.Push({Index: A_Index})
         }
     }
-    CallbackGeneral(Obj, *) {
+    CallbackGeneral(controller, Obj, *) {
         if ((not Obj is Map && not Obj is Array) || Obj.Capacity <= 1000) && not Obj is DataItem {
             return 1
         }
@@ -219,7 +213,7 @@ test() {
 
     ; -------- 15
 
-    CallbackGeneral2(Obj, *) {
+    CallbackGeneral2(controller, Obj, *) {
         if Obj is Map {
             if Obj.Capacity <= 1000 {
                 StringifyAll.StrEscapeJson(&(Name := Obj['Index']))
@@ -241,7 +235,7 @@ test() {
 
     ; -------- 16
 
-    CallbackGeneral3(Obj, *) {
+    CallbackGeneral3(controller, Obj, *) {
         if ((not Obj is Map && not Obj is Array) || Obj.Capacity <= 1000) && not Obj is DataItem {
             return -1
         }

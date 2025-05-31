@@ -2,6 +2,9 @@
 # StringifyAll - v1.1.0
 A customizable solution for serializing AutoHotkey (AHK) object properties, including inherited properties, and/or items into a 100% valid JSON string.
 
+## AutoHotkey forum post
+https://www.autohotkey.com/boards/viewtopic.php?f=83&t=137415&p=604407#p604407
+
 # Introduction
 `StringifyAll` works in conjunction with `GetPropsInfo` (https://github.com/Nich-Cebolla/AutoHotkey-LibV2/tree/main/inheritance) to allow us to include all of an object's properties in the JSON string, not just the items or own properties.
 
@@ -28,7 +31,10 @@ There are some conditions which will cause `Stringify` to skip stringifying an o
 - The object is a `ComObject` or `ComValue`.
 - The maximum depth is reached.
 - Your callback function returned a value directing `Stringify` to skip the object.
-- The object has been stringified already. The placeholder for this condition is separate from the others; it is a string representation of the object path at which the object was first encountered. This is so one's code or one's self can identify the correct object that was at that location when `Stringify` was processing.
+
+When `StringifyAll` encounters an object multiple times, it may skip the object and print a string representation of the object path at which the object was first encountered. Using the object path instead of the standard placeholder is so one's code or one's self can identify the correct object that was at that location when `Stringify` was processing. This will occur when one or both of the following are true:
+- `Options.Multiple` is false (the default is false).
+- Processing the object will result in infinite recursion.
 
 `StringifyAll` will require more setup to be useful compared to other stringify functions, because we usually don't need information about every property. `StringifyAll` is not intended to be a replacement for other stringify functions. Where `StringifyAll` shines is in cases where we need a way to programmatically define specifically what properties we want represented in the JSON string and what we want to exclude; at the cost of requiring greater setup time investment, we receive in exchange the potential to fine-tune precisely what will be present in the JSON string.
 
@@ -67,6 +73,7 @@ Jump to:
 <a href="#initialstrcapacity"><br>InitialStrCapacity</a>
 <a href="#itemprop"><br>ItemProp</a>
 <a href="#maxdepth"><br>MaxDepth</a>
+<a href="#multiple"><br>Multple</a>
 <a href="#newline"><br>Newline</a>
 <a href="#newlinedepthlimit"><br>NewlineDepthLimit</a>
 <a href="#printerrors"><br>PrintErrors</a>
@@ -182,7 +189,7 @@ Jump to:
   <ul style="padding-left: 24px; margin-top: 0; margin-bottom: 0;">A <b>Func</b> or callable <b>Object</b> that will be called when <code>StringifyAll</code> encounters an error attempting to access a property's value. When <code>CallbackError</code> is set, <code>StringifyAll</code> ignores <code>PrintErrors</code>.</ul>
   <ul style="padding-left: 24px; margin-top: 0; margin-bottom: 0;"><i>Parameters</i>
     <ol type="1" style="margin-top: 4px; margin-bottom: 6px; padding-left: 36px;">
-      <li><b>{Object}</b> - The <code>controller</code> object, which has various properties but the only propery of value here is the <code>path</code> property, which returns a string representation of the object path up to the object currently being evaluated.</li>
+      <li><b>{Object}</b> - The <code>controller</code> object. The <code>controller</code> is an internal mechanism with various callable properties, but the only property of use for this purpose is <code>Path</code>, which has a string value representing the object path up to the object that is currently being evaluated. See the example in section <a href="#callbackplaceholder">CallbackPlaceholder</a>.</li>
       <li><b>{Error}</b> - The error object.</li>
       <li><b>{*}</b> - The object currently being evaluated.</li>
       <li><b>{PropsInfoItem}</b> - The <code>PropsInfoItem</code> object associated with the property that caused the error.</li>
@@ -209,8 +216,17 @@ Jump to:
   <ul style="padding-left: 24px; margin-top: 0; margin-bottom: 0;">A <b>Func</b> or callable <b>Object</b>, or an array of one or more <b>Func</b> or callable <b>Object</b> values, that will be called for each object prior to processing.</ul>
   <ul style="padding-left: 24px; margin-top: 0; margin-bottom: 0;"><i>Parameters</i>
     <ol type="1" style="margin-top: 4px; margin-bottom: 6px; padding-left: 36px;">
+      <li><b>{Object}</b> - The <code>controller</code> object. The <code>controller</code> is an internal mechanism with various callable properties, but the only property of use for this purpose is <code>Path</code>, which has a string value representing the object path up to the object that is currently being evaluated. See the example in section <a href="#callbackplaceholder">CallbackPlaceholder</a>.</li>
       <li><b>{*}</b> - The object being evaluated.</li>
       <li><b>{VarRef}</b> - A variable that will receive a reference to the JSON string being created.</li>
+      <li><b>{String}</b> - An <b>optional</b> parameter that will receive the name of the property for objects that are encountered while iterating the parent object's properties.</li>
+      <li><b>{String|Integer}</b> - An <b>optional</b> parameter that will receive either of:</li>
+      <ul style="margin-bottom: 0; padding-left: 24px;">
+        <li>The loop index integer value for objects that are encountered while enumerating an object in 1-parameter mode.</li>
+        <li>
+          The "key" (the value received by the first variable in a for-loop) for objects that are encountered while enumerating an object in 2-parameter mode.
+        </li>
+      </ul>
     </ol>
   </ul>
   <ul style="padding-left: 24px; margin-top: 0; margin-bottom: 0;"><i>Return</i>
@@ -245,8 +261,7 @@ Obj := {
   nestedObj: {
       doubleNestedObj: {  prop: 'value' }
   }
-}
-        </pre>
+}</pre>
       </li>
       <li><b>{*}</b> - The object being evaluated.</li>
       <li><b>{VarRef}</b> - An <b>optional</b> <code>VarRef</code> parameter that will receive the name of the property for objects that are encountered while iterating the parent object's properties.</li>
@@ -270,8 +285,7 @@ MyPlaceholderFunc(controller, obj, &prop?, &key?) {
           ; make something
       }
   }
-}
-          </pre>
+}</pre>
         </li>
       </ul>
     </ol>
@@ -289,7 +303,7 @@ MyPlaceholderFunc(controller, obj, &prop?, &key?) {
 
 <h2>Newline and indent options</h2>
 
-<ul style="margin-top: 0;">Each of <code>CondenseCharLimit</code>, <code>CondenseCharLimitEnum1</code>, <code>CondenseCharLimitEnum2</code>, and <code>CondenseCharLimitProps</code>, set a threshold which <code>StringifyAll</code> will use to condense the an object's substring if the length, in characters, of the substring is less than or equal to the value. The substring length is measured beginning from the open brace and excludes external whitespace such as newline characters and indentation that is not part of a string literal value.</ul>
+<ul style="margin-top: 0;">Each of <code>CondenseCharLimit</code>, <code>CondenseCharLimitEnum1</code>, <code>CondenseCharLimitEnum2</code>, and <code>CondenseCharLimitProps</code> set a threshold which <code>StringifyAll</code> will use to condense an object's substring if the length, in characters, of the substring is less than or equal to the value. The substring length is measured beginning from the open brace and excludes external whitespace such as newline characters and indentation that are not part of a string literal value.</ul>
 
 <ul id="condensecharlimit" style="margin-top: 0; margin-bottom: 0;"><b>{Integer}</b> [ <b>CondenseCharLimit</b>  = <code>0</code> ]
   <ul style="padding-left:24px;">Applies to all substrings. If <code>CondenseCharLimit</code> is set, you can still specify individual options for the other three and the individual option will take precedence over <code>CondenseCharLimit</code>.</ul>
@@ -423,9 +437,15 @@ The following is a description of the part of the process which the function(s) 
 
 <h4>2025-05-31 - 1.1.0</h4>
 
-- Implemented `CallbackError`.
-- Adjusted `PrintErrors` to allow specifying what properties to be included in the output string.
+- **Breaking:** Increased the number of values passed to `CallbackGeneral`.
+- Implemented `Options.CallbackError`.
+- Implemented `Options.Multiple`.
+- Created "test\test-errors.ahk" to test the error-related options.
+- Created "test\test-recursion.ahk" to test `Options.Multiple`.
+- Created "test\test.ahk" to run all tests.
+- Adjusted `Options.PrintErrors` to allow specifying what properties to be included in the output string.
 - Fixed an error causing a small chance for `StringifyAll` to incorrectly apply a property value to the subsequent property.
+- Fixed an error that occurred when using `Options.CallbackGeneral` and `StringifyAll` encounters a duplicate object resulting in an invalid JSON string.
 
 <h4>2025-05-30 - 1.0.5</h4>
 

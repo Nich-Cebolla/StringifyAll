@@ -58,10 +58,14 @@
  * - The object is a `ComObject` or `ComValue`.
  * - The maximum depth is reached.
  * - Your callback function returned a value directing `Stringify` to skip the object.
- * - The object has been stringified already. The placeholder for this condition is separate from
- * the others; it is a string representation of the object path at which the object was first encountered.
- * This is so one's code or one's controller can identify the correct object that was at that location
- * when `Stringify` was processing.
+ *
+ * When `StringifyAll` encounters an object multiple times, it may skip the object and print a
+ * string representation of the object path at which the object was first encountered. Using the
+ * object path instead of the standard placeholder is so one's code or one's self can identify the
+ * correct object that was at that location when `Stringify` was processing. This will occur when one or
+ * both of the following are true:
+ * - `Options.Multiple` is false (the default is false).
+ * - Processing the object will result in infinite recursion.
  *
  * `StringifyAll` does not inherently direct the flow of action as a condition of whether an object
  * is a map, array, or some other type of object. Instead, the options can be used to specify precisely
@@ -101,6 +105,12 @@
  * iterating the properties of an object of the indicated types.
  * @param {Integer} [Options.MaxDepth=0] - The maximum depth `StringifyAll` will recurse
  * into. The root depth is 1. Note "Depth" and "indent level" do not necessarily line up.
+ * @param {Boolean} [Options.Multiple=false] - When true, there is no limit to how many times
+ * `StringifyAll` will process an object. Each time an individual object is encountered, it will
+ * be processed unless doing so will result in infinite recursion. When false, `StringifyAll`
+ * processes each individual object a maximum of 1 time, and all other encounters result in
+ * `StringifyAll` printing a placeholder string that is a string representation of the object path
+ * at which the object was first encountered.
  * @param {Map} [Options.PropsTypeMap={ __Class: "Map", Default: 1, Count: 0 }] - A `Map` object where the keys are object types
  * and the values are either:
  * - A boolean indicating whether or not `StringifyAll` should process the object's properties. A
@@ -210,6 +220,7 @@ class StringifyAll {
         excludeProps := Options.ExcludeProps
         filterTypeMap := Options.FilterTypeMap
         maxDepth := Options.MaxDepth > 0 ? Options.MaxDepth : 9223372036854775807
+        controllerBase.HandleMultiple := Options.Multiple ? (controller, Val) => InStr('$$$.' controller.Path, '$$$.' ptrList.Get(ObjPtr(Val)).Path) : (*) => 1
         if !(propsTypeMap := Options.PropsTypeMap) {
             throw ValueError('The option ``PropsTypeMap`` must be set with an object value.', -1)
         }
@@ -260,7 +271,6 @@ class StringifyAll {
         Recurse := _Recurse1
         OutStr := ''
         VarSetStrCapacity(&OutStr, Options.InitialStrCapacity)
-        replacements := []
         depth := indentlevel := 0
 
         ; The functions set in this block are: nl, ind, controller.OpenProps, controller.OpenEnum1,
@@ -512,7 +522,7 @@ class StringifyAll {
         }
         _HandleEnum11(controller, Val, &Key, &OutStr) {
             controller.PrepareNextEnum1(&OutStr)
-            if ptrList.Has(ObjPtr(Val)) {
+            if ptrList.Has(ObjPtr(Val)) && controller.HandleMultiple(Val) {
                 OutStr .= '"{ ' ptrList.Get(ObjPtr(Val)).Path ' }"'
             } else if depth >= maxDepth || Val is ComObject || Val is ComValue {
                 OutStr .= controller.GetPlaceholder(Val, , &Key)
@@ -524,7 +534,7 @@ class StringifyAll {
             }
         }
         _HandleEnum12(controller, Val, &Key, &OutStr) {
-            if ptrList.Has(ObjPtr(Val)) {
+            if ptrList.Has(ObjPtr(Val)) && controller.HandleMultiple(Val) {
                 controller.PrepareNextEnum1(&OutStr)
                 OutStr .= '"{ ' ptrList.Get(ObjPtr(Val)).Path ' }"'
             } else if depth >= maxDepth || Val is ComObject || Val is ComValue {
@@ -532,7 +542,7 @@ class StringifyAll {
                 OutStr .= controller.GetPlaceholder(Val, , &Key)
             } else {
                 for cb in CallbackGeneral {
-                    if result := cb(Val, &OutStr) {
+                    if result := cb(controller, Val, &OutStr, , key) {
                         if result is String {
                             controller.PrepareNextEnum1(&OutStr)
                             OutStr .= result
@@ -553,7 +563,7 @@ class StringifyAll {
         _HandleEnum21(controller, Val, &Key, &OutStr) {
             controller.PrepareNextEnum2(&OutStr)
             OutStr .= Key ',' nl() ind()
-            if ptrList.Has(ObjPtr(Val)) {
+            if ptrList.Has(ObjPtr(Val)) && controller.HandleMultiple(Val) {
                 OutStr .= '"{ ' ptrList.Get(ObjPtr(Val)).Path ' }"'
             } else if depth >= maxDepth || Val is ComObject || Val is ComValue {
                 OutStr .= controller.GetPlaceholder(Val, , &Key)
@@ -565,7 +575,7 @@ class StringifyAll {
             }
         }
         _HandleEnum22(controller, Val, &Key, &OutStr) {
-            if ptrList.Has(ObjPtr(Val)) {
+            if ptrList.Has(ObjPtr(Val)) && controller.HandleMultiple(Val) {
                 controller.PrepareNextEnum2(&OutStr)
                 OutStr .= Key ',' nl() ind()
                 OutStr .= '"{ ' ptrList.Get(ObjPtr(Val)).Path ' }"'
@@ -575,7 +585,7 @@ class StringifyAll {
                 OutStr .= controller.GetPlaceholder(Val, , &Key)
             } else {
                 for cb in CallbackGeneral {
-                    if result := cb(Val, &OutStr) {
+                    if result := cb(controller, Val, &OutStr, , key) {
                         if result is String {
                             controller.PrepareNextEnum2(&OutStr)
                             OutStr .= Key ',' nl() ind()
@@ -616,8 +626,9 @@ class StringifyAll {
             return -1
         }
         _HandleProp1(controller, Val, &Prop, &OutStr) {
-            if ptrList.Has(ObjPtr(Val)) {
-                OutStr .= '"{ ' ptrList.Get(ObjPtr(Val)).Path ' }"'
+            if ptrList.Has(ObjPtr(Val)) && controller.HandleMultiple(Val) {
+                Val := '{ ' ptrList.Get(ObjPtr(Val)).Path ' }'
+                _WriteProp1(controller, &Prop, &Val, &OutStr)
             } else if depth >= maxDepth  || Val is ComObject || Val is ComValue {
                 _WriteProp2(controller, &Prop, controller.GetPlaceholder(Val, &Prop), &OutStr)
             } else {
@@ -630,13 +641,14 @@ class StringifyAll {
             }
         }
         _HandleProp2(controller, Val, &Prop, &OutStr) {
-            if ptrList.Has(ObjPtr(Val)) {
-                OutStr .= '"{ ' ptrList.Get(ObjPtr(Val)).Path ' }"'
+            if ptrList.Has(ObjPtr(Val)) && controller.HandleMultiple(Val) {
+                Val := '{ ' ptrList.Get(ObjPtr(Val)).Path ' }'
+                _WriteProp1(controller, &Prop, &Val, &OutStr)
             } else if depth >= maxDepth  || Val is ComObject || Val is ComValue {
                 _WriteProp2(controller, &Prop, controller.GetPlaceholder(Val, &Prop), &OutStr)
             } else {
                 for cb in CallbackGeneral {
-                    if result := cb(Val, &OutStr) {
+                    if result := cb(controller, Val, &OutStr, Prop) {
                         if result is String {
                             _WriteProp3(controller, &Prop, &result, &OutStr)
                         } else if result !== -1 {
@@ -936,6 +948,7 @@ class StringifyAll {
           , Filter: ''
           , FilterTypeMap: ''
           , MaxDepth: 0
+          , Multiple: false
           ; `PropsTypeMap` is set by `StringifyAll.__New`.
           , PropsTypeMap: ''
           , StopAtTypeMap: ''

@@ -15,6 +15,8 @@ A customizable solution for serializing object properties, including inherited p
 
 The options defined by the [c]Options[/c] parameter supercede options defined by the [c]StringifyAllConfig[/c] class. This is convenient for setting your own defaults based on your personal preferences / project needs using the class object, and then passing an object to the [c]Options[/c] parameter to adjust your defaults on-the-fly.
 
+Callback functions must not call [c]StringifyAll[/c]. [c]StringifyAll[/c] relies on several variables in the function's scope. Concurrent function calls would change their values, causing unexpected behavior for earlier calls.
+
 For usage examples, see "example\example.ahk".
 
 There are some considerations to keep in mind when using [c]StringifyAll[/c] with the intent to later parse it back into a data object.
@@ -27,201 +29,14 @@ The above considerations are mitigated by keeping separate configurations for se
 There are some conditions which will cause [c]Stringify[/c] to skip stringifying an object. When this occurs, [c]Stringify[/c] prints a placeholder string instead. The conditions are:
 [list][*]The object is a [c]ComObject[/c] or [c]ComValue[/c].
 [*]The maximum depth is reached.
-[*]Your callback function returned a value directing [c]Stringify[/c] to skip the object.
-[*]The object has been stringified already. The placeholder for this condition is separate from the others; it is a string representation of the object path at which the object was first encountered. This is so one's code or one's self can identify the correct object that was at that location when [c]Stringify[/c] was processing.[/list]
+[*]Your callback function returned a value directing [c]Stringify[/c] to skip the object.[/list]
+
+When [c]StringifyAll[/c] encounters an object multiple times, it may skip the object and print a string representation of the object path at which the object was first encountered. Using the object path instead of the standard placeholder is so one's code or one's self can identify the correct object that was at that location when [c]Stringify[/c] was processing. This will occur when one or both of the following are true:
+[list][*][c]Options.Multiple[/c] is false (the default is false). (added in 1.1.0).
+[*]Processing the object will result in infinite recursion.[/list]
 
 [c]StringifyAll[/c] will require more setup to be useful compared to other stringify functions, because we usually don't need information about every property. [c]StringifyAll[/c] is not intended to be a replacement for other stringify functions. Where [c]StringifyAll[/c] shines is in cases where we need a way to programmatically define specifically what properties we want represented in the JSON string and what we want to exclude; at the cost of requiring greater setup time investment, we receive in exchange the potential to fine-tune precisely what will be present in the JSON string.
 
-[color=#800000][size=145][b]Parameters[/b][/size][/color]
+[color=#800000][size=145][b]Function details[/b][/size][/color]
 
-[b][color=#008000]{*}[/color] Obj[/b] - The object to stringify.
-[b][color=#008000]{Object|String}[/color] [Options][/b] - If you are using `ConfigLibrary`, the name of the configuration. Or, the options object with zero or more options as property : value pairs.
-[b][color=#008000]{VarRef}[/color] [OutStr][/b] - A variable that will receive the JSON string. The string is also returned as a return value, but for very long strings, or for loops that process thousands of objects, it will be slightly faster to use the [c]OutStr[/c] variable since the JSON string would not need to be copied.
-
-[color=#800000][size=145][b]Returns[/b][/size][/color]
-
-[b][color=#008000]{String}[/color][/b] - The JSON string.
-
-[color=#800000][size=145][b]Options[/b][/size][/color]
-
-[size=135][b]Enum options[/b][/size]
-
-[b][color=#008000]{Map}[/color] [EnumTypeMap = Map("Array", 1, "Map", 2, "RegExMatchInfo", 2)][/b] - A [c]Map[/c] object where the keys are object types and the values are either:
-[list][*]An integer:
-[list][*]1: Directs [c]StringifyAll[/c] to call the object's enumerator in 1-param mode.
-[*]2: Directs [c]StringifyAll[/c] to call the object's enumerator in 2-param mode.
-[*]0: Directs [c]StringifyAll[/c] to not call the object's enumerator.[/list]
-[*]A function or callable object:
-[list][*]The function should accept the object being evaluated as its only parameter.
-[*]The function should return one of the above listed integers.[/list][/list]
-[indent=1]Use the [c]Map[/c]'s [c]Default[/c] property to set a condition for all types not included within the [c]Map[/c].[/indent]
-
-
-[b][color=#008000]{Boolean}[/color] [ExcludeMethods = true][/b] - If true, properties with a [c]Call[/c] accessor and properties with only a [c]Set[/c] accessor are excluded from stringification. If false or unset, those kinds of properties are included in the JSON string with the name of the function object.
-
-[b][color=#008000]{String}[/color] [ExcludeProps = ""][/b] - A comma-delimited, case-insensitive list of property names to exclude from stringification.
-
-[b][color=#008000]{Map}[/color] [FilterTypeMap = ""][/b] - A [c]Map[/c] object where the keys are object types and the values are [c]PropsInfo.FilterGroup[/c] objects. [c]StringifyAll[/c] will apply the filter when iterating the properties of an object of the indicated types.
-
-[b][color=#008000]{Integer}[/color] [MaxDepth = 0][/b] - The maximum depth [c]StringifyAll[/c] will recurse into. The root depth is 1. Note "Depth" and "indent level" do not necessarily line up. At any given point, the indentation level can be as large as 3x the depth level. This is due to how [c]StringifyAll[/c] handles map and array items.
-
-[b][color=#008000]{Map}[/color] [PropsTypeMap = { __Class: "Map", Default: 1, Count: 0 }][/b] - A [c]Map[/c] object where the keys are object types and the values are either:
-[list][*]A boolean indicating whether or not [c]StringifyAll[/c] should process the object's properties. A nonzero value directs [c]StringifyAll[/c] to process the properties. A falsy value directs [c]StringifyAll[/c] to skip the properties.
-[*]A function or callable object:
-[list][*]The function should accept the object being evaluated as its only parameter.
-[*]The function should return a boolean value described above.[/list][/list]
-
-[indent=1]The default value is a [c]Map[/c] object with zero items and a [c]Default[/c] property value of 1, directing [c]StringifyAll[/c] to process the properties of all object types. Keep this in mind when you set [c]PropsTypeMap[/c]; if you intend to direct [c]StringifyAll[/c] to process object properties by default while using [c]PropsTypeMap[/c] to exclude certain object types, you'll need to set the [c]Default[/c] value to 1 as well. If you want [c]StringifyAll[/c] to not process any properties by default, and to use [c]PropsTypeMap[/c] to specify which object types should have their properties processed, you can leave the [c]Default[/c] property unset, or set it with [c]0[/c].[/indent]
-
-
-[b][color=#008000]{Map}[/color] [StopAtTypeMap = ""][/b] - A [c]Map[/c] object where the keys are object types and the values are either:
-[list][*]A string or number that will be passed to the [c]StopAt[/c] parameter of [c]GetPropsInfo[/c].
-[*]A function or callable object:
-[list][*]The function should accept the object being evaluated as its only parameter.
-[*]The function should return a string or number to be passed to the [c]StopAt[/c] parameter of [c]GetPropsInfo[/c].[/list][/list]
-[indent=1]Use the [c]Map[/c]'s [c]Default[/c] property to set a condition for all types not included within the [c]Map[/c].[/indent]
-
-
-[size=135][b]Callbacks[/b][/size]
-
-[b][color=#008000]{*}[/color] [CallbackGeneral = ""][/b] - A function or callable object, or an array of one or more functions or callable objects, that will be called for each object prior to processing. The function should accept up to two parameters:
-[list][*][b]{*}[/b] - The object about to be processed.
-[*][b]{VarRef}[/b] - A variable that will receive a reference to the JSON string being created.[b]Return:[/b] The function(s) can return a nonzero value to direct [c]StringifyAll[/c] to skip processing the object. Any further functions in an array of functions are necessarily also skipped in this case. The function should return a value to one of these effects:
-[list][*]If the return value is a [b]string[/b], that string will be used as the placeholder for the object in the JSON string.
-[*]If the return value is [b]-1[/b], [c]StringifyAll[/c] skips that object completely and it is not represented in the JSON string.
-[*]If the return value is [b]any other nonzero value[/b], then:
-[list][*]If [c]CallbackPlaceholder[/c] is set, [c]CallbackPlaceholder[/c] will be called to generate the placeholder. Else,
-[*]If [c]CallbackPlaceholder[/c] is unset, the built-in placeholder is used.[/list]
-[*]If the return value is [b]zero or an empty string[/b], [c]StringifyAll[/c] proceeds calling the next function if there is one, or proceeds stringifying the object.[/list][/list]
-
-[indent=1]If your function returns a string:[/indent]
-[list][*]Don't forget to escape the necessary characters. You can call [c]StringifyAll.StrEscapeJson[/c]to do this.
-[*]Note that [c]StringifyAll[/c] does not enclose the value in quotes when adding it to the JSON string. Your function should add the quote characters, or call [c]StringifyAll.StrEscapeJson[/c] which has the option to add the quote characters for you.[/list]
-
-[indent=1]The function(s) should not call [c]StringifyAll[/c]; [c]StringifyAll[/c] relies on several variables in the function's scope that would be altered by concurrent function calls, causing unexpected behavior for any earlier [c]StringifyAll[/c] calls.
-
-The following is a description of the part of the process which the function(s) are called.
-[c]StringifyAll[/c] proceeds in two stages, initialization and recursive processing. After initialization, the function [c]Recurse[/c] is called once, which starts the second stage. When [c]StringifyAll[/c] encounters a value that is an object, it proceeds through a series of condition checks to determine if it will call [c]Recurse[/c] again for that value. Before calling [c]Recurse[/c], [c]StringifyAll[/c] checks the following conditions. When a value is skipped, a placeholder is printed instead.
-[list][*]If the value is a [c]ComObject[/c] or [c]ComValue[/c], the value is skipped.
-[*]If the value has already been stringified, the value is skipped. This is intended to prevent infinite recursion, but currently causes [c]StringifyAll[/c] to skip all subsequent encounters of an object after the first, not just problematic ones. I will implement a more flexible solution.
-[*]If no further recursion is permitted according to [c]MaxDepth[/c], the value is skipped.[/list]
-If none of the above conditions cause [c]StringifyAll[/c] to skip the object, [c]StringifyAll[/c] then calls the callback function(s). This occurs right before [c]Recurse[/c] is called.[/indent]
-
-
-[b][color=#008000]{*}[/color] [CallbackPlaceholder = ""][/b] - When [c]StringifyAll[/c] skips processing an object, a placeholder is printed instead. You can define [c]CallbackPlaceholder[/c] with any callable object to customize the string that gets printed. The function must follow these specifications:
-[indent=1][b]Parameters:[/b][/indent]
-[list][*][b]{Object}[/b] - The [c]controller[/c] object. The [c]controller[/c] is an internal mechanism with various callable properties, but the only property of use for this purpose is [c]Path[/c], which has a string value representing the object path up to but not including the object that is currently being evaluated. In the below example, if your function is called for a placeholder for the object at [c]obj.nestedObj.doubleNestedObj[/c], the path will be "$.nestedObj".
-[code]
-Obj := {
-    nestedObj: {
-        doubleNestedObj: {  prop: 'value' }
-    }
-}
-[/code]
-[*][b]{*}[/b] - The object being evaluated.
-[*][b]{VarRef}[/b] - An optional [c]VarRef[/c] parameter that will receive the name of the property for objects that are encountered while iterating the parent object's properties.
-[*][b]{VarRef}[/b] - An optional [c]VarRef[/c] parameter that will receive either of:
-[list][*]The loop index integer value for objects that are encountered while enumerating an object in 1-parameter mode.
-[*]The "key" (the value received by the first variable in a for-loop) for objects that are encountered while enumerating an object in 2-parameter mode. The key will already have been escaped and enclosed in double quotes at this point, making it somewhat awkward to work with because escaping it again will re-escape the existing escape sequences. If your function will use the key for some purpose, then you will likely want to do something like the below example.[/list][/list]
-[code]
-MyPlaceholderFunc(controller, obj, &prop?, &key?) {
-    if IsSet(prop) {
-        ; make something
-    } else if IsSet(key) {
-        if IsNumber(key) {
-            ; make something
-        } else {
-            key := Trim(key, '"')
-            if InStr(key, '\') {
-                StringifyAll.StrUnescapeJson(&key)
-            }
-            ; make something
-        }
-    }
-}
-[/code]
-[indent=1][b]Return:[/b] The function should return the placeholder string. Don't forget to escape the necessary characters. You can call [c]StringifyAll.StrEscapeJson[/c] to do this. Also don't forget to enclose the string in double quotes.
-It does not matter if the function modifies the two [c]VarRef[/c] parameters as [c]StringifyAll[/c] will not use them again at that point.
-If your function will not use one or more parameters, specify the "*" operator to exclude them.[/indent]
-
-
-[size=135][b]Newline and indent options[/b][/size]
-
-[b][color=#008000]{Integer}[/color] [CondenseCharLimit
-CondenseCharLimitEnum1
-CondenseCharLimitEnum2
-CondenseCharLimitProps = 0][/b] - Sets a threshold which [c]StringifyAll[/c] uses to determine whether an object's JSON substring should be condensed to a single line as a function of the character length of the substring. If [c]CondenseCharLimit[/c] is set, you can still specify individual options for the other three and the individual option will take precedence over [c]CondenseCharLimit[/c]. The substring length is measured beginning from the open brace.
-
-[b][color=#008000]{String}[/color] [Indent = "`s`s`s`s"][/b] - The literal string that will be used for one level of indentation.
-
-[b][color=#008000]{String}[/color] [Newline = "`r`n"][/b] - The literal string that will be used for line breaks. If set to zero or an empty string, the [c]Singleline[/c] option is effectively enabled.
-
-[b][color=#008000]{Integer}[/color] [NewlineDepthLimit = 0][/b] - Sets a threshold directing [c]StringifyAll[/c] to stop adding line breaks between values after exceeding the threshold.
-
-[b][color=#008000]{Boolean}[/color] [Singleline = false][/b] - If true, the JSON string is printed without line breaks or indentation. All other "Newline and indent options" are ignored.
-
-[size=135][b]Print options[/b][/size]
-
-[b][color=#008000]{String}[/color] [ItemProp = "__Items__"][/b] - The name that [c]StringifyAll[/c] will use as a faux-property for including an object's items returned by its enumerator.
-
-[b][color=#008000]{Boolean}[/color] [PrintErrors = false][/b] - When true, if [c]StringifyAll[/c] encounters an error when attempting to access the value of an object's property, the error message is included in the JSON string as the value of the property. When false, [c]StringifyAll[/c] skips the property.
-
-[b][color=#008000]{Boolean}[/color] [QuoteNumericKeys = false][/b] - When true, and when [c]StringifyAll[/c] is processing an object's enumerator in 2-param mode, if the value returned to the first parameter (the "key") is numeric, it will be quoted in the JSON string.
-
-[b][color=#008000]{String}[/color] [RootName = "$"][/b] - Prior to recursively stringifying a nested object, [c]StringifyAll[/c] checks if the object has already been processed. (This is to prevent infinite recursion, and more flexible processing will be implemented). If an object has already been processed, a placeholder is printed in its place. The placeholder printed as a result of this condition is different than placeholders printed for other reasons. In this case, the placeholder is a string representation of the object path at which the object was first encountered. This is so one's self, or one's code, can locate the object in the JSON string if needed. [c]RootName[/c] specifies the name of the root object used within any occurrences of this placeholder string.
-
-[b][color=#008000]{String}[/color] [UnsetArrayItem = "`"`""][/b] - The string to print for unset array items.
-
-[size=135][b]General options[/b][/size]
-
-[b][color=#008000]{Integer}[/color] [InitialPtrListCapacity = 64][/b] - [c]StringifyAll[/c] tracks the ptr addresses of every object it stringifies to prevent infinite recursion. [c]StringifyAll[/c] will set the initial capacity of the [c]Map[/c] object used for this purpose to [c]InitialPtrListCapacity[/c].
-
-[b][color=#008000]{Integer}[/color] [InitialStrCapacity = 65536][/b] - [c]StringifyAll[/c] calls [c]VarSetStrCapacity[/c] using [c]InitialStrCapacity[/c] for the output string during the initialization stage. For the best performance, you can overestimate the approximate length of the string; [c]StringifyAll[/c] calls [c]VarSetStrCapacity(&OutStr, -1)[/c] at the end of the function to release any unused memory.
-
-[color=#800000][size=145][b]StringifyAll's process[/b][/size][/color]
-
-This section describes [c]StringifyAll[/c]'s process. This section is intended to help you better understand how the options will impact the output string. This section is not complete.
-
-[size=135][b]Properties[/b][/size]
-For every object, prior to adding the object's open brace to the string, [c]StringifyAll[/c] proceeds through these steps:
-[list][*]If [c]Options.PropsTypeMap.HasOwnProp('Default')[/c] then this code is used:
-[code]
-if IsObject(Item := propsTypeMap.Get(Type(Obj))) {
-    return Item(Obj)
-} else {
-    return Item
-}
-[/code]
-[*]Else, this code is used:
-[code]
-if propsTypeMap.Has(Type(Obj)) {
-    if IsObject(Item := propsTypeMap.Get(Type(Obj))) {
-        return Item(Obj)
-    } else {
-        return Item
-    }
-}
-[/code]
-[*]If the return value is nonzero:
-[list][*][c]StringifyAll[/c] calls [c]PropsInfoObj := GetPropsInfo(Obj, StopAt, excludeProps, false, , excludeMethods)[/c].
-[*]If [c]PropsInfoObj.Count > 0[/c], [c]StringifyAll[/c] processes only the properties exposed by [c]PropsInfoObj[/c]. You can control this with two options.
-[list][*][c]Options.ExcludeProps[/c] is effective and straightforward. Write a comma-delimited string of property names to exclude. This would apply to all objects.
-[*][c]Options.FilterTypeMap[/c] affords greater flexibility. [c]PropsInfo[/c] objects are designed with a filter system to make it easy to programmatically include a set of properties, and exclude the other, from whatever one's code is doing with the [c]PropsInfo[/c] object. See "example\example.ahk" and/or "inheritance\example-Inheritance.ahk" for examples.[/list]
-[*]Else, [c]StringifyAll[/c] skips the properties for that object and goes on to check if the enumerator will be called.[/list]
-[*]If the return value is falsy, [c]StringifyAll[/c] skips the properties for that object and goes on to check if the enumerator will be called.[/list]
-[indent=1]This will come into play if you want an [c]Array[/c] or [c]Map[/c] object's string representation to have the appearance of what we typically expect for arrays and maps. To accomplish this, [c]StringifyAll[/c] must not process any properties for those objects. You can accomplish this by simply defining two items in the map: [c]Options.PropsTypeMap := Map("Array", 0, "Map", 0)[/c]. Don't forget to set [c]Options.PropsTypeMap.Default := 1[/c] if you still want other objects to have their properties processed.[/indent]
-
-
-[color=#800000][size=145]Changelog[/size][/color]
-[color=#000000][size=100][b]2025-05-30 - 1.0.5[/b][/size][/color]
-[list][*]Fixed an error causing [c]StringifyAll[/c] to incorrectly handle objects returned by a [c]Map[/c] object's enumerator, resulting in an invalid JSON string.[/list]
-
-[color=#000000][size=100][b]2025-05-29 - 1.0.4[/b][/size][/color]
-[list][*]Corrected the order of operations in [c]StringifyAll.StrUnescapeJson[/c].[/list]
-
-[color=#000000][size=100][b]2025-05-29 - 1.0.3[/b][/size][/color]
-[list][*]Implemented `ConfigLibrary`.
-[*]Corrected the order of operations in [c]StringifyAll.StrUnescapeJson[/c].[/list]
-
-[color=#000000][size=100][b]2025-05-28 - v1.0.1[/b][/size][/color]
-[list][*]Adjusted how [c]Options.PropsTypeMap[/c] is handled.  This change did not modify [c]StringifyAll[/c]'s behavior, but it is now more clear both in the code and in the documentation what the default value is and what the default value does.[/list]
+Please view the function details from the [url=https://github.com/Nich-Cebolla/StringifyAll]Github[/url] webpage.

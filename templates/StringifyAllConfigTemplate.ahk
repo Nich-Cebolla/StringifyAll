@@ -7,6 +7,7 @@ class StringifyAllConfig {
     static ExcludeProps := unset
     static FilterTypeMap := unset
     static MaxDepth := unset
+    static Multiple := unset
     static PropsTypeMap := unset
     static StopAtTypeMap := unset
 

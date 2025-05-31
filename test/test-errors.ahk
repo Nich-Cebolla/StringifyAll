@@ -6,19 +6,11 @@ class cls {
     prop2 := 'val'
 }
 
-result := test()
-if result {
-    OutputDebug('`n' StringifyAll(result))
-}
-
-class StringifyAllConfig {
-    static Newline := '`n'
-}
-
-test() {
+test_errors() {
     obj := cls()
     problems := []
     i := 1
+    StringifyAllConfig.Newline := '`n'
 
     ; ======== 1
     options := { PrintErrors: false }
