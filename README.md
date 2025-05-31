@@ -1,5 +1,5 @@
 
-# StringifyAll - v1.1.2
+# StringifyAll - v1.1.3
 A customizable solution for serializing AutoHotkey (AHK) object properties, including inherited properties, and/or items into a 100% valid JSON string.
 
 ## AutoHotkey forum post
@@ -512,7 +512,7 @@ Then, the value is processed:
     <ul>
       <li>If <code>Options.Multiple</code></li>
       <ul>
-        <li>Checks if the new object shares a parent-child relationship with the current object using <code>InStr('$.' controller.Path, '$.' ptrList.Get(ObjPtr(Val)).Path)</code>. This is comparing the string representation of the object path for the two objects. The leading "$." is just to ensure the two strings must match at the beginning of the string. Using this approach should be slightly more performant than <code>RegExMatch</code>, which matters when processing thousands of iterations. The reason this is an effective way to determine parent-child relationship is because, if they are parent-child, they will always share the same path up to the parent.</li>
+        <li>Checks if the new object shares a parent-child relationship with the current object using <code>InStr('$.' controller.Path, '$.' ptrList.Get(ObjPtr(Val)).Path)</code>. This is comparing the string representation of the object path for the two objects. If the object has been processed multiple times already, each path is checked. The leading "$." is just to ensure the two strings must match at the beginning of the string. Using this approach should be slightly more performant than <code>RegExMatch</code>, which matters when processing thousands of iterations. The reason this is an effective way to determine parent-child relationship is because, if they are parent-child, they will always share the same path up to the parent.</li>
         <ul>
           <li>If they are parent-child, skips the object printing the path instead.</li>
           <li>If not, proceeds to the next step.</li>
@@ -530,6 +530,10 @@ Then, the value is processed:
 After processing the enumerator, if <code>count == 0</code>, adds the closing bracket(s) to the output string. If <code>count > 0</code>, adds a newline, indentation, and the closing bracket to the output string.
 
 ## Changelog
+
+<h4>2025-05-31 - 1.1.3</h4>
+
+- When `StringifyAll` processes an object, it caches a the string object path. Previously, the cached path was overwritten each time an object was processed, resulting in a possibility for `StringifyAll` to cause AHK to crash if it entered into an infinite loop. This has been corrected by adjusted the tracking of object ptr addresses to add the string object path to an array each time an object is processed, and to check all paths when testing if two objects share a parent-child relationship.
 
 <h4>2025-05-31 - 1.1.2</h4>
 

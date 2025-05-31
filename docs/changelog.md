@@ -1,4 +1,8 @@
 
+<h4>2025-05-31 - 1.1.3</h4>
+
+- When `StringifyAll` processes an object, it caches a the string object path. Previously, the cached path was overwritten each time an object was processed, resulting in a possibility for `StringifyAll` to cause AHK to crash if it entered into an infinite loop. This has been corrected by adjusted the tracking of object ptr addresses to add the string object path to an array each time an object is processed, and to check all paths when testing if two objects share a parent-child relationship.
+
 <h4>2025-05-31 - 1.1.2</h4>
 
 - Added error for invalid return values from `Options.EnumTypeMap`.

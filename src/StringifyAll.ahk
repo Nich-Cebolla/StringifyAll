@@ -1,7 +1,7 @@
 ﻿/*
     Github: https://github.com/Nich-Cebolla/AutoHotkey-StringifyAll
     Author: Nich-Cebolla
-    Version: 1.1.2
+    Version: 1.1.3
     License: MIT
 */
 
@@ -220,7 +220,7 @@ class StringifyAll {
         excludeProps := Options.ExcludeProps
         filterTypeMap := Options.FilterTypeMap
         maxDepth := Options.MaxDepth > 0 ? Options.MaxDepth : 9223372036854775807
-        controllerBase.HandleMultiple := Options.Multiple ? (controller, Val) => InStr('$.' controller.Path, '$.' ptrList.Get(ObjPtr(Val)).Path) : (*) => 1
+        controllerBase.HandleMultiple := Options.Multiple ? _HandleMultiple : (*) => 1
         if !(propsTypeMap := Options.PropsTypeMap) {
             throw ValueError('The option ``PropsTypeMap`` must be set with an object value.', -1)
         }
@@ -528,89 +528,117 @@ class StringifyAll {
         }
         _HandleEnum11(controller, Val, &Key, &OutStr) {
             controller.PrepareNextEnum1(&OutStr)
-            if ptrList.Has(ObjPtr(Val)) && controller.HandleMultiple(Val) {
-                OutStr .= '"{ ' ptrList.Get(ObjPtr(Val)).Path ' }"'
+            if ptrList.Has(ptr := ObjPtr(Val)) {
+                if controller.HandleMultiple(Val) {
+                    OutStr .= '"{ ' ptrList.Get(ptr)[1].Path ' }"'
+                } else {
+                    newController := GetController()
+                    newController.Path := controller.Path '[' Key ']'
+                    ptrList.Get(ptr).Push(newController)
+                    Recurse(newController, Val, &OutStr)
+                }
             } else if depth >= maxDepth || Val is ComObject || Val is ComValue {
                 OutStr .= controller.GetPlaceholder(Val, , &Key)
             } else {
                 newController := GetController()
                 newController.Path := controller.Path '[' Key ']'
-                ptrList.Set(ObjPtr(Val), newController)
+                ptrList.Set(ptr, [newController])
                 Recurse(newController, Val, &OutStr)
             }
         }
         _HandleEnum12(controller, Val, &Key, &OutStr) {
-            if ptrList.Has(ObjPtr(Val)) && controller.HandleMultiple(Val) {
-                controller.PrepareNextEnum1(&OutStr)
-                OutStr .= '"{ ' ptrList.Get(ObjPtr(Val)).Path ' }"'
+            if ptrList.Has(ptr := ObjPtr(Val)) {
+                if controller.HandleMultiple(Val) {
+                    controller.PrepareNextEnum1(&OutStr)
+                    OutStr .= '"{ ' ptrList.Get(ptr)[1].Path ' }"'
+                    return
+                }
             } else if depth >= maxDepth || Val is ComObject || Val is ComValue {
                 controller.PrepareNextEnum1(&OutStr)
                 OutStr .= controller.GetPlaceholder(Val, , &Key)
-            } else {
-                for cb in CallbackGeneral {
-                    if result := cb(controller, Val, &OutStr, , key) {
-                        if result is String {
-                            controller.PrepareNextEnum1(&OutStr)
-                            OutStr .= result
-                        } else if result !== -1 {
-                            controller.PrepareNextEnum1(&OutStr)
-                            OutStr .= controller.GetPlaceholder(Val, , &Key)
-                        }
-                        return
-                    }
-                }
-                controller.PrepareNextEnum1(&OutStr)
-                newController := GetController()
-                newController.Path := controller.Path '[' Key ']'
-                ptrList.Set(ObjPtr(Val), newController)
-                Recurse(newController, Val, &OutStr)
+                return
             }
+            for cb in CallbackGeneral {
+                if result := cb(controller, Val, &OutStr, , key) {
+                    if result is String {
+                        controller.PrepareNextEnum1(&OutStr)
+                        OutStr .= result
+                    } else if result !== -1 {
+                        controller.PrepareNextEnum1(&OutStr)
+                        OutStr .= controller.GetPlaceholder(Val, , &Key)
+                    }
+                    return
+                }
+            }
+            newController := GetController()
+            newController.Path := controller.Path '[' Key ']'
+            if ptrList.Has(ptr) {
+                ptrList.Get(ptr).Push(newController)
+            } else {
+                ptrList.Set(ptr, [newController])
+            }
+            controller.PrepareNextEnum1(&OutStr)
+            Recurse(newController, Val, &OutStr)
         }
         _HandleEnum21(controller, Val, &Key, &OutStr) {
             controller.PrepareNextEnum2(&OutStr)
             OutStr .= Key ',' nl() ind()
-            if ptrList.Has(ObjPtr(Val)) && controller.HandleMultiple(Val) {
-                OutStr .= '"{ ' ptrList.Get(ObjPtr(Val)).Path ' }"'
+            if ptrList.Has(ptr := ObjPtr(Val)) {
+                if controller.HandleMultiple(Val) {
+                    OutStr .= '"{ ' ptrList.Get(ptr)[1].Path ' }"'
+                } else {
+                    newController := GetController()
+                    newController.Path := controller.Path '[' Key ']'
+                    ptrList.Get(ptr).Push(newController)
+                    Recurse(newController, Val, &OutStr)
+                }
             } else if depth >= maxDepth || Val is ComObject || Val is ComValue {
                 OutStr .= controller.GetPlaceholder(Val, , &Key)
             } else {
                 newController := GetController()
                 newController.Path := controller.Path '[' Key ']'
-                ptrList.Set(ObjPtr(Val), newController)
+                ptrList.Set(ptr, [newController])
                 Recurse(newController, Val, &OutStr)
             }
         }
         _HandleEnum22(controller, Val, &Key, &OutStr) {
-            if ptrList.Has(ObjPtr(Val)) && controller.HandleMultiple(Val) {
-                controller.PrepareNextEnum2(&OutStr)
-                OutStr .= Key ',' nl() ind()
-                OutStr .= '"{ ' ptrList.Get(ObjPtr(Val)).Path ' }"'
+            if ptrList.Has(ptr := ObjPtr(Val)) {
+                if controller.HandleMultiple(Val) {
+                    controller.PrepareNextEnum2(&OutStr)
+                    OutStr .= Key ',' nl() ind()
+                    OutStr .= '"{ ' ptrList.Get(ptr)[1].Path ' }"'
+                    return
+                }
             } else if depth >= maxDepth || Val is ComObject || Val is ComValue {
                 controller.PrepareNextEnum2(&OutStr)
                 OutStr .= Key ',' nl() ind()
                 OutStr .= controller.GetPlaceholder(Val, , &Key)
-            } else {
-                for cb in CallbackGeneral {
-                    if result := cb(controller, Val, &OutStr, , key) {
-                        if result is String {
-                            controller.PrepareNextEnum2(&OutStr)
-                            OutStr .= Key ',' nl() ind()
-                            OutStr .= result
-                        } else if result !== -1 {
-                            controller.PrepareNextEnum2(&OutStr)
-                            OutStr .= Key ',' nl() ind()
-                            OutStr .= controller.GetPlaceholder(Val, , &Key)
-                        }
-                        return
-                    }
-                }
-                controller.PrepareNextEnum2(&OutStr)
-                OutStr .= Key ',' nl() ind()
-                newController := GetController()
-                newController.Path := controller.Path '[' Key ']'
-                ptrList.Set(ObjPtr(Val), newController)
-                Recurse(newController, Val, &OutStr)
+                return
             }
+            for cb in CallbackGeneral {
+                if result := cb(controller, Val, &OutStr, , key) {
+                    if result is String {
+                        controller.PrepareNextEnum2(&OutStr)
+                        OutStr .= Key ',' nl() ind()
+                        OutStr .= result
+                    } else if result !== -1 {
+                        controller.PrepareNextEnum2(&OutStr)
+                        OutStr .= Key ',' nl() ind()
+                        OutStr .= controller.GetPlaceholder(Val, , &Key)
+                    }
+                    return
+                }
+            }
+            controller.PrepareNextEnum2(&OutStr)
+            OutStr .= Key ',' nl() ind()
+            newController := GetController()
+            newController.Path := controller.Path '[' Key ']'
+            if ptrList.Has(ptr) {
+                ptrList.Get(ptr).Push(newController)
+            } else {
+                ptrList.Set(ptr, [newController])
+            }
+            Recurse(newController, Val, &OutStr)
         }
         _HandleError1(controller, Err, *) {
             local s := Err.Message
@@ -631,45 +659,66 @@ class StringifyAll {
         _HandleError3(*) {
             return -1
         }
-        _HandleProp1(controller, Val, &Prop, &OutStr) {
-            if ptrList.Has(ObjPtr(Val)) && controller.HandleMultiple(Val) {
-                Val := '{ ' ptrList.Get(ObjPtr(Val)).Path ' }'
-                _WriteProp1(controller, &Prop, &Val, &OutStr)
-            } else if depth >= maxDepth  || Val is ComObject || Val is ComValue {
-                _WriteProp2(controller, &Prop, controller.GetPlaceholder(Val, &Prop), &OutStr)
-            } else {
-                controller.PrepareNextProp(&OutStr)
-                OutStr .= '"' Prop '": '
-                newController := GetController()
-                newController.Path := controller.Path '.' Prop
-                ptrList.Set(ObjPtr(Val), newController)
-                Recurse(newController, Val, &OutStr)
+        _HandleMultiple(controller, Val) {
+            for c in ptrList.Get(ObjPtr(Val)) {
+                if InStr('$.' controller.Path, '$.' c.Path) {
+                    return 1
+                }
             }
         }
-        _HandleProp2(controller, Val, &Prop, &OutStr) {
-            if ptrList.Has(ObjPtr(Val)) && controller.HandleMultiple(Val) {
-                Val := '{ ' ptrList.Get(ObjPtr(Val)).Path ' }'
-                _WriteProp1(controller, &Prop, &Val, &OutStr)
+        _HandleProp1(controller, Val, &Prop, &OutStr) {
+            if ptrList.Has(ptr := ObjPtr(Val)) {
+                if controller.HandleMultiple(Val) {
+                    Val := '{ ' ptrList.Get(ptr)[1].Path ' }'
+                    _WriteProp1(controller, &Prop, &Val, &OutStr)
+                    return
+                }
             } else if depth >= maxDepth  || Val is ComObject || Val is ComValue {
                 _WriteProp2(controller, &Prop, controller.GetPlaceholder(Val, &Prop), &OutStr)
-            } else {
-                for cb in CallbackGeneral {
-                    if result := cb(controller, Val, &OutStr, Prop) {
-                        if result is String {
-                            _WriteProp3(controller, &Prop, &result, &OutStr)
-                        } else if result !== -1 {
-                            _WriteProp2(controller, &Prop, controller.GetPlaceholder(Val, &Prop), &OutStr)
-                        }
-                        return
-                    }
-                }
-                controller.PrepareNextProp(&OutStr)
-                OutStr .= '"' Prop '": '
-                newController := GetController()
-                newController.Path := controller.Path '.' Prop
-                ptrList.Set(ObjPtr(Val), newController)
-                Recurse(newController, Val, &OutStr)
+                return
             }
+            controller.PrepareNextProp(&OutStr)
+            OutStr .= '"' Prop '": '
+            newController := GetController()
+            newController.Path := controller.Path '.' Prop
+            if ptrList.Has(ptr) {
+                ptrList.Get(ptr).Push(newController)
+            } else {
+                ptrList.Set(ptr, [newController])
+            }
+            Recurse(newController, Val, &OutStr)
+        }
+        _HandleProp2(controller, Val, &Prop, &OutStr) {
+            if ptrList.Has(ptr := ObjPtr(Val)) {
+                if controller.HandleMultiple(Val) {
+                    Val := '{ ' ptrList.Get(ptr)[1].Path ' }'
+                    _WriteProp1(controller, &Prop, &Val, &OutStr)
+                    return
+                }
+            } else if depth >= maxDepth  || Val is ComObject || Val is ComValue {
+                _WriteProp2(controller, &Prop, controller.GetPlaceholder(Val, &Prop), &OutStr)
+                return
+            }
+            for cb in CallbackGeneral {
+                if result := cb(controller, Val, &OutStr, Prop) {
+                    if result is String {
+                        _WriteProp3(controller, &Prop, &result, &OutStr)
+                    } else if result !== -1 {
+                        _WriteProp2(controller, &Prop, controller.GetPlaceholder(Val, &Prop), &OutStr)
+                    }
+                    return
+                }
+            }
+            controller.PrepareNextProp(&OutStr)
+            OutStr .= '"' Prop '": '
+            newController := GetController()
+            newController.Path := controller.Path '.' Prop
+            if ptrList.Has(ptr) {
+                ptrList.Get(ptr).Push(newController)
+            } else {
+                ptrList.Set(ptr, [newController])
+            }
+            Recurse(newController, Val, &OutStr)
         }
         _IncDepth1(delta) {
             _depth := depth
