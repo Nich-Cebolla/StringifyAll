@@ -762,6 +762,7 @@ class StringifyAll {
                     if IsSet(Val) {
                         Val := Val.Message
                     } else {
+                        Val := unset
                         continue
                     }
                 }
