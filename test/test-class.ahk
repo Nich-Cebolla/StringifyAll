@@ -57,7 +57,7 @@ class STO {
 
     static ErrorProp {
         Get {
-            return this.__ErrorProp
+            return this.__ContainerProp
         }
     }
 
