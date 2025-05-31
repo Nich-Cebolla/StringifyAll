@@ -482,7 +482,7 @@ if enumTypeMap.Has(Type(Obj)) {
     }
 }
 ```
-The return value should be 1, 2, or 0. `StringifyAll` then processes the properties as described in <li><a href="#properties">Properties</a></li>. `StringifyAll`'s behavior when calling the enumerator varies slightly depending on whether any properties were processed for the object.
+The return value should be 1, 2, or 0. `StringifyAll` then processes the properties as described in <a href="#properties">Properties</a>. `StringifyAll`'s behavior when calling the enumerator varies slightly depending on whether any properties were processed for the object.
 
 If `StringifyAll` processed properties, and if `flag_enum` is `1` or `2`, `StringifyAll` adds the comma, newline, indentation, open quote, <a href="#itemprop">Options.ItemProp</a>, close quote, colon, space, and open square bracket to the output string. `OutStr .= ',' nl() ind() '"' itemProp '": ['`. (This is actually split into two function calls so the code looks different in the source file).
 
