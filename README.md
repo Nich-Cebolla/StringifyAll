@@ -1,11 +1,34 @@
 
-# StringifyAll - v1.1.1
+# StringifyAll - v1.1.2
 A customizable solution for serializing AutoHotkey (AHK) object properties, including inherited properties, and/or items into a 100% valid JSON string.
 
 ## AutoHotkey forum post
 https://www.autohotkey.com/boards/viewtopic.php?f=83&t=137415&p=604407#p604407
 
-# Introduction
+## Table of contents
+
+<ol type="I">
+  <li><a href="#introduction">Introduction</a></li>
+  <li><a href="#parameters">Parameters</a></li>
+  <li><a href="#returns">Returns</a></li>
+  <li><a href="#options">Options</a></li>
+  <ol type="A">
+    <li><a href="#enum-options">Enum options</a></li>
+    <li><a href="#callbacks">Callbacks</a></li>
+    <li><a href="#newline-and-indent-options">Newline and indent options</a></li>
+    <li><a href="#print-options">Print options</a></li>
+    <li><a href="#general-options">General options</a></li>
+  </ol>
+  <li><a href="#stringifyalls-process">StringifyAll's process</a></li>
+  <ol type="A">
+    <li><a href="#properties">Properties</a></li>
+    <li><a href="#callbackgeneral">CallbackGeneral</a></li>
+    <li><a href="#calling-the-enumerator">Calling the enumerator</a></li>
+  </ol>
+  <li><a href="#changelog">Changelog</a></li>
+</ol>
+
+## Introduction
 `StringifyAll` works in conjunction with `GetPropsInfo` (https://github.com/Nich-Cebolla/AutoHotkey-LibV2/tree/main/inheritance) to allow us to include all of an object's properties in the JSON string, not just the items or own properties.
 
 `StringifyAll` exposes many options to programmatically restrict what gets included in the JSON string. It also includes options for adjusting the spacing in the string. To set your options, you can:
@@ -27,18 +50,18 @@ There are some considerations to keep in mind when using `StringifyAll` with the
 
 The above considerations are mitigated by keeping separate configurations for separate purposes. For example, keep one configuration to use when intending to later parse the string back into AHK data, and keep another configuration to use when intending to visually inspect the string.
 
-There are some conditions which will cause `Stringify` to skip stringifying an object. When this occurs, `Stringify` prints a placeholder string instead. The conditions are:
+There are some conditions which will cause `StringifyAll` to skip stringifying an object. When this occurs, `StringifyAll` prints a placeholder string instead. The conditions are:
 - The object is a `ComObject` or `ComValue`.
 - The maximum depth is reached.
-- Your callback function returned a value directing `Stringify` to skip the object.
+- Your callback function returned a value directing `StringifyAll` to skip the object.
 
-When `StringifyAll` encounters an object multiple times, it may skip the object and print a string representation of the object path at which the object was first encountered. Using the object path instead of the standard placeholder is so one's code or one's self can identify the correct object that was at that location when `Stringify` was processing. This will occur when one or both of the following are true:
+When `StringifyAll` encounters an object multiple times, it may skip the object and print a string representation of the object path at which the object was first encountered. Using the object path instead of the standard placeholder is so one's code or one's self can identify the correct object that was at that location when `StringifyAll` was processing. This will occur when one or both of the following are true:
 - `Options.Multiple` is false (the default is false).
 - Processing the object will result in infinite recursion.
 
 `StringifyAll` will require more setup to be useful compared to other stringify functions, because we usually don't need information about every property. `StringifyAll` is not intended to be a replacement for other stringify functions. Where `StringifyAll` shines is in cases where we need a way to programmatically define specifically what properties we want represented in the JSON string and what we want to exclude; at the cost of requiring greater setup time investment, we receive in exchange the potential to fine-tune precisely what will be present in the JSON string.
 
-# Parameters
+## Parameters
 
 <ol type="1">
   <li><b>{*} Obj</b> - The object to stringify.</li>
@@ -50,11 +73,11 @@ When `StringifyAll` encounters an object multiple times, it may skip the object 
   <li><b>{VarRef} [OutStr]</b> - A variable that will receive the JSON string. The string is also returned as a return value, but for very long strings, or for loops that process thousands of objects, it will be slightly faster to use the `OutStr` variable since the JSON string would not need to be copied.</li>
 </ol>
 
-# Returns
+## Returns
 
 **{String}** - The JSON string.
 
-# Options
+## Options
 
 The format for these options are:<br>
 <b>{Value type}</b> [ <b>Option name</b>  = <code>Default value</code> ]<br>
@@ -64,6 +87,10 @@ Jump to:
 <a href="#callerror"><br>CallbackError</a>
 <a href="#callbackgeneral"><br>CallbackGeneral</a>
 <a href="#callbackplaceholder"><br>CallbackPlaceholder</a>
+<a href="#condensecharlimit"><br>CondenseCharLimit</a>
+<a href="#condensecharlimitenum1"><br>CondenseCharLimitEnum1</a>
+<a href="#condensecharlimitenum2"><br>CondenseCharLimitEnum2</a>
+<a href="#condensecharlimitprops"><br>CondenseCharLimitProps</a>
 <a href="#enumtypemap"><br>EnumTypeMap</a>
 <a href="#excludemethods"><br>ExcludeMethods</a>
 <a href="#excludeprops"><br>ExcludeProps</a>
@@ -84,7 +111,7 @@ Jump to:
 <a href="#stopattypemap"><br>StopAtTypeMap</a>
 <a href="#unsetarrayitem"><br>UnsetArrayItem</a>
 
-<h2>Enum options</h2>
+### Enum options
 
 <ul id="enumtypemap"><b>{Map}</b> [ <b>EnumTypeMap</b>  = <code>Map("Array", 1, "Map", 2, "RegExMatchInfo", 2)</code> ]
   <ul style="padding-left: 24px; margin-top: 0; margin-bottom: 0;">
@@ -183,7 +210,7 @@ Jump to:
   <ul style="padding-left: 24px;">Use the <code>Map</code>'s <code>Default</code> property to set a condition for all types not included within the <code>Map</code>.</ul>
 </ul>
 
-<h2>Callbacks</h2>
+### Callbacks
 
 <ul id="callbackerror"><b>{*}</b> [ <b>CallbackError</b>  = <code>""</code> ]
   <ul style="padding-left: 24px; margin-top: 0; margin-bottom: 0;">A <b>Func</b> or callable <b>Object</b> that will be called when <code>StringifyAll</code> encounters an error attempting to access a property's value. When <code>CallbackError</code> is set, <code>StringifyAll</code> ignores <code>PrintErrors</code>.</ul>
@@ -301,7 +328,7 @@ MyPlaceholderFunc(controller, obj, &prop?, &key?) {
   </ul>
 </ul>
 
-<h2>Newline and indent options</h2>
+### Newline and indent options
 
 <ul style="margin-top: 0;">Each of <code>CondenseCharLimit</code>, <code>CondenseCharLimitEnum1</code>, <code>CondenseCharLimitEnum2</code>, and <code>CondenseCharLimitProps</code> set a threshold which <code>StringifyAll</code> will use to condense an object's substring if the length, in characters, of the substring is less than or equal to the value. The substring length is measured beginning from the open brace and excludes external whitespace such as newline characters and indentation that are not part of a string literal value.</ul>
 
@@ -337,7 +364,7 @@ MyPlaceholderFunc(controller, obj, &prop?, &key?) {
   <ul style="padding-left:24px;">If true, the JSON string is printed without line breaks or indentation. All other "Newline and indent options" are ignored.</ul>
 </ul>
 
-<h2>Print options</h2>
+### Print options
 
 <ul id="itemprop"><b>{String}</b> [ <b>ItemProp</b>  = <code>"__Items__"</code> ]
   <ul style="padding-left:24px;">The name that <code>StringifyAll</code> will use as a faux-property for including an object's items returned by its enumerator.</ul>
@@ -365,7 +392,7 @@ MyPlaceholderFunc(controller, obj, &prop?, &key?) {
   <ul style="padding-left:24px;">The string to print for unset array items.</ul>
 </ul>
 
-<h2>General options</h2>
+### General options
 
 <ul id="initialptrlistcapacity"><b>{Integer}</b> [ <b>InitialPtrListCapacity</b>  = <code>64</code> ]
   <ul style="padding-left:24px;"><code>StringifyAll</code> tracks the ptr addresses of every object it stringifies to prevent infinite recursion. <code>StringifyAll</code> will set the initial capacity of the <code>Map</code> object used for this purpose to <code>InitialPtrListCapacity</code>.</ul>
@@ -375,11 +402,11 @@ MyPlaceholderFunc(controller, obj, &prop?, &key?) {
   <ul style="padding-left:24px;"><code>StringifyAll</code> calls <code>VarSetStrCapacity</code> using <code>InitialStrCapacity</code> for the output string during the initialization stage. For the best performance, you can overestimate the approximate length of the string; <code>StringifyAll</code> calls <code>VarSetStrCapacity(&OutStr, -1)</code> at the end of the function to release any unused memory.</ul>
 </ul>
 
-<h1>StringifyAll's process</h1>
+## StringifyAll's process
 
 This section describes `StringifyAll`'s process. This section is intended to help you better understand how the options will impact the output string. This section is not complete.
 
-<h3><b>Properties</b></h3>
+### Properties
 
 For every object, prior to adding the object's open brace to the string, `StringifyAll` proceeds through these steps:
 
@@ -418,7 +445,7 @@ if propsTypeMap.Has(Type(Obj)) {
 
 This will come into play if you want an `Array` or `Map` object's string representation to have the appearance of what we typically expect for arrays and maps. To accomplish this, `StringifyAll` must not process any properties for those objects. You can accomplish this by simply defining two items in the map: `Options.PropsTypeMap := Map("Array", 0, "Map", 0)`. Don't forget to set `Options.PropsTypeMap.Default := 1` if you still want other objects to have their properties processed.
 
-<h3><b>CallbackGeneral</b></h3>
+### CallbackGeneral
 
 The following is a description of the part of the process which the function(s) are called.
 <ul style="padding-left:24px;">
@@ -433,7 +460,80 @@ The following is a description of the part of the process which the function(s) 
   <br>If none of the <code>CallbackGeneral</code> functions direct <code>StringifyAll</code> to skip the object, <code>Recurse</code> is called.
 </ul>
 
-<h1>Changelog</h1>
+### Calling the enumerator
+
+One of the first actions within `Recurse` is `flag_enum := CheckEnum(Obj)`. `CheckEnum` is one of the following:
+
+If `Options.EnumTypeMap.HasOwnProp('Default')`:
+```ahk
+if IsObject(Item := enumTypeMap.Get(Type(Obj))) {
+    return Item(Obj)
+} else {
+    return Item
+}
+```
+If `!Options.EnumTypeMap.HasOwnprop('Default')`:
+```ahk
+if enumTypeMap.Has(Type(Obj)) {
+    if IsObject(Item := enumTypeMap.Get(Type(Obj))) {
+        return Item(Obj)
+    } else {
+        return Item
+    }
+}
+```
+The return value should be 1, 2, or 0. `StringifyAll` then processes the properties as described above. `StringifyAll`'s behavior when calling the enumerator varies slightly depending on whether any properties were processed for the object.
+
+If `StringifyAll` processed properties, and if `flag_enum` is `1` or `2`, `StringifyAll` adds the comma, newline, indentation, open quote, <a href="#itemprop">Options.ItemProp</a>, close quote, colon, space, and open square bracket to the output string. `OutStr .= ',' nl() ind() '"' itemProp '": ['`. (This is actually split into two function calls so the code looks different in the source file).
+
+If `StringifyAll` did not process properties for the object, and if `flag_enum` is `1` or `2`, `StringifyAll` adds the open brace to the output string: `OutStr .= '['`
+
+After handling the open bracket:
+<ol type="1">
+  <li><code>StringifyAll</code> increases the indent level by 1.</li>
+  <li>If <code>Options.CondenseCharLimit</code> or the individual <code>Options.CondenseCharLimitEnum1</code> / <code>Options.CondenseCharLimitEnum2</code> are set, caches some values needed later to handle that option.</li>
+  <li>Initializes a variable <code>count := 0</code>.</li>
+  <li>Calls the enumerator, incrementing <code>count</code> for each item. How the output string is constructed varies if <code>flag_enum == 1</code> and <code>flag_enum == 2</code>, but the processing logic is the same. The main difference between the two, of course, is that there are two values to handle when calling the enumerator in 2-param mode. The following only applies when calling an enumerator in 2-param mode:</li>
+  <ol type="i">
+    <li>Prior to processing the value that is received by the second parameter, <code>StringifyAll</code> first processes the first parameter (<code>Key</code>):</li>
+    <li>If <code>IsObject(Key)</code>: <code>StringifyAll</code> will not process an object that is received by the first parameter. Instead, it creates a placeholder string to use as the key: <code>Key := '"{ ' this.GetType(Key) ':' ObjPtr(Key) ' }"'</code>.</li>
+    <li>If <code>!IsObject(Key)</code></li>
+    <ul>
+      <li><code>StringifyAll</code> processes the <code>Key</code> for escape sequences</li>
+      <li>If <code>Options.QuoteNumericKeys</code> and <code>IsNumber(Key)</code>, or if <code>!IsNumber(Key)</code>, encloses it in double-quotes.</li>
+    </ul>
+  </ol>
+</ol>
+Then, the value is processed:
+<ol start="5">
+  <li>If <code>IsObject(Val)</code></li>
+  <ul>
+    <li>If the object has been processed before</li>
+    <ul>
+      <li>If <code>Options.Multiple</code></li>
+      <ul>
+        <li>Checks if the new object shares a parent-child relationship with the current object using <code>InStr('$.' controller.Path, '$.' ptrList.Get(ObjPtr(Val)).Path)</code>. This is comparing the string representation of the object path for the two objects. The leading "$." is just to ensure the two strings must match at the beginning of the string. Using this approach should be slightly more performant than <code>RegExMatch</code>, which matters when processing thousands of iterations. The reason this is an effective way to determine parent-child relationship is because, if they are parent-child, they will always share the same path up to the parent.</li>
+        <ul>
+          <li>If they are parent-child, skips the object printing the path instead.</li>
+          <li>If not, proceeds to the next step.</li>
+        </ul>
+        <li>If <code>!Options.Multiple</code>, prints the placeholder and skips the object.</li>
+      </ul>
+    </ul>
+    <li>If <code>depth >= maxDepth || Val is ComObject || Val is ComValue </code>, prints a placeholder string and skips the object.</li>
+    <li>If <code>Options.CallbackGeneral</code>, iterates the callbacks. Processing behavior is described in the <a href="#callbackgeneral">CallbackGeneral</a> section.</li>
+    <li>If <code>!Options.CallbackGeneral</code> or none of the callbacks directed <code>StringifyAll</code> to skip the object, <code>StringifyAll</code> proceeds through some initialization steps then calls <code>Recurse</code> with the object.</li>
+    </ul>
+  </ul>
+  <li>If <code>!IsObject(Val)</code>, processes the value for escape sequences and encloses it in double quotes, then writes it to the output string.</li>
+</ol>
+After processing the enumerator, if <code>count == 0</code>, adds the closing bracket(s) to the output string. If <code>count > 0</code>, adds a newline, indentation, and the closing bracket to the output string.
+
+## Changelog
+
+<h4>2025-05-31 - 1.1.2</h4>
+
+- Added error for invalid return values from `Options.EnumTypeMap`.
 
 <h4>2025-05-31 - 1.1.1</h4>
 
