@@ -1,3 +1,8 @@
+
+<h4>2025-05-31 - 1.1.1</h4>
+
+- Fixed: If an object's enumerator is called in 1-param mode but returns zero valid items, the empty object no longer has a line break between the open and close bracket.
+
 <h4>2025-05-31 - 1.1.0</h4>
 
 - **Breaking:** Increased the number of values passed to `CallbackGeneral`.

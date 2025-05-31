@@ -1,7 +1,7 @@
 ﻿/*
     Github: https://github.com/Nich-Cebolla/AutoHotkey-StringifyAll
     Author: Nich-Cebolla
-    Version: 1.1.0
+    Version: 1.1.1
     License: MIT
 */
 
@@ -361,8 +361,7 @@ class StringifyAll {
                         OutStr .= ',' nl() ind() '"' itemProp '": '
                     }
                     controller.OpenEnum1(&OutStr)
-                    controller.ProcessEnum1(Obj, &OutStr)
-                    controller.CloseEnum1(&OutStr)
+                    controller.CloseEnum1(controller.ProcessEnum1(Obj, &OutStr), &OutStr)
                 } else if flag_enum == 2 {
                     if flag_props {
                         OutStr .= ',' nl() ind() '"' itemProp '": '
@@ -373,8 +372,7 @@ class StringifyAll {
                 controller.CloseProps(&OutStr)
             } else if flag_enum == 1 {
                 controller.OpenEnum1(&OutStr)
-                controller.ProcessEnum1(Obj, &OutStr)
-                controller.CloseEnum1(&OutStr)
+                controller.CloseEnum1(controller.ProcessEnum1(Obj, &OutStr), &OutStr)
             } else if flag_enum == 2 {
                 controller.OpenEnum2(&OutStr)
                 controller.CloseEnum2(controller.ProcessEnum2(Obj, &OutStr), &OutStr)
@@ -419,13 +417,21 @@ class StringifyAll {
                 }
             }
         }
-        _CloseEnum11(controller, &OutStr) {
+        _CloseEnum11(controller, count, &OutStr) {
             indentLevel--
-            OutStr .= nl() ind() ']'
+            if count {
+                OutStr .= nl() ind() ']'
+            } else {
+                OutStr .= ']'
+            }
         }
-        _CloseEnum12(controller, &OutStr) {
+        _CloseEnum12(controller, count, &OutStr) {
             indentLevel--
-            OutStr .= nl() ind() ']'
+            if count {
+                OutStr .= nl() ind() ']'
+            } else {
+                OutStr .= ']'
+            }
             if container := lenContainer.Get(ObjPtr(controller) '-1') {
                 if (obj.result := StrLen(OutStr) - container.Len - (diff := whitespaceChars - container.whitespaceChars)) <= container.limit {
                     whitespaceChars -= diff
@@ -773,7 +779,9 @@ class StringifyAll {
             OutStr .= ',' nl() ind()
         }
         _ProcessEnum1(controller, Obj, &OutStr) {
+            count := 0
             for Val in Obj {
+                count++
                 if IsSet(Val) {
                     if IsObject(Val) {
                         controller.HandleEnum1(Val, &(i := A_Index), &OutStr)
@@ -787,6 +795,7 @@ class StringifyAll {
                     OutStr .= unsetArrayItem
                 }
             }
+            return count
         }
         _ProcessEnum2(controller, Obj, &OutStr) {
             count := 0

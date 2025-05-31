@@ -1,5 +1,5 @@
 
-# StringifyAll - v1.1.0
+# StringifyAll - v1.1.1
 A customizable solution for serializing AutoHotkey (AHK) object properties, including inherited properties, and/or items into a 100% valid JSON string.
 
 ## AutoHotkey forum post
@@ -434,6 +434,10 @@ The following is a description of the part of the process which the function(s) 
 </ul>
 
 <h1>Changelog</h1>
+
+<h4>2025-05-31 - 1.1.1</h4>
+
+- Fixed: If an object's enumerator is called in 1-param mode but returns zero valid items, the empty object no longer has a line break between the open and close bracket.
 
 <h4>2025-05-31 - 1.1.0</h4>
 
