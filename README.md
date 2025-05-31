@@ -33,98 +33,307 @@ There are some conditions which will cause `Stringify` to skip stringifying an o
 # Parameters
 
 <ol type="1">
-  <span style="font-size:15px;"><li><b>{*} Obj</b> - The object to stringify.<span style="font-size:13px;"></li>
-  <span style="font-size:15px;"><li><b>{Object|String} [Options]</b> - If you are using `ConfigLibrary`, the name of the configuration. Or, the options object with zero or more options as property : value pairs.</li>
-  <span style="font-size:15px;"><li><b>{VarRef} [OutStr]</b> - A variable that will receive the JSON string. The string is also returned as a return value, but for very long strings, or for loops that process thousands of objects, it will be slightly faster to use the `OutStr` variable since the JSON string would not need to be copied.</li>
+  <li><b>{*} Obj</b> - The object to stringify.</li>
+  <li><b>{Object|String} [Options]</b> -
+  <ul>
+    <li>If you are using <code>ConfigLibrary</code>, the name of the configuration as string. See the explanation within the file "templates\ConfigLibrary.ahk".
+    <li>When not using <code>ConfigLibrary</code>, the options object with zero or more options as property : value pairs.</li>
+  </ul>
+  <li><b>{VarRef} [OutStr]</b> - A variable that will receive the JSON string. The string is also returned as a return value, but for very long strings, or for loops that process thousands of objects, it will be slightly faster to use the `OutStr` variable since the JSON string would not need to be copied.</li>
 </ol>
 
 # Returns
 
-<b>{String}</b> - The JSON string.
+**{String}** - The JSON string.
 
 # Options
 
+The format for these options are:<br>
+<b>{Value type}</b> [ <b>Option name</b>  = <code>Default value</code> ]<br>
+<span style="padding-left: 24px;">Description</span>
+
 Jump to:
-<ul>
-  <a href="#callbackgeneral"><br>CallbackGeneral</a>
-  <a href="#callbackplaceholder"><br>CallbackPlaceholder</a>
-  <a href="#enumtypemap"><br>EnumTypeMap</a>
-  <a href="#excludemethods"><br>ExcludeMethods</a>
-  <a href="#excludeprops"><br>ExcludeProps</a>
-  <a href="#filtertypemap"><br>FilterTypeMap</a>
-  <a href="#indent"><br>Indent</a>
-  <a href="#initialptrlistcapacity"><br>InitialPtrListCapacity</a>
-  <a href="#initialstrcapacity"><br>InitialStrCapacity</a>
-  <a href="#itemprop"><br>ItemProp</a>
-  <a href="#maxdepth"><br>MaxDepth</a>
-  <a href="#newline"><br>Newline</a>
-  <a href="#newlinedepthlimit"><br>NewlineDepthLimit</a>
-  <a href="#printerrors"><br>PrintErrors</a>
-  <a href="#propstypemap"><br>PropsTypeMap</a>
-  <a href="#quotenumerickeys"><br>QuoteNumericKeys</a>
-  <a href="#rootname"><br>RootName</a>
-  <a href="#singleline"><br>Singleline</a>
-  <a href="#stopattypemap"><br>StopAtTypeMap</a>
-  <a href="#unsetarrayitem"><br>UnsetArrayItem</a>
-</ul>
+<a href="#callbackgeneral"><br>CallbackGeneral</a>
+<a href="#callbackplaceholder"><br>CallbackPlaceholder</a>
+<a href="#enumtypemap"><br>EnumTypeMap</a>
+<a href="#excludemethods"><br>ExcludeMethods</a>
+<a href="#excludeprops"><br>ExcludeProps</a>
+<a href="#filtertypemap"><br>FilterTypeMap</a>
+<a href="#indent"><br>Indent</a>
+<a href="#initialptrlistcapacity"><br>InitialPtrListCapacity</a>
+<a href="#initialstrcapacity"><br>InitialStrCapacity</a>
+<a href="#itemprop"><br>ItemProp</a>
+<a href="#maxdepth"><br>MaxDepth</a>
+<a href="#newline"><br>Newline</a>
+<a href="#newlinedepthlimit"><br>NewlineDepthLimit</a>
+<a href="#printerrors"><br>PrintErrors</a>
+<a href="#propstypemap"><br>PropsTypeMap</a>
+<a href="#quotenumerickeys"><br>QuoteNumericKeys</a>
+<a href="#rootname"><br>RootName</a>
+<a href="#singleline"><br>Singleline</a>
+<a href="#stopattypemap"><br>StopAtTypeMap</a>
+<a href="#unsetarrayitem"><br>UnsetArrayItem</a>
 
 ## Enum options
 
-Name|Type|Default|Description
-----------|----|-------|-----
-<span id="enumtypemap" style="font-size:16px;"><b>EnumTypeMap</b></span>|Map|Map("Array", 1, "Map", 2, "RegExMatchInfo", 2)|A <code>Map</code> object where the keys are object types and the values are either:<ul><li>An integer:</li><ul><li>1: Directs <code>StringifyAll</code> to call the object's enumerator in 1-param mode.</li><li>2: Directs <code>StringifyAll</code> to call the object's enumerator in 2-param mode.</li><li>0: Directs <code>StringifyAll</code> to not call the object's enumerator.</li></ul><li>A function or callable object:</li><ul><li>The function should accept the object being evaluated as its only parameter.</li><li>The function should return one of the above listed integers.</li></ul></ul>Use the <code>Map</code>'s <code>Default</code> property to set a condition for all types not included within the <code>Map</code>.
-<span id="excludemethods" style="font-size:16px;"><b>ExcludeMethods</b></span>|Boolean|true|If true, properties with a <code>Call</code> accessor and properties with only a <code>Set</code> accessor are excluded from stringification. If false or unset, those kinds of properties are included in the JSON string with the name of the function object.
-<span id="excludeprops" style="font-size:16px;"><b>ExcludeProps</b></span>|String|""|A comma-delimited, case-insensitive list of property names to exclude from stringification.
-<span id="filtertypemap" style="font-size:16px;"><b>FilterTypeMap</b></span>|Map|""|A <code>Map</code> object where the keys are object types and the values are <code>PropsInfo.FilterGroup</code> objects. <code>StringifyAll</code> will apply the filter when iterating the properties of an object of the indicated types.
-<span id="maxdepth" style="font-size:16px;"><b>MaxDepth</b>|Integer|0|The maximum depth <code>StringifyAll</code> will recurse into. The root depth is 1. Note "Depth" and "indent level" do not necessarily line up. At any given point, the indentation level can be as large as 3x the depth level. This is due to how <code>StringifyAll</code> handles map and array items.
-<span id="propstypemap" style="font-size:16px;"><b>PropsTypeMap</b></span>|Map|{ __Class: "Map", Default: 1, Count: 0 }|A <code>Map</code> object where the keys are object types and the values are either:<ul><li>A boolean indicating whether or not <code>StringifyAll</code> should process the object's properties. A nonzero value directs <code>StringifyAll</code> to process the properties. A falsy value directs <code>StringifyAll</code> to skip the properties.</li><li>A function or callable object:</li><ul><li>The function should accept the object being evaluated as its only parameter.</li><li>The function should return a boolean value described above.</li></ul>The default value is a `Map` object with zero items and a `Default` property value of 1, directing `StringifyAll` to process the properties of all object types. Keep this in mind when you set `PropsTypeMap`; if you intend to direct `StringifyAll` to process object properties by default while using `PropsTypeMap` to exclude certain object types, you'll need to set the `Default` value to 1 as well. If you want `StringifyAll` to not process any properties by default, and to use `PropsTypeMap` to specify which object types should have their properties processed, you can leave the `Default` property unset, or set it with `0`.</ul>
-<span id="stopattypemap" style="font-size:16px;"><b>StopAtTypeMap</b></span>|Map|""|A <code>Map</code> object where the keys are object types and the values are either: <ul><li>A string or number that will be passed to the <code>StopAt</code> parameter of <code>GetPropsInfo</code>.</li><li>A function or callable object:</li><ul><li>The function should accept the object being evaluated as its only parameter.</li><li>The function should return a string or number to be passed to the <code>StopAt</code> parameter of <code>GetPropsInfo</code>.</li></ul></ul>Use the <code>Map</code>'s <code>Default</code> property to set a condition for all types not included within the <code>Map</code>.
+<ul id="enumtypemap"><b>{Map}</b> [ <b>EnumTypeMap</b>  = <code>Map("Array", 1, "Map", 2, "RegExMatchInfo", 2)</code> ]
+  <ul style="padding-left: 24px; margin-top: 0; margin-bottom: 0;">
+    A <code>Map</code> object where the keys are object types and the values are either:
+    <ul style="margin-top: 4px; margin-bottom: 6px; ">
+      <li><b>Integer</b>:</li>
+      <ul style="margin-bottom: 0;">
+        <li><code>1</code>: Directs <code>StringifyAll</code> to call the object's enumerator in 1-param mode.</li>
+        <li><code>2</code>: Directs <code>StringifyAll</code> to call the object's enumerator in 2-param mode.</li>
+        <li><code>0</code>: Directs <code>StringifyAll</code> to not call the object's enumerator.</li>
+      </ul>
+      <li><b>Func</b> or callable <b>Object</b>:
+        <br>
+        <i>Parameters</i>
+        <ol type="1" style="margin-bottom: 0;">
+          <li>The <b>Object</b> being evaluated.</li>
+        </ol>
+        <i>Return</i>
+        <ul style="margin-bottom: 0;">
+          <li><b>Integer:</b> One of the above listed integers.</li>
+        </ol>
+      </ul>
+    </ul>
+    Use the <code>Map</code>'s <code>Default</code> property to set a condition for all types not included within the <code>Map</code>.
+  </ul>
+</ul>
 
+<ul id="excludemethods"><b>{Boolean}</b> [ <b>ExcludeMethods</b>  = <code>true</code> ]
+  <ul style="padding-left: 24px; margin-top: 0;">
+    If true, properties with a <code>Call</code> accessor and properties with only a <code>Set</code> accessor are excluded from stringification.<br>
+    If false or unset, those kinds of properties are included in the JSON string with the name of the function object.
+  </ul>
+</ul>
+
+<ul id="excludeprops"><b>{String}</b> [ <b>ExcludeProps</b>  = <code>""</code> ]
+  <ul style="padding-left: 24px; margin-top: 0;">A comma-delimited, case-insensitive list of property names to exclude from stringification.</ul>
+</ul>
+
+<ul id="filtertypemap"><b>{Map}</b> [ <b>FilterTypeMap</b>  = <code>""</code> ]
+  <ul style="padding-left: 24px; margin-top: 0;">A <code>Map</code> object where the keys are object types and the values are <code>PropsInfo.FilterGroup</code> objects. <code>StringifyAll</code> will apply the filter when iterating the properties of an object of the indicated types.</ul>
+</ul>
+
+<ul id="maxdepth"><b>{Integer}</b> [ <b>MaxDepth</b>  = <code>0</code> ]
+  <ul style="padding-left: 24px; margin-top: 0;">The maximum depth <code>StringifyAll</code> will recurse into. The root depth is 1. Note "Depth" and "indent level" do not necessarily line up. At any given point, the indentation level can be as large as 3x the depth level. This is due to how <code>StringifyAll</code> handles map and array items.</ul>
+</ul>
+
+<ul id="propstypemap"><b>{Map}</b> [ <b>PropsTypeMap</b>  = <code>{ __Class: "Map", Default: 1, Count: 0 }</code> ]
+  <ul style="padding-left: 24px; margin-bottom: 0; margin-top: 0;">
+    A <code>Map</code> object where the keys are object types and the values are either:
+    <ul style="margin-top: 4px; margin-bottom: 6px;">
+      <li><b>Boolean</b>:</li>
+      <ul style="margin-bottom: 0; padding-left: 24px;">
+        <li><code>true</code>: Directs <code>StringifyAll</code> to process the properties.</li>
+        <li><code>false</code>: Directs <code>StringifyAll</code> to skip the properties.</li>
+      </ul>
+      <li><b>Func</b> or callable <b>Object</b>:
+        <br>
+        <i>Parameters</i>
+        <ol type="1" style="margin-bottom: 0;">
+          <li>The <b>Object</b> being evaluated.</li>
+        </ol>
+        <i>Return</i>
+        <ul style="margin-bottom: 0;">
+          <li><b>Boolean:</b> Either value described above.</li>
+        </ul>
+      </li>
+    </ul>
+  </ul>
+  <ul style="padding-left: 24px; margin-bottom: 6px;">The default value is a <code>Map</code> object with <b>0</b> items and a <code>Default</code> property value of <code>1</code>, directing <code>StringifyAll</code> to process the properties of all object types. Keep this in mind when you set <code>PropsTypeMap</code>.
+  <ul style="margin-top: 4px; margin-bottom: 6px;">
+    <li>If you intend to direct <code>StringifyAll</code> to process object properties by default while using <code>PropsTypeMap</code> to exclude certain object types, you'll need to set the <code>Default</code> value to 1 as well.</li>
+    <li>If you want <code>StringifyAll</code> to not process any properties by default, and to use <code>PropsTypeMap</code> to specify which object types should have their properties processed, you can leave the <code>Default</code> property unset, or set it with <code>0</code>.</li>
+  </ul>
+  <p style="padding-left: 24px;">Use the <code>Map</code>'s <code>Default</code> property to set a condition for all types not included within the <code>Map</code>.</ul>
+</ul>
+
+<ul id="stopattypemap"><b>{Map}</b> [ <b>StopAtTypeMap</b>  = <code>""</code> ]
+  <ul style="padding-left: 24px; margin-bottom: 0; margin-top: 0;">A <code>Map</code> object where the keys are object types and the values are either:</ul>
+  <ul style="margin-top: 4px; margin-bottom: 6px; padding-left: 64px;">
+    <li><b>Integer</b> or <b>String</b>:</li>
+    <ul style="margin-bottom: 0; padding-left: 24px;">
+      <li>Both <b>Integer</b> and <b>String</b> are passed to the <code>StopAt</code> parameter of <code>GetPropsInfo</code>.</li>
+    </ul>
+    <li><b>Func</b> or callable <b>Object</b>:
+      <br>
+      <i>Parameters</i>
+      <ol type="1" style="margin-bottom: 0;">
+        <li>The <b>Object</b> being evaluated.</li>
+      </ol>
+      <i>Return</i>
+      <ul style="margin-bottom: 0;">
+        <li><b>Integer</b> or <b>String</b>: The value to pass to the <code>StopAt</code> parameter of <code>GetPropsInfo</code>.</li>
+      </ol>
+    </ul>
+  </ul>
+  <ul style="padding-left: 24px;">Use the <code>Map</code>'s <code>Default</code> property to set a condition for all types not included within the <code>Map</code>.</ul>
+</ul>
 
 <h2>Callbacks</h2>
 
-Name|Type|Default|Description
-----------|----|-------|-----
-<span id="callbackgeneral" style="font-size:16px;"><b>CallbackGeneral</b></span>|*|""|A function or callable object, or an array of one or more functions or callable objects, that will be called for each object prior to processing. The function should accept up to two parameters:<ol><li><b>{*}</b> - The object about to be processed.</li><li><b>{VarRef}</b> - A variable that will receive a reference to the JSON string being created.</li></ol><b>Return:</b> The function(s) can return a nonzero value to direct <code>StringifyAll</code> to skip processing the object. Any further functions in an array of functions are necessarily also skipped in this case.The function should return a value to one of these effects:<ul><li>If the return value is a <b>string</b>, that string will be used as the placeholder for the object in the JSON string.</li><li>If the return value is <b>-1</b>, <code>StringifyAll</code> skips that object completely and it is not represented in the JSON string.</li><li>If the return value is <b>any other nonzero value</b>, then:</li><ul><li>If <code>CallbackPlaceholder</code> is set, <code>CallbackPlaceholder</code> will be called to generate the placeholder. Else,</li><li>If <code>CallbackPlaceholder</code> is unset, the built-in placeholder is used.</li></ul><li>If the return value is <b>zero or an empty string</b>, <code>StringifyAll</code> proceeds calling the next function if there is one, or proceeds stringifying the object.</li></ul>If your function returns a string:<ul><li>Don't forget to escape the necessary characters. You can call <code>StringifyAll.StrEscapeJson</code>to do this.</li><li>Note that <code>StringifyAll</code> does not enclose the value in quotes when adding it to the JSON string. Your function should add the quote characters, or call <code>StringifyAll.StrEscapeJson</code> which has the option to add the quote characters for you.</li></ul><br>The function(s) should not call <code>StringifyAll</code>; <code>StringifyAll</code> relies on several variables in the function's scope that would be altered by concurrent function calls, causing unexpected behavior for any earlier <code>StringifyAll</code> calls.<br><br>The following is a description of the part of the process which the function(s) are called. <ul><li><code>StringifyAll</code> proceeds in two stages, initialization and recursive processing. After initialization, the function <code>Recurse</code> is called once, which starts the second stage. When <code>StringifyAll</code> encounters a value that is an object, it proceeds through a series of condition checks to determine if it will call <code>Recurse</code> again for that value. Before calling <code>Recurse</code>, <code>StringifyAll</code> checks the following conditions. When a value is skipped, a placeholder is printed instead.</li><ul><li>If the value is a <code>ComObject</code> or <code>ComValue</code>, the value is skipped.</li><li>If the value has already been stringified, the value is skipped. This is intended to prevent infinite recursion, but currently causes <code>StringifyAll</code> to skip all subsequent encounters of an object after the first, not just problematic ones. I will implement a more flexible solution.</li><li>If no further recursion is permitted according to <code>MaxDepth</code>, the value is skipped. If none of the above conditions cause <code>StringifyAll</code> to skip the object, <code>StringifyAll</code> then calls the callback function(s). This occurs right before <code>Recurse</code> is called.</ul></ul>
-<span id="callbackplaceholder" style="font-size:16px;"><b>CallbackPlaceholder</b></span>|*|""|When <code>StringifyAll</code> skips processing an object, a placeholder is printed instead. You can define <code>CallbackPlaceholder</code> with any callable object to customize the string that gets printed. The function must follow these specifications:<li><b>Parameters:</b><ol type="1"></li><li><b>{Object}</b> - The <code>controller</code> object. The <code>controller</code> is an internal mechanism with various callable properties, but the only property of use for this purpose is <code>Path</code>, which has a string value representing the object path up to but not including the object that is currently being evaluated. In the below example, if your function is called for a placeholder for the object at <code>obj.nestedObj.doubleNestedObj</code>, the path will be "$.nestedObj".<pre>Obj := {<br>    nestedObj: {<br>        doubleNestedObj: {  prop: 'value' }<br>    }<br>}</pre></li><li><b>{\*}</b> - The object being evaluated.</li><li><b>{VarRef}</b> - An optional <code>VarRef</code> parameter that will receive the name of the property for objects that are encountered while iterating the parent object's properties.</li><li><b>{VarRef}</b> - An optional <code>VarRef</code> parameter that will receive either of:</li><ul><li>The loop index integer value for objects that are encountered while enumerating an object in 1-parameter mode.</li><li>The "key" (the value received by the first variable in a for-loop) for objects that are encountered while enumerating an object in 2-parameter mode. The key will already have been escaped and enclosed in double quotes at this point, making it somewhat awkward to work with because escaping it again will re-escape the existing escape sequences. If your function will use the key for some purpose, then you will likely want to do something like the below example.</li></ul><pre>MyPlaceholderFunc(controller, obj, &prop?, &key?) {<br>    if IsSet(prop) {<br>        ; make something<br>    } else if IsSet(key) {<br>        if IsNumber(key) {<br>            ; make something<br>        } else {<br>            key := Trim(key, '"')<br>            if InStr(key, '\') {<br>                StringifyAll.StrUnescapeJson(&key)<br>            }<br>            ; make something<br>        }<br>    }<br>}</pre></ol></li><li><b>Return:</b> The function should return the placeholder string. Don't forget to escape the necessary characters. You can call <code>StringifyAll.StrEscapeJson</code> to do this. Also don't forget to enclose the string in double quotes.</li>It does not matter if the function modifies the two <code>VarRef</code> parameters as <code>StringifyAll</code> will not use them again at that point.<br>If your function will not use one or more parameters, specify the "*" operator to exclude them.
+<ul id="callbackgeneral"><b>{*}</b> [ <b>CallbackGeneral</b>  = <code>""</code> ]
+  <ul style="padding-left: 24px; margin-top: 0; margin-bottom: 0;">A <b>Func</b> or callable <b>Object</b>, or an array of one or more <b>Func</b> or callable <b>Object</b> values, that will be called for each object prior to processing.</ul>
+  <ul style="padding-left: 24px; margin-top: 0; margin-bottom: 0;"><i>Parameters</i>
+    <ol type="1" style="margin-top: 4px; margin-bottom: 6px; padding-left: 36px;">
+      <li><b>{*}</b> - The object being evaluated.</li>
+      <li><b>{VarRef}</b> - A variable that will receive a reference to the JSON string being created.</li>
+    </ol>
+  </ul>
+  <ul style="padding-left: 24px; margin-top: 0; margin-bottom: 0;"><i>Return</i>
+    <ul style="padding-left: 24px; margin-top: 0; margin-bottom: 0;">The function(s) can return a nonzero value to direct <code>StringifyAll</code> to skip processing the object. Any further functions in an array of functions are necessarily also skipped in this case. The function should return a value to one of these effects:</ul>
+    <ul style="margin-top: 4px; margin-bottom: 6px; padding-left: 36px;">
+      <li><b>String</b>: The string will be used as the placeholder for the object in the JSON string.</li>
+      <li><b>-1</b>: <code>StringifyAll</code> skips that object completely and it is not represented in the JSON string.</li>
+      <li><b>Any other nonzero value</b>:</li>
+      <ul style="margin-bottom: 0; padding-left: 24px;">
+        <li>If <code>CallbackPlaceholder</code> is set, <code>CallbackPlaceholder</code> will be called to generate the placeholder.</li>
+        <li>If <code>CallbackPlaceholder</code> is unset, the built-in placeholder is used.</li>
+      </ul>
+      <li><b>Zero or an empty string</b>: <code>StringifyAll</code> proceeds calling the next function if there is one, or proceeds stringifying the object.</li>
+    </ul>
+  </ul>
+  <ul style="padding-left: 48px; margin-bottom: 0;">If the function returns a string:</ul>
+  <ul style="margin-top: 4px; margin-bottom: 6px; padding-left: 88px;">
+    <li>Don't forget to escape the necessary characters. You can call <code>StringifyAll.StrEscapeJson</code>to do this.</li>
+    <li>Note that <code>StringifyAll</code> does not enclose the value in quotes when adding it to the JSON string. Your function should add the quote characters, or call <code>StringifyAll.StrEscapeJson</code> which has the option to add the quote characters for you.</li>
+  </ul>
+</ul>
 
+<ul id="callbackplaceholder"><b>{*}</b> [ <b>CallbackPlaceholder</b>  = <code>""</code> ]
+  <ul style="padding-left: 24px; margin-top: 0; margin-bottom: 0;">When <code>StringifyAll</code> skips processing an object, a placeholder is printed instead. You can define <code>CallbackPlaceholder</code> with any callable object to customize the string that gets printed.</ul>
+  <ul style="padding-left: 24px; margin-top: 0; margin-bottom: 0;"><i>Parameters</i>
+    <ul style="padding-left: 24px; margin-top: 0; margin-bottom: 0;">It does not matter if the function modifies the two <code>VarRef</code> parameters as <code>StringifyAll</code> will not use them again at that point.</ul>
+    <ol type="1" style="margin-top: 4px; margin-bottom: 6px; padding-left: 64px;">
+      <li>
+        <b>{Object}</b> - The <code>controller</code> object. The <code>controller</code> is an internal mechanism with various callable properties, but the only property of use for this purpose is <code>Path</code>, which has a string value representing the object path up to but not including the object that is currently being evaluated. In the below example, if your function is called for a placeholder for the object at <code>obj.nestedObj.doubleNestedObj</code>, the path will be "$.nestedObj".
+        <pre>
+Obj := {
+  nestedObj: {
+      doubleNestedObj: {  prop: 'value' }
+  }
+}
+        </pre>
+      </li>
+      <li><b>{*}</b> - The object being evaluated.</li>
+      <li><b>{VarRef}</b> - An <b>optional</b> <code>VarRef</code> parameter that will receive the name of the property for objects that are encountered while iterating the parent object's properties.</li>
+      <li><b>{VarRef}</b> - An <b>optional</b> <code>VarRef</code> parameter that will receive either of:</li>
+      <ul style="margin-bottom: 0; padding-left: 24px;">
+        <li>The loop index integer value for objects that are encountered while enumerating an object in 1-parameter mode.</li>
+        <li>
+          The "key" (the value received by the first variable in a for-loop) for objects that are encountered while enumerating an object in 2-parameter mode. The key will already have been escaped and enclosed in double quotes at this point, making it somewhat awkward to work with because escaping it again will re-escape the existing escape sequences. If your function will use the key for some purpose, then you will likely want to do something like the below example.
+          <pre>
+MyPlaceholderFunc(controller, obj, &prop?, &key?) {
+  if IsSet(prop) {
+      ; make something
+  } else if IsSet(key) {
+      if IsNumber(key) {
+          ; make something
+      } else {
+          key := Trim(key, '"')
+          if InStr(key, '\') {
+              StringifyAll.StrUnescapeJson(&key)
+          }
+          ; make something
+      }
+  }
+}
+          </pre>
+        </li>
+      </ul>
+    </ol>
+  </ul>
+  <ul style="padding-left: 24px; margin-top: 0; margin-bottom: 0;"><i>Return</i>
+    <ul style="margin-bottom: 0; padding-left: 48px;">
+      <li><b>String</b>: The placeholder string.</li>
+      <ul style="margin-bottom: 0; padding-left: 24px;">
+        <li>Don't forget to escape the necessary characters. You can call <code>StringifyAll.StrEscapeJson</code>to do this.</li>
+        <li>Note that <code>StringifyAll</code> does not enclose the value in quotes when adding it to the JSON string. Your function should add the quote characters, or call <code>StringifyAll.StrEscapeJson</code> which has the option to add the quote characters for you.</li>
+      </ul>
+    </ul>
+  </ul>
+</ul>
 
 <h2>Newline and indent options</h2>
 
-Name|Type|Default|Description
-----------|----|-------|-----
-<span id="condensecharlimit" style="font-size:16px;"><b>CondenseCharLimit<br>CondenseCharLimitEnum1<br>CondenseCharLimitEnum2<br>CondenseCharLimitProps</b></span>|Integer|0|Sets a threshold which <code>StringifyAll</code> uses to determine whether an object's JSON substring should be condensed to a single line as a function of the character length of the substring. If <code>CondenseCharLimit</code> is set, you can still specify individual options for the other three and the individual option will take precedence over <code>CondenseCharLimit</code>. The substring length is measured beginning from the open brace.
-<span id="indent" style="font-size:16px;"><b>Indent</b></span>|String|"\`s\`s\`s\`s"|The literal string that will be used for one level of indentation.
-<span id="newline" style="font-size:16px;"><b>Newline</b></span>|String|"\`r\`n"|The literal string that will be used for line breaks. If set to zero or an empty string, the <code>Singleline</code> option is effectively enabled.
-<span id="newlinedepthlimit" style="font-size:16px;"><b>NewlineDepthLimit</b></span>|Integer|0|Sets a threshold directing <code>StringifyAll</code> to stop adding line breaks between values after exceeding the threshold.
-<span id="singleline" style="font-size:16px;"><b>Singleline</b></span>|Boolean|false|If true, the JSON string is printed without line breaks or indentation. All other "Newline and indent options" are ignored.
+<ul id="condensecharlimit" style="margin-top: 0;">Each of <code>CondenseCharLimit</code>, <code>CondenseCharLimitEnum1</code>, <code>CondenseCharLimitEnum2</code>, and <code>CondenseCharLimitProps</code>, set a threshold which <code>StringifyAll</code> will use to condense the an object's substring if the length, in characters, of the substring is less than or equal to the value. The substring length is measured beginning from the open brace and excludes external whitespace such as newline characters and indentation that is not part of a string literal value.</ul>
+
+<ul id="condensecharlimit" style="margin-top: 0; margin-bottom: 0;"><b>{Integer}</b> [ <b>CondenseCharLimit</b>  = <code>0</code> ]
+  <ul style="padding-left:24px;">Applies to all substrings. If <code>CondenseCharLimit</code> is set, you can still specify individual options for the other three and the individual option will take precedence over <code>CondenseCharLimit</code>.</ul>
+</ul>
+
+<ul id="condensecharlimitenum1" style="margin-top: 0; margin-bottom: 0;"><b>{Integer}</b> [ <b>CondenseCharLimitEnum1</b>  = <code>0</code> ]
+  <ul style="padding-left:24px;">Applies to substrings that are created by calling an object's enumerator in 1-param mode.</ul>
+</ul>
+
+<ul id="condensecharlimitenum2" style="margin-top: 0; margin-bottom: 0;"><b>{Integer}</b> [ <b>CondenseCharLimitEnum2</b>  = <code>0</code> ]
+  <ul style="padding-left:24px;">Applies to substrings that are created by calling an object's enumerator in 2-param mode.</ul>
+</ul>
+
+<ul id="condensecharlimitprops" style="margin-top: 0; margin-bottom: 0;"><b>{Integer}</b> [ <b>CondenseCharLimitProps</b>  = <code>0</code> ]
+  <ul style="padding-left:24px;">Applies to substrings that are created by processing an object's properties.</ul>
+</ul>
+
+<ul id="indent"><b>{String}</b> [ <b>Indent</b>  = <code>"`s`s`s`s"</code> ]
+  <ul style="padding-left:24px;">The literal string that will be used for one level of indentation.</ul>
+</ul>
+
+<ul id="newline"><b>{String}</b> [ <b>Newline</b>  = <code>"`r`n"</code> ]
+  <ul style="padding-left:24px;">The literal string that will be used for line breaks. If set to zero or an empty string, the <code>Singleline</code> option is effectively enabled.</ul>
+</ul>
+
+<ul id="newlinedepthlimit"><b>{Integer}</b> [ <b>NewlineDepthLimit</b>  = <code>0</code> ]
+  <ul style="padding-left:24px;">Sets a threshold directing <code>StringifyAll</code> to stop adding line breaks between values after exceeding the threshold.</ul>
+</ul>
+
+<ul id="singleline"><b>{Boolean}</b> [ <b>Singleline</b>  = <code>false</code> ]
+  <ul style="padding-left:24px;">If true, the JSON string is printed without line breaks or indentation. All other "Newline and indent options" are ignored.</ul>
+</ul>
 
 <h2>Print options</h2>
 
-Name|Type|Default|Description
-----------|----|-------|-----
-<span id="itemprop" style="font-size:16px;"><b>ItemProp</b></span>|String|"\_\_Items\_\_"|The name that <code>StringifyAll</code> will use as a faux-property for including an object's items returned by its enumerator.
-<span id="printerrors" style="font-size:16px;"><b>PrintErrors</b></span>|Boolean|false|When true, if <code>StringifyAll</code> encounters an error when attempting to access the value of an object's property, the error message is included in the JSON string as the value of the property. When false, <code>StringifyAll</code> skips the property.
-<span id="quotenumerickeys" style="font-size:16px;"><b>QuoteNumericKeys</b></span>|Boolean|false|When true, and when <code>StringifyAll</code> is processing an object's enumerator in 2-param mode, if the value returned to the first parameter (the "key") is numeric, it will be quoted in the JSON string.
-<span id="rootname" style="font-size:16px;"><b>RootName</b></span>|String|"$"|Prior to recursively stringifying a nested object, <code>StringifyAll</code> checks if the object has already been processed. (This is to prevent infinite recursion, and more flexible processing will be implemented). If an object has already been processed, a placeholder is printed in its place. The placeholder printed as a result of this condition is different than placeholders printed for other reasons. In this case, the placeholder is a string representation of the object path at which the object was first encountered. This is so one's self, or one's code, can locate the object in the JSON string if needed. <code>RootName</code> specifies the name of the root object used within any occurrences of this placeholder string.
-<span id="unsetarrayitem" style="font-size:16px;"><b>UnsetArrayItem</b></span>|String|"\`"\`""|The string to print for unset array items.
+<ul id="itemprop"><b>{String}</b> [ <b>ItemProp</b>  = <code>"__Items__"</code> ]
+  <ul style="padding-left:24px;">The name that <code>StringifyAll</code> will use as a faux-property for including an object's items returned by its enumerator.</ul>
+</ul>
+
+<ul id="printerrors"><b>{Boolean}</b> [ <b>PrintErrors</b>  = <code>false</code> ]
+  <ul style="padding-left:24px;">When true, if <code>StringifyAll</code> encounters an error when attempting to access the value of an object's property, the error message is included in the JSON string as the value of the property. When false, <code>StringifyAll</code> skips the property.</ul>
+</ul>
+
+<ul id="quotenumerickeys"><b>{Boolean}</b> [ <b>QuoteNumericKeys</b>  = <code>false</code> ]
+  <ul style="padding-left:24px;">When true, and when <code>StringifyAll</code> is processing an object's enumerator in 2-param mode, if the value returned to the first parameter (the "key") is numeric, it will be quoted in the JSON string.</ul>
+</ul>
+
+<ul id="rootname"><b>{String}</b> [ <b>RootName</b>  = <code>"$"</code> ]
+  <ul style="padding-left:24px;">Prior to recursively stringifying a nested object, <code>StringifyAll</code> checks if the object has already been processed. (This is to prevent infinite recursion, and more flexible processing will be implemented). If an object has already been processed, a placeholder is printed in its place. The placeholder printed as a result of this condition is different than placeholders printed for other reasons. In this case, the placeholder is a string representation of the object path at which the object was first encountered. This is so one's self, or one's code, can locate the object in the JSON string if needed. <code>RootName</code> specifies the name of the root object used within any occurrences of this placeholder string.</ul>
+</ul>
+
+<ul id="unsetarrayitem"><b>{String}</b> [ <b>UnsetArrayItem</b>  = <code>"`"`""</code> ]
+  <ul style="padding-left:24px;">The string to print for unset array items.</ul>
+</ul>
 
 <h2>General options</h2>
 
-Name|Type|Default|Description
-----------|----|-------|-----
-<span id="initialptrlistcapacity" style="font-size:16px;"><b>InitialPtrListCapacity</b></span>|Integer|64|<code>StringifyAll</code> tracks the ptr addresses of every object it stringifies to prevent infinite recursion. <code>StringifyAll</code> will set the initial capacity of the <code>Map</code> object used for this purpose to <code>InitialPtrListCapacity</code>.
-<span id="initialstrcapacity" style="font-size:16px;"><b>InitialStrCapacity</b>|Integer|65536|<code>StringifyAll</code> calls <code>VarSetStrCapacity</code> using <code>InitialStrCapacity</code> for the output string during the initialization stage. For the best performance, you can overestimate the approximate length of the string; <code>StringifyAll</code> calls <code>VarSetStrCapacity(&OutStr, -1)</code> at the end of the function to release any unused memory.
+<ul id="initialptrlistcapacity"><b>{Integer}</b> [ <b>InitialPtrListCapacity</b>  = <code>64</code> ]
+  <ul style="padding-left:24px;"><code>StringifyAll</code> tracks the ptr addresses of every object it stringifies to prevent infinite recursion. <code>StringifyAll</code> will set the initial capacity of the <code>Map</code> object used for this purpose to <code>InitialPtrListCapacity</code>.</ul>
+</ul>
+
+<ul id="initialstrcapacity"><b>{Integer}</b> [ <b>InitialStrCapacity</b>  = <code>65536</code> ]
+  <ul style="padding-left:24px;"><code>StringifyAll</code> calls <code>VarSetStrCapacity</code> using <code>InitialStrCapacity</code> for the output string during the initialization stage. For the best performance, you can overestimate the approximate length of the string; <code>StringifyAll</code> calls <code>VarSetStrCapacity(&OutStr, -1)</code> at the end of the function to release any unused memory.</ul>
+</ul>
 
 <h1>StringifyAll's process</h1>
 
 This section describes `StringifyAll`'s process. This section is intended to help you better understand how the options will impact the output string. This section is not complete.
 
-<b>Properties</b>
+<h3><b>Properties</b></h3>
 
-For every object, prior to adding the object's open brace to the string, <code>StringifyAll</code> proceeds through these steps:
-<ul>
-  <li>If <code>Options.PropsTypeMap.HasOwnProp('Default')</code> then this code is used:</li>
+For every object, prior to adding the object's open brace to the string, `StringifyAll` proceeds through these steps:
+
+  - If `Options.PropsTypeMap.HasOwnProp('Default')` then this code is used:
 
 ```
 if IsObject(Item := propsTypeMap.Get(Type(Obj))) {
@@ -134,7 +343,7 @@ if IsObject(Item := propsTypeMap.Get(Type(Obj))) {
 }
 ```
 
-  <li>Else, this code is used:</li>
+  - Else, this code is used:
 
 ```
 if propsTypeMap.Has(Type(Obj)) {
@@ -145,35 +354,54 @@ if propsTypeMap.Has(Type(Obj)) {
     }
 }
 ```
+  - If the return value is nonzero:
 
-  <li>If the return value is nonzero:</li>
-    <ul>
-      <li><code>StringifyAll</code> calls <code>PropsInfoObj := GetPropsInfo(Obj, StopAt, excludeProps, false, , excludeMethods)</code>.</li>
-      <li>If <code>PropsInfoObj.Count > 0</code>, <code>StringifyAll</code> processes only the properties exposed by <code>PropsInfoObj</code>. You can control this with two options.</li>
-      <ul>
-        <li><code>Options.ExcludeProps</code> is effective and straightforward. Write a comma-delimited string of property names to exclude. This would apply to all objects.</li>
-        <li><code>Options.FilterTypeMap</code> affords greater flexibility. <code>PropsInfo</code> objects are designed with a filter system to make it easy to programmatically include a set of properties, and exclude the other, from whatever one's code is doing with the <code>PropsInfo</code> object. See "example\example.ahk" and/or "inheritance\example-Inheritance.ahk" for examples.</li>
-      </ul>
-      <li>Else, <code>StringifyAll</code> skips the properties for that object and goes on to check if the enumerator will be called.</li>
-    </ul>
-    <li>If the return value is falsy, <code>StringifyAll</code> skips the properties for that object and goes on to check if the enumerator will be called.</li>
+    - `StringifyAll` calls `PropsInfoObj := GetPropsInfo(Obj, StopAt, excludeProps, false, , excludeMethods)`.
+    - If `PropsInfoObj.Count > 0`, `StringifyAll` processes only the properties exposed by `PropsInfoObj`. You can control this with two options.
+
+      - `Options.ExcludeProps` is effective and straightforward. Write a comma-delimited string of property names to exclude. This would apply to all objects.
+      - `Options.FilterTypeMap` affords greater flexibility. `PropsInfo` objects are designed with a filter system to make it easy to programmatically include a set of properties, and exclude the other, from whatever one's code is doing with the `PropsInfo` object. See "example\example.ahk" and/or "inheritance\example-Inheritance.ahk" for examples.
+
+    - Else, `StringifyAll` skips the properties for that object and goes on to check if the enumerator will be called.
+
+  - If the return value is falsy, `StringifyAll` skips the properties for that object and goes on to check if the enumerator will be called.
+
+This will come into play if you want an `Array` or `Map` object's string representation to have the appearance of what we typically expect for arrays and maps. To accomplish this, `StringifyAll` must not process any properties for those objects. You can accomplish this by simply defining two items in the map: `Options.PropsTypeMap := Map("Array", 0, "Map", 0)`. Don't forget to set `Options.PropsTypeMap.Default := 1` if you still want other objects to have their properties processed.
+
+<h3><b>CallbackGeneral</b></h3>
+
+The following is a description of the part of the process which the function(s) are called.
+<ul style="padding-left:24px;">
+  <code>StringifyAll</code> proceeds in two stages, initialization and recursive processing. After initialization, the function <code>Recurse</code> is called once, which starts the second stage.
+  <br>When <code>StringifyAll</code> encounters a value that is an object, it proceeds through a series of condition checks to determine if it will call <code>Recurse</code> again for that value. When a value is skipped, a placeholder is printed instead.<code>StringifyAll</code> checks the following conditions.
+  <ul style="padding-left:48px;">
+    <li>If the value is a <code>ComObject</code> or <code>ComValue</code>, the value is skipped.</li>
+    <li>If the value has already been stringified, the value is skipped. This is intended to prevent infinite recursion, but currently causes <code>StringifyAll</code> to skip all subsequent encounters of an object after the first, not just problematic ones. I will implement a more flexible solution.</li>
+    <li>If <code>MaxDepth</code> has been reached, the value is skipped.</li>
   </ul>
+  If none of the above conditions cause <code>StringifyAll</code> to skip the object, <code>StringifyAll</code> then calls the <code>CallbackGeneral</code> function(s).
+  <br>If none of the <code>CallbackGeneral</code> functions direct <code>StringifyAll</code> to skip the object, <code>Recurse</code> is called.
 </ul>
-
-This will come into play if you want an <code>Array</code> or <code>Map</code> object's string representation to have the appearance of what we typically expect for arrays and maps. To accomplish this, <code>StringifyAll</code> must not process any properties for those objects. You can accomplish this by simply defining two items in the map: <code>Options.PropsTypeMap := Map("Array", 0, "Map", 0)</code>. Don't forget to set <code>Options.PropsTypeMap.Default := 1</code> if you still want other objects to have their properties processed.
-
 
 <h1>Changelog</h1>
 
-2025-05-30 - 1.0.5
+
+<h4>2025-05-30 - 1.0.5</h4>
+
 - Fixed an error causing `StringifyAll` to incorrectly handle objects returned by a `Map` object's enumerator, resulting in an invalid JSON string.
 
-2025-05-29 - 1.0.4
+
+<h4>2025-05-29 - 1.0.4</h4>
+
 - Corrected the order of operations in `StringifyAll.StrUnescapeJson`.
 
-2025-05-29 - 1.0.3
+
+<h4>2025-05-29 - 1.0.3</h4>
+
 - Implemented `ConfigLibrary`.
 
-2025-05-28 - 1.0.1
+
+<h4>2025-05-28 - 1.0.1</h4>
+
 - Adjusted how `Options.PropsTypeMap` is handled. This change did not modify `StringifyAll`'s behavior, but it is now more clear both in the code and in the documentation what the default value is and what the default value does.
 - Added "StringifyAll's process" to the docs.
