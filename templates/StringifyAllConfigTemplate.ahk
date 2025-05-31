@@ -11,6 +11,7 @@ class StringifyAllConfig {
     static StopAtTypeMap := unset
 
 ; ==== Callbacks -----------------------------------------------------------------------------------
+    static CallbackError := unset
     static CallbackGeneral := unset
     static CallbackPlaceholder := unset
 

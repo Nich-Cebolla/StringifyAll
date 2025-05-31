@@ -1,5 +1,5 @@
 
-# StringifyAll - v1.0.5
+# StringifyAll - v1.1.0
 A customizable solution for serializing AutoHotkey (AHK) object properties, including inherited properties, and/or items into a 100% valid JSON string.
 
 # Introduction
@@ -12,6 +12,8 @@ A customizable solution for serializing AutoHotkey (AHK) object properties, incl
 - Pass an object to the `Options` parameter.
 
 The options defined by the `Options` parameter supercede options defined by the `StringifyAllConfig` class. This is convenient for setting your own defaults based on your personal preferences / project needs using the class object, and then passing an object to the `Options` parameter to adjust your defaults on-the-fly.
+
+Callback functions must not call `StringifyAll`. `StringifyAll` relies on several variables in the function's scope. Concurrent function calls would change their values, causing unexpected behavior for earlier calls.
 
 For usage examples, see "example\example.ahk".
 
@@ -53,6 +55,7 @@ The format for these options are:<br>
 <span style="padding-left: 24px;">Description</span>
 
 Jump to:
+<a href="#callerror"><br>CallbackError</a>
 <a href="#callbackgeneral"><br>CallbackGeneral</a>
 <a href="#callbackplaceholder"><br>CallbackPlaceholder</a>
 <a href="#enumtypemap"><br>EnumTypeMap</a>
@@ -74,7 +77,7 @@ Jump to:
 <a href="#stopattypemap"><br>StopAtTypeMap</a>
 <a href="#unsetarrayitem"><br>UnsetArrayItem</a>
 
-## Enum options
+<h2>Enum options</h2>
 
 <ul id="enumtypemap"><b>{Map}</b> [ <b>EnumTypeMap</b>  = <code>Map("Array", 1, "Map", 2, "RegExMatchInfo", 2)</code> ]
   <ul style="padding-left: 24px; margin-top: 0; margin-bottom: 0;">
@@ -175,6 +178,33 @@ Jump to:
 
 <h2>Callbacks</h2>
 
+<ul id="callbackerror"><b>{*}</b> [ <b>CallbackError</b>  = <code>""</code> ]
+  <ul style="padding-left: 24px; margin-top: 0; margin-bottom: 0;">A <b>Func</b> or callable <b>Object</b> that will be called when <code>StringifyAll</code> encounters an error attempting to access a property's value. When <code>CallbackError</code> is set, <code>StringifyAll</code> ignores <code>PrintErrors</code>.</ul>
+  <ul style="padding-left: 24px; margin-top: 0; margin-bottom: 0;"><i>Parameters</i>
+    <ol type="1" style="margin-top: 4px; margin-bottom: 6px; padding-left: 36px;">
+      <li><b>{Object}</b> - The <code>controller</code> object, which has various properties but the only propery of value here is the <code>path</code> property, which returns a string representation of the object path up to the object currently being evaluated.</li>
+      <li><b>{Error}</b> - The error object.</li>
+      <li><b>{*}</b> - The object currently being evaluated.</li>
+      <li><b>{PropsInfoItem}</b> - The <code>PropsInfoItem</code> object associated with the property that caused the error.</li>
+    </ol>
+  </ul>
+  <ul style="padding-left: 24px; margin-top: 0; margin-bottom: 0;"><i>Return</i>
+    <ul style="padding-left: 24px; margin-top: 0; margin-bottom: 0;"></ul>
+    <ul style="margin-top: 4px; margin-bottom: 6px; padding-left: 36px;">
+      <li><b>String</b>: The string will be printed as the property's value.</li>
+      <li><b>-1</b>: <code>StringifyAll</code> skips property completely and it is not represented in the JSON string.</li>
+      <li><b>Any other nonzero value</b>: <code>StringifyAll</code> prints just the <code>Message</code> property of the <code>Error</code> object.</li>
+      <li><b>Zero or an empty string</b>: <code>StringifyAll</code> treats the <code>Error</code> object as the property's value. If no other conditions prevents it, the <code>Error</code> object will be stringified.</li>
+    </ul>
+  </ul>
+  <ul style="padding-left: 48px; margin-bottom: 0;">If the function returns a string:</ul>
+  <ul style="margin-top: 4px; margin-bottom: 6px; padding-left: 88px;">
+    <li>Don't forget to escape the necessary characters. You can call <code>StringifyAll.StrEscapeJson</code>to do this.</li>
+    <li>Note that <code>StringifyAll</code> does not enclose the value in quotes when adding it to the JSON string. Your function should add the quote characters, or call <code>StringifyAll.StrEscapeJson</code> which has the option to add the quote characters for you.</li>
+  </ul>
+</ul>
+
+
 <ul id="callbackgeneral"><b>{*}</b> [ <b>CallbackGeneral</b>  = <code>""</code> ]
   <ul style="padding-left: 24px; margin-top: 0; margin-bottom: 0;">A <b>Func</b> or callable <b>Object</b>, or an array of one or more <b>Func</b> or callable <b>Object</b> values, that will be called for each object prior to processing.</ul>
   <ul style="padding-left: 24px; margin-top: 0; margin-bottom: 0;"><i>Parameters</i>
@@ -209,7 +239,7 @@ Jump to:
     <ul style="padding-left: 24px; margin-top: 0; margin-bottom: 0;">It does not matter if the function modifies the two <code>VarRef</code> parameters as <code>StringifyAll</code> will not use them again at that point.</ul>
     <ol type="1" style="margin-top: 4px; margin-bottom: 6px; padding-left: 64px;">
       <li>
-        <b>{Object}</b> - The <code>controller</code> object. The <code>controller</code> is an internal mechanism with various callable properties, but the only property of use for this purpose is <code>Path</code>, which has a string value representing the object path up to but not including the object that is currently being evaluated. In the below example, if your function is called for a placeholder for the object at <code>obj.nestedObj.doubleNestedObj</code>, the path will be "$.nestedObj".
+        <b>{Object}</b> - The <code>controller</code> object. The <code>controller</code> is an internal mechanism with various callable properties, but the only property of use for this purpose is <code>Path</code>, which has a string value representing the object path up to the object that is currently being evaluated. In the below example, if your function is called for a placeholder for the object at <code>obj.nestedObj.doubleNestedObj</code>, the path will be "$.nestedObj.doubleNestedObj".
         <pre>
 Obj := {
   nestedObj: {
@@ -259,7 +289,7 @@ MyPlaceholderFunc(controller, obj, &prop?, &key?) {
 
 <h2>Newline and indent options</h2>
 
-<ul id="condensecharlimit" style="margin-top: 0;">Each of <code>CondenseCharLimit</code>, <code>CondenseCharLimitEnum1</code>, <code>CondenseCharLimitEnum2</code>, and <code>CondenseCharLimitProps</code>, set a threshold which <code>StringifyAll</code> will use to condense the an object's substring if the length, in characters, of the substring is less than or equal to the value. The substring length is measured beginning from the open brace and excludes external whitespace such as newline characters and indentation that is not part of a string literal value.</ul>
+<ul style="margin-top: 0;">Each of <code>CondenseCharLimit</code>, <code>CondenseCharLimitEnum1</code>, <code>CondenseCharLimitEnum2</code>, and <code>CondenseCharLimitProps</code>, set a threshold which <code>StringifyAll</code> will use to condense the an object's substring if the length, in characters, of the substring is less than or equal to the value. The substring length is measured beginning from the open brace and excludes external whitespace such as newline characters and indentation that is not part of a string literal value.</ul>
 
 <ul id="condensecharlimit" style="margin-top: 0; margin-bottom: 0;"><b>{Integer}</b> [ <b>CondenseCharLimit</b>  = <code>0</code> ]
   <ul style="padding-left:24px;">Applies to all substrings. If <code>CondenseCharLimit</code> is set, you can still specify individual options for the other three and the individual option will take precedence over <code>CondenseCharLimit</code>.</ul>
@@ -299,8 +329,14 @@ MyPlaceholderFunc(controller, obj, &prop?, &key?) {
   <ul style="padding-left:24px;">The name that <code>StringifyAll</code> will use as a faux-property for including an object's items returned by its enumerator.</ul>
 </ul>
 
-<ul id="printerrors"><b>{Boolean}</b> [ <b>PrintErrors</b>  = <code>false</code> ]
-  <ul style="padding-left:24px;">When true, if <code>StringifyAll</code> encounters an error when attempting to access the value of an object's property, the error message is included in the JSON string as the value of the property. When false, <code>StringifyAll</code> skips the property.</ul>
+<ul id="printerrors"><b>{Boolean|String}</b> [ <b>PrintErrors</b>  = <code>false</code> ]
+  <ul style="padding-left:24px;">
+    Influences how <code>StringifyAll</code> handles errors when accessing a property value. <code>PrintErrors</code> is ignored if <code>CallbackError</code> is set.</ul>
+  <ul style="padding-left:48px;">
+    <li>If <code>PrintErrors</code> is a string value, it should be a comma-delimited list of <code>Error</code> property names to include in the output as the value of the property that caused the error.</li>
+    <li>If any other nonzero value, <code>StringifyAll</code> will print just the "Message" property of the <code>Error</code> object in the string.</li>
+    <li>If zero or an empty string, <code>StringifyAll</code> skips the property.</li>
+  </ul>
 </ul>
 
 <ul id="quotenumerickeys"><b>{Boolean}</b> [ <b>QuoteNumericKeys</b>  = <code>false</code> ]
@@ -385,21 +421,23 @@ The following is a description of the part of the process which the function(s) 
 
 <h1>Changelog</h1>
 
+<h4>2025-05-31 - 1.1.0</h4>
+
+- Implemented `CallbackError`.
+- Adjusted `PrintErrors` to allow specifying what properties to be included in the output string.
+- Fixed an error causing a small chance for `StringifyAll` to incorrectly apply a property value to the subsequent property.
 
 <h4>2025-05-30 - 1.0.5</h4>
 
 - Fixed an error causing `StringifyAll` to incorrectly handle objects returned by a `Map` object's enumerator, resulting in an invalid JSON string.
 
-
 <h4>2025-05-29 - 1.0.4</h4>
 
 - Corrected the order of operations in `StringifyAll.StrUnescapeJson`.
 
-
 <h4>2025-05-29 - 1.0.3</h4>
 
 - Implemented `ConfigLibrary`.
-
 
 <h4>2025-05-28 - 1.0.1</h4>
 

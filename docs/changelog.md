@@ -1,12 +1,22 @@
-2025-05-30 - 1.0.5
+<h4>2025-05-31 - 1.1.0</h4>
+
+- Implemented `CallbackError`.
+- Adjusted `PrintErrors` to allow specifying what properties to be included in the output string.
+- Fixed an error causing a small chance for `StringifyAll` to incorrectly apply a property value to the subsequent property.
+
+<h4>2025-05-30 - 1.0.5</h4>
+
 - Fixed an error causing `StringifyAll` to incorrectly handle objects returned by a `Map` object's enumerator, resulting in an invalid JSON string.
 
-2025-05-29 - 1.0.4
+<h4>2025-05-29 - 1.0.4</h4>
+
 - Corrected the order of operations in `StringifyAll.StrUnescapeJson`.
 
-2025-05-29 - 1.0.3
+<h4>2025-05-29 - 1.0.3</h4>
+
 - Implemented `ConfigLibrary`.
 
+<h4>2025-05-28 - 1.0.1</h4>
 
-2025-05-28 v1.0.1
 - Adjusted how `Options.PropsTypeMap` is handled. This change did not modify `StringifyAll`'s behavior, but it is now more clear both in the code and in the documentation what the default value is and what the default value does.
+- Added "StringifyAll's process" to the docs.

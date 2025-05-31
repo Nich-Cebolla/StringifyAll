@@ -1,7 +1,7 @@
 ﻿/*
     Github: https://github.com/Nich-Cebolla/AutoHotkey-StringifyAll
     Author: Nich-Cebolla
-    Version: 1.0.5
+    Version: 1.1.0
     License: MIT
 */
 
@@ -32,6 +32,10 @@
  * project needs using the class object, and then passing an object to the `Options` parameter to
  * adjust your defaults on-the-fly.
  *
+ * Callback functions must not call `StringifyAll`. `StringifyAll` relies on several variables in
+ * the function's scope. Concurrent function calls would change their values, causing unexpected
+ * behavior for earlier calls.
+ *
  * For usage examples, see "example\example.ahk".
  *
  * There are some considerations to keep in mind when using `StringifyAll` with the intent to later
@@ -56,7 +60,7 @@
  * - Your callback function returned a value directing `Stringify` to skip the object.
  * - The object has been stringified already. The placeholder for this condition is separate from
  * the others; it is a string representation of the object path at which the object was first encountered.
- * This is so one's code or one's self can identify the correct object that was at that location
+ * This is so one's code or one's controller can identify the correct object that was at that location
  * when `Stringify` was processing.
  *
  * `StringifyAll` does not inherently direct the flow of action as a condition of whether an object
@@ -114,6 +118,8 @@
  *   - The function should return a string or number to be passed to the `StopAt` parameter of
  * `GetPropsInfo`.
  * Use the `Map`'s `Default` property to set a condition for all types not included within the `Map`.
+ * @param {*} [Options.CallbackError=''] - A function or callable object that is called when `StringifyAll`
+ * encounters an error when attempting to access the value of a property.
  * @param {*} [Options.CallbackGeneral=''] - A function or callable object, or an array of
  * one or more functions or callable objects, that will be called for each object prior to processing.
  * @param {*} [Options.CallbackPlaceholder=''] - When `StringifyAll` skips processing an
@@ -136,10 +142,14 @@
  * line breaks or indentation. All other "Newline and indent options" are ignored.
  * @param {String} [Options.ItemProp='__Item__'] - The name that `StringifyAll` will use as a
  * faux-property for including an object's items returned by its enumerator.
- * @param {Boolean} [Options.PrintErrors=false] - When true, if `StringifyAll` encounters an
- * error when attempting to access the value of an object's property, the error message is
- * included in the JSON string as the value of the property. When false, `StringifyAll` skips
- * the property.
+ * @param {Boolean|String} [Options.PrintErrors=false] - When `StringifyAll` encounters an error
+ * accessing a property's value, `Options.PrintErrors` influences how it is handled. `Options.PrintErrors`
+ * is ignored if `Options.CallbackError` is set.
+ * - If `Options.PrintErrors` is a string value, it should be a comma-delimited list of `Error` property
+ * names to include in the output as the value of the property that caused the error.
+ * - If any other nonzero value, `StringifyAll` will print just the "Message" property of the `Error`
+ * object in the string.
+ * - If zero or an empty string, `StringifyAll` skips the property.
  * @param {Boolean} [Options.QuoteNumericKeys=false] - When true, and when `StringifyAll` is
  * processing an object's enumerator in 2-param mode, if the value returned to the first parameter
  * (the "key") is numeric, it will be quoted in the JSON string.
@@ -192,7 +202,11 @@ class StringifyAll {
         } else {
             CheckEnum := (*) => 0
         }
-        excludeMethods := Options.ExcludeMethods
+        if excludeMethods := Options.ExcludeMethods {
+            controllerBase.ProcessProps := _ProcessProps1
+        } else {
+            controllerBase.ProcessProps := _ProcessProps2
+        }
         excludeProps := Options.ExcludeProps
         filterTypeMap := Options.FilterTypeMap
         maxDepth := Options.MaxDepth > 0 ? Options.MaxDepth : 9223372036854775807
@@ -209,6 +223,9 @@ class StringifyAll {
             _GetPropsInfo := _GetPropsInfo4
         }
         ; Callbacks
+        if CallbackError := Options.CallbackError {
+            controllerBase.HandleError := CallbackError
+        }
         if CallbackGeneral := Options.CallbackGeneral {
             if not CallbackGeneral is Array {
                 CallbackGeneral := [CallbackGeneral]
@@ -226,10 +243,16 @@ class StringifyAll {
         }
         ; Print options
         itemProp := Options.ItemProp
-        if Options.PrintErrors {
-            controllerBase.ProcessProps := Options.ExcludeMethods ? _ProcessProps1 : _ProcessProps2
-        } else {
-            controllerBase.ProcessProps := Options.ExcludeMethods ? _ProcessProps3 : _ProcessProps4
+        if !CallbackError {
+            if printErrors := Options.PrintErrors {
+                if IsNumber(printErrors) {
+                    controllerBase.HandleError := _HandleError1
+                } else {
+                    controllerBase.HandleError := _HandleError2
+                }
+            } else {
+                controllerBase.HandleError := _HandleError3
+            }
         }
         quoteNumericKeys := Options.QuoteNumericKeys
         unsetArrayItem := Options.UnsetArrayItem
@@ -322,7 +345,7 @@ class StringifyAll {
             }
             if flag_props {
                 controller.OpenProps(&OutStr)
-                controller.ProcessProps(PropsInfoObj, &OutStr)
+                controller.ProcessProps(Obj, PropsInfoObj, &OutStr)
                 if flag_enum == 1 {
                     if flag_props {
                         OutStr .= ',' nl() ind() '"' itemProp '": '
@@ -386,21 +409,21 @@ class StringifyAll {
                 }
             }
         }
-        _CloseEnum11(Self, &OutStr) {
+        _CloseEnum11(controller, &OutStr) {
             indentLevel--
             OutStr .= nl() ind() ']'
         }
-        _CloseEnum12(Self, &OutStr) {
+        _CloseEnum12(controller, &OutStr) {
             indentLevel--
             OutStr .= nl() ind() ']'
-            if container := lenContainer.Get(ObjPtr(Self) '-1') {
+            if container := lenContainer.Get(ObjPtr(controller) '-1') {
                 if (obj.result := StrLen(OutStr) - container.Len - (diff := whitespaceChars - container.whitespaceChars)) <= container.limit {
                     whitespaceChars -= diff
                     OutStr := RegExReplace(OutStr, '\R *(?!$)', '', , , container.len || 1)
                 }
             }
         }
-        _CloseEnum21(Self, count, &OutStr) {
+        _CloseEnum21(controller, count, &OutStr) {
             indentLevel--
             if count {
                 OutStr .= nl() ind() ']'
@@ -408,28 +431,28 @@ class StringifyAll {
                 OutStr .= '[]]'
             }
         }
-        _CloseEnum22(Self, count, &OutStr) {
+        _CloseEnum22(controller, count, &OutStr) {
             indentLevel--
             if count {
                 OutStr .= nl() ind() ']'
             } else {
                 OutStr .= '[]]'
             }
-            if container := lenContainer.Get(ObjPtr(Self) '-2') {
+            if container := lenContainer.Get(ObjPtr(controller) '-2') {
                 if (obj.result := StrLen(OutStr) - container.Len - (diff := whitespaceChars - container.whitespaceChars)) <= container.limit {
                     whitespaceChars -= diff
                     OutStr := RegExReplace(OutStr, '\R *(?!$)', '', , , container.len || 1)
                 }
             }
         }
-        _CloseProps1(Self, &OutStr) {
+        _CloseProps1(controller, &OutStr) {
             indentLevel--
             OutStr .= nl() ind() '}'
         }
-        _CloseProps2(Self, &OutStr) {
+        _CloseProps2(controller, &OutStr) {
             indentLevel--
             OutStr .= nl() ind() '}'
-            if container := lenContainer.Get(ObjPtr(Self) '-3') {
+            if container := lenContainer.Get(ObjPtr(controller) '-3') {
                 if (obj.result := StrLen(OutStr) - container.Len - (diff := whitespaceChars - container.whitespaceChars)) <= container.limit {
                     whitespaceChars -= diff
                     OutStr := RegExReplace(OutStr, '\R *(?!$)', '', , , container.len || 1)
@@ -573,6 +596,25 @@ class StringifyAll {
                 Recurse(newController, Val, &OutStr)
             }
         }
+        _HandleError1(controller, Err, *) {
+            local s := Err.Message
+            StringifyAll.StrEscapeJson(&s, true)
+            return s
+        }
+        _HandleError2(controller, Err, *) {
+            local str := ''
+            for s in StrSplit(Options.PrintErrors, ',') {
+                if s {
+                    str .= s ': ' Err.%s% '; '
+                }
+            }
+            str := SubStr(str, 1, -2)
+            StringifyAll.StrEscapeJson(&str, true)
+            return str
+        }
+        _HandleError3(*) {
+            return -1
+        }
         _HandleProp1(controller, Val, &Prop, &OutStr) {
             if ptrList.Has(ObjPtr(Val)) {
                 OutStr .= '"{ ' ptrList.Get(ObjPtr(Val)).Path ' }"'
@@ -656,66 +698,66 @@ class StringifyAll {
         _nl2() {
             return ''
         }
-        _OpenEnum11(Self, &OutStr) {
+        _OpenEnum11(controller, &OutStr) {
             OutStr .= '['
             indentLevel++
         }
-        _OpenEnum12(Self, &OutStr) {
-            lenContainer.Set(ObjPtr(Self) '-1', { len: StrLen(OutStr), whitespaceChars: whitespaceChars, limit: condenseCharLimitEnum1 })
+        _OpenEnum12(controller, &OutStr) {
+            lenContainer.Set(ObjPtr(controller) '-1', { len: StrLen(OutStr), whitespaceChars: whitespaceChars, limit: condenseCharLimitEnum1 })
             OutStr .= '['
             indentLevel++
         }
-        _OpenEnum13(Self, &OutStr) {
+        _OpenEnum13(controller, &OutStr) {
             OutStr .= '['
         }
-        _OpenEnum21(Self, &OutStr) {
-            OutStr .= '['
-            indentLevel++
-        }
-        _OpenEnum22(Self, &OutStr) {
-            lenContainer.Set(ObjPtr(Self) '-2', { len: StrLen(OutStr), whitespaceChars: whitespaceChars, limit: condenseCharLimitEnum2 })
+        _OpenEnum21(controller, &OutStr) {
             OutStr .= '['
             indentLevel++
         }
-        _OpenEnum23(Self, &OutStr) {
+        _OpenEnum22(controller, &OutStr) {
+            lenContainer.Set(ObjPtr(controller) '-2', { len: StrLen(OutStr), whitespaceChars: whitespaceChars, limit: condenseCharLimitEnum2 })
             OutStr .= '['
             indentLevel++
         }
-        _OpenProps1(Self, &OutStr) {
+        _OpenEnum23(controller, &OutStr) {
+            OutStr .= '['
+            indentLevel++
+        }
+        _OpenProps1(controller, &OutStr) {
             OutStr .= '{'
             indentLevel++
         }
-        _OpenProps2(Self, &OutStr) {
-            lenContainer.Set(ObjPtr(Self) '-3', { len: StrLen(OutStr), whitespaceChars: whitespaceChars, limit: condenseCharLimitProps })
+        _OpenProps2(controller, &OutStr) {
+            lenContainer.Set(ObjPtr(controller) '-3', { len: StrLen(OutStr), whitespaceChars: whitespaceChars, limit: condenseCharLimitProps })
             OutStr .= '{'
             indentLevel++
         }
-        _OpenProps3(Self, &OutStr) {
+        _OpenProps3(controller, &OutStr) {
             OutStr .= '{'
         }
-        _PrepareNextEnum11(Self, &OutStr) {
+        _PrepareNextEnum11(controller, &OutStr) {
             OutStr .= nl() ind()
-            Self.PrepareNextEnum1 := _PrepareNextEnum12
+            controller.PrepareNextEnum1 := _PrepareNextEnum12
         }
-        _PrepareNextEnum12(Self, &OutStr) {
+        _PrepareNextEnum12(controller, &OutStr) {
             OutStr .= ',' nl() ind()
         }
-        _PrepareNextEnum21(Self, &OutStr) {
+        _PrepareNextEnum21(controller, &OutStr) {
             OutStr .= nl() ind() '['
             indentLevel++
             OutStr .= nl() ind()
-            Self.PrepareNextEnum2 := _PrepareNextEnum22
+            controller.PrepareNextEnum2 := _PrepareNextEnum22
         }
-        _PrepareNextEnum22(Self, &OutStr) {
+        _PrepareNextEnum22(controller, &OutStr) {
             OutStr .= ',' nl() ind() '['
             indentLevel++
             OutStr .= nl() ind()
         }
-        _PrepareNextProp1(Self, &OutStr) {
+        _PrepareNextProp1(controller, &OutStr) {
             OutStr .= nl() ind()
-            Self.PrepareNextProp := _PrepareNextProp2
+            controller.PrepareNextProp := _PrepareNextProp2
         }
-        _PrepareNextProp2(Self, &OutStr) {
+        _PrepareNextProp2(controller, &OutStr) {
             OutStr .= ',' nl() ind()
         }
         _ProcessEnum1(controller, Obj, &OutStr) {
@@ -756,67 +798,56 @@ class StringifyAll {
             }
             return count
         }
-        _ProcessProps1(Self, _pi, &OutStr) {
-            for Prop, Item in _pi {
-                if Item.GetValue(&Val) {
+        ; ExcludeMethod = true
+        _ProcessProps1(controller, Obj, PropsInfoObj, &OutStr) {
+            for Prop, InfoItem in PropsInfoObj {
+                if InfoItem.GetValue(&Val) {
                     if IsSet(Val) {
-                        Val := Val.Message
+                        if errorResult := controller.HandleError(Val, Obj, InfoItem) {
+                            if errorResult is String {
+                                _WriteProp3(controller, &Prop, &errorResult, &OutStr)
+                            } else if errorResult !== -1 {
+                                Val := Val.Message
+                                _WriteProp1(controller, &Prop, &Val, &OutStr)
+                            }
+                            Val := unset
+                            continue
+                        }
                     } else {
-                        Val := unset
                         continue
                     }
                 }
                 if IsObject(Val) {
-                    Self.HandleProp(Val, &Prop, &OutStr)
+                    controller.HandleProp(Val, &Prop, &OutStr)
                 } else {
-                    _WriteProp1(Self, &Prop, &Val, &OutStr)
+                    _WriteProp1(controller, &Prop, &Val, &OutStr)
                 }
                 Val := unset
             }
         }
-        _ProcessProps2(Self, _pi, &OutStr) {
-            for Prop, Item in _pi {
-                if Item.GetValue(&Val) {
+        ; ExcludeMethod = false
+        _ProcessProps2(controller, Obj, PropsInfoObj, &OutStr) {
+            for Prop, InfoItem in PropsInfoObj {
+                if InfoItem.GetValue(&Val) {
                     if IsSet(Val) {
-                        Val := Val.Message
+                        if errorResult := controller.HandleError(Val, Obj, InfoItem) {
+                            if errorResult is String {
+                                _WriteProp3(controller, &Prop, &errorResult, &OutStr)
+                            } else if errorResult !== -1 {
+                                Val := Val.Message
+                                _WriteProp1(controller, &Prop, &Val, &OutStr)
+                            }
+                            Val := unset
+                            continue
+                        }
                     } else {
-                        Val := '{ ' Item.GetFunc().Name ' }'
+                        Val := '{ ' InfoItem.GetFunc().Name ' }'
                     }
                 }
                 if IsObject(Val) {
-                    Self.HandleProp(Val, &Prop, &OutStr)
+                    controller.HandleProp(Val, &Prop, &OutStr)
                 } else {
-                    _WriteProp1(Self, &Prop, &Val, &OutStr)
-                }
-                Val := unset
-            }
-        }
-        _ProcessProps3(Self, _pi, &OutStr) {
-            for Prop, Item in _pi {
-                if !Item.GetValue(&Val) {
-                    if IsObject(Val) {
-                        Self.HandleProp(Val, &Prop, &OutStr)
-                    } else {
-                        _WriteProp1(Self, &Prop, &Val, &OutStr)
-                    }
-                }
-                Val := unset
-            }
-        }
-        _ProcessProps4(Self, _pi, &OutStr) {
-            for Prop, Item in _pi {
-                if Item.GetValue(&Val) {
-                    if IsSet(Val) {
-                        Val := unset
-                        continue
-                    } else {
-                        Val := '{ ' Item.GetFunc().Name ' }'
-                    }
-                }
-                if IsObject(Val) {
-                    Self.HandleProp(Val, &Prop, &OutStr)
-                } else {
-                    _WriteProp1(Self, &Prop, &Val, &OutStr)
+                    _WriteProp1(controller, &Prop, &Val, &OutStr)
                 }
                 Val := unset
             }
@@ -910,6 +941,7 @@ class StringifyAll {
           , StopAtTypeMap: ''
 
             ; Callbacks
+          , CallbackError: ''
           , CallbackGeneral: ''
           , CallbackPlaceholder: ''
 
