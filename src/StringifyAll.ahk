@@ -357,15 +357,11 @@ class StringifyAll {
                 controller.OpenProps(&OutStr)
                 controller.ProcessProps(Obj, PropsInfoObj, &OutStr)
                 if flag_enum == 1 {
-                    if flag_props {
-                        OutStr .= ',' nl() ind() '"' itemProp '": '
-                    }
+                    OutStr .= ',' nl() ind() '"' itemProp '": '
                     controller.OpenEnum1(&OutStr)
                     controller.CloseEnum1(controller.ProcessEnum1(Obj, &OutStr), &OutStr)
                 } else if flag_enum == 2 {
-                    if flag_props {
-                        OutStr .= ',' nl() ind() '"' itemProp '": '
-                    }
+                    OutStr .= ',' nl() ind() '"' itemProp '": '
                     controller.OpenEnum2(&OutStr)
                     controller.CloseEnum2(controller.ProcessEnum2(Obj, &OutStr), &OutStr)
                 }
