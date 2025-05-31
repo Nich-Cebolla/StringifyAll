@@ -1,5 +1,5 @@
 
-# StringifyAll - v1.0.4
+# StringifyAll - v1.0.5
 A customizable solution for serializing AutoHotkey (AHK) object properties, including inherited properties, and/or items into a 100% valid JSON string.
 
 # Introduction
@@ -164,6 +164,9 @@ This will come into play if you want an <code>Array</code> or <code>Map</code> o
 
 
 <h1>Changelog</h1>
+
+2025-05-30 - 1.0.5
+- Fixed an error causing `StringifyAll` to incorrectly handle objects returned by a `Map` object's enumerator, resulting in an invalid JSON string.
 
 2025-05-29 - 1.0.4
 - Corrected the order of operations in `StringifyAll.StrUnescapeJson`.

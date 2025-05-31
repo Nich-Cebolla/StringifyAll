@@ -1,7 +1,7 @@
 ﻿/*
     Github: https://github.com/Nich-Cebolla/AutoHotkey-StringifyAll
     Author: Nich-Cebolla
-    Version: 1.0.4
+    Version: 1.0.5
     License: MIT
 */
 
@@ -529,6 +529,7 @@ class StringifyAll {
         }
         _HandleEnum21(controller, Val, &Key, &OutStr) {
             controller.PrepareNextEnum2(&OutStr)
+            OutStr .= Key ',' nl() ind()
             if ptrList.Has(ObjPtr(Val)) {
                 OutStr .= '"{ ' ptrList.Get(ObjPtr(Val)).Path ' }"'
             } else if depth >= maxDepth || Val is ComObject || Val is ComValue {
@@ -543,24 +544,29 @@ class StringifyAll {
         _HandleEnum22(controller, Val, &Key, &OutStr) {
             if ptrList.Has(ObjPtr(Val)) {
                 controller.PrepareNextEnum2(&OutStr)
+                OutStr .= Key ',' nl() ind()
                 OutStr .= '"{ ' ptrList.Get(ObjPtr(Val)).Path ' }"'
             } else if depth >= maxDepth || Val is ComObject || Val is ComValue {
                 controller.PrepareNextEnum2(&OutStr)
+                OutStr .= Key ',' nl() ind()
                 OutStr .= controller.GetPlaceholder(Val, , &Key)
             } else {
                 for cb in CallbackGeneral {
                     if result := cb(Val, &OutStr) {
                         if result is String {
                             controller.PrepareNextEnum2(&OutStr)
+                            OutStr .= Key ',' nl() ind()
                             OutStr .= result
                         } else if result !== -1 {
                             controller.PrepareNextEnum2(&OutStr)
+                            OutStr .= Key ',' nl() ind()
                             OutStr .= controller.GetPlaceholder(Val, , &Key)
                         }
                         return
                     }
                 }
                 controller.PrepareNextEnum2(&OutStr)
+                OutStr .= Key ',' nl() ind()
                 newController := GetController()
                 newController.Path := controller.Path '[' Key ']'
                 ptrList.Set(ObjPtr(Val), newController)
@@ -732,16 +738,16 @@ class StringifyAll {
             count := 0
             for Key, Val in Obj {
                 count++
-                controller.PrepareNextEnum2(&OutStr)
                 if IsObject(Key) {
                     Key := '"{ ' this.GetType(Key) ':' ObjPtr(Key) ' }"'
                 } else {
                     _GetVal(&Key, quoteNumericKeys)
                 }
-                OutStr .= Key ',' nl() ind()
                 if IsObject(Val) {
                     controller.HandleEnum2(Val, &Key, &OutStr)
                 } else {
+                    controller.PrepareNextEnum2(&OutStr)
+                    OutStr .= Key ',' nl() ind()
                     _GetVal(&Val)
                     OutStr .= Val
                 }

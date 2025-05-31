@@ -1,4 +1,4 @@
-[color=#800000][size=165][b]StringifyAll - v1.0.4[/b][/size][/color]
+[color=#800000][size=165][b]StringifyAll - v1.0.5[/b][/size][/color]
 A customizable solution for serializing object properties, including inherited properties, and/or items into a 100% valid JSON string.
 
 [color=#800000][size=145][b]Github link[/b][/size][/color]
@@ -213,6 +213,8 @@ if propsTypeMap.Has(Type(Obj)) {
 
 
 [color=#800000][size=145]Changelog[/size][/color]
+[color=#000000][size=100][b]2025-05-30 - 1.0.5[/b][/size][/color]
+[list][*]Fixed an error causing [c]StringifyAll[/c] to incorrectly handle objects returned by a [c]Map[/c] object's enumerator, resulting in an invalid JSON string.[/list]
 
 [color=#000000][size=100][b]2025-05-29 - 1.0.4[/b][/size][/color]
 [list][*]Corrected the order of operations in [c]StringifyAll.StrUnescapeJson[/c].[/list]
