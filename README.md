@@ -151,7 +151,49 @@ Jump to:
 </ul>
 
 <ul id="filtertypemap"><b>{Map}</b> [ <b>FilterTypeMap</b>  = <code>""</code> ]
-  <ul style="padding-left: 24px; margin-top: 0;">A <code>Map</code> object where the keys are object types and the values are <code>PropsInfo.FilterGroup</code> objects. <code>StringifyAll</code> will apply the filter when iterating the properties of an object of the indicated types.</ul>
+  <ul style="padding-left: 24px; margin-top: 0;">A <code>Map</code> object where the keys are object types and the values are <code>PropsInfo.FilterGroup</code> objects. <code>StringifyAll</code> will apply the filter when iterating the properties of an object of the indicated types. For usage examples you can review the "inheritance\example-Inheritance.ahk" walkthrough which demonstrates using filters in the context of the <code>PropsInfo</code> class, which is the same as how they are applied by <code>StringifyAll</code>. The following is a brief explanation of how to use filters:</ul>
+  <ul style="padding-left: 48px; margin-top: 0;">
+    <li>The term "filter" here refers to a collection of <code>PropsInfo.Filter</code> objects which comprise a <code>PropsInfo.FilterGroup</code> object. Just think of a "filter" as a collection of functions that <code>StringifyAll</code> processes to exclude properties from stringification.</li>
+    <li>Filters are functions that return a nonzero value to direct <code>PropsInfo.Prototype.FilterActivate</code> to exclude a property from being exposed by the <code>PropsInfo</code> object. Within the context of <code>StringifyAll</code>, this effectively causes <code>StringifyAll</code> to skip the property completely; the property's value does not get evaluated.</li>
+    <li>Although filters are applied on a per-object basis, <code>StringifyAll</code> must categorize objects by their type, and so <code>StringifyAll</code> uses the same filter group for all objects of the indicated type. The significance this has for you is that you can include code that responds to characteristics or conditions about individual objects. An example of this is within the "example\example.ahk" file in section I.D. "Enum options - <code>FilterTypeMap</code>". The function conditionally excludes the <code>Mark</code> property only if the property does not have a significant value.</li>
+    <li>There are five built-in filters, four of which can be added by simply adding the index to the filter.</li>
+    <ul>
+      <li><b>Exclude properties by name:</b> To exclude properties by name, simply add a comma-delimited list of property names to the filter.</li>
+      <pre>
+filter := PropsInfo.FilterGroup('__New,__Init,__Delete,Length,Capacity')
+filterTypeMap := Map('Array', filter)
+</pre>
+      <li><b>1:</b> Exclude all items that are not own properties of the root object.</li>
+      <li><b>2:</b> Exclude all items that are own properties of the root object.</li>
+      <li><b>3:</b> Exclude all items that have an <code>Alt</code> property, i.e. exclude all properties that have multiple owners.</li>
+      <li><b>4:</b> Exclude all items that do not have an <code>Alt</code> property, i.e. exclude all properties that have only one owner.</li>
+      <li>Example adding a filter by index:</li>
+      <pre>
+; Assume we are continuing with the filter created above.
+filter.Add(1)
+</pre>
+    </ul>
+    <li>You can define a filter with any function or callable object. The function must accept the <code>PropsInfoItem</code> object as its only parameter, and should return a nonzero value if the property should be skipped for the object. Understand that the filter gets called once for every property for every object of the indicated type (unless a property gets excluded by a filter before it). The filter function isn't evaluating the object, it's evaluating the <code>PropsInfoItem</code> objects associated with the object's properties.</li>
+    <li><code>Options.FilterTypeMap</code> is the only option that allows us to choose what properties are included at an individual-object level.</li>
+  <li>Example using a function and applying it to the <code>MapObj.Default</code>:</li>
+<pre>
+MyFilterFunc(InfoItem) {
+    switch InfoItem.Kind {
+        case 'Get', 'Get_Set':
+            if InfoItem.GetValue(&Value) {
+                return 1            ; Skip properties that fail to return a value
+            } else if !IsNumber(Value) {
+                return 1            ; Skip properties that have a non-numeric value
+            }
+        default: return 1           ; Skip all other properties
+    }
+}
+filter := PropsInfo.FilterGroup(MyFilterFunc)
+FilterTypeMap := Map()
+FilterTypeMap.Default := filter
+</pre>
+    </ul>
+  </ul>
 </ul>
 
 <ul id="maxdepth"><b>{Integer}</b> [ <b>MaxDepth</b>  = <code>0</code> ]
@@ -357,7 +399,7 @@ MyPlaceholderFunc(controller, obj, &prop?, &key?) {
 </ul>
 
 <ul id="newline"><b>{String}</b> [ <b>Newline</b>  = <code>"`r`n"</code> ]
-  <ul style="padding-left:24px;">The literal string that will be used for line breaks. If set to zero or an empty string, the <code>Singleline</code> option is effectively enabled.</ul>
+  <ul style="padding-left:24px;">The literal string that will be used for line breaks. If set to zero or an empty string, the <code>Singleline</code> option is effectively enabled and <code>StringifyAll</code> disables <code>Options.Indent</code> for you. If you have a need to direct <code>StringifyAll</code> to not use newline characters but still use indentation where it typically would, you should set <code>Options.Newline</code> with a zero-width character like 0xFEFF.</ul>
 </ul>
 
 <ul id="newlinedepthlimit"><b>{Integer}</b> [ <b>NewlineDepthLimit</b>  = <code>0</code> ]
@@ -537,7 +579,7 @@ After processing the enumerator, if <code>count == 0</code>, adds the closing br
 
 <h4>2025-05-31 - 1.1.3</h4>
 
-- When `StringifyAll` processes an object, it caches a the string object path. Previously, the cached path was overwritten each time an object was processed, resulting in a possibility for `StringifyAll` to cause AHK to crash if it entered into an infinite loop. This has been corrected by adjusted the tracking of object ptr addresses to add the string object path to an array each time an object is processed, and to check all paths when testing if two objects share a parent-child relationship.
+- When `StringifyAll` processes an object, it caches the string object path. Previously, the cached path was overwritten each time an object was processed, resulting in a possibility for `StringifyAll` to cause AHK to crash if it entered into an infinite loop. This has been corrected by adjusted the tracking of object ptr addresses to add the string object path to an array each time an object is processed, and to check all paths when testing if two objects share a parent-child relationship.
 
 <h4>2025-05-31 - 1.1.2</h4>
 
