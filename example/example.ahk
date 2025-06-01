@@ -623,7 +623,7 @@ OutputDebug('`n' A_LineNumber '=========================`n' StringifyAll(arr))
 ; The above options are great for fine-tuning what gets included in the JSON string per object type
 ; or per individual object, but sometimes we may simply want to exclude an object altogether.
 
-; --- E. Callbacks - `CallbackGeneral` -------------------------------------------------------------
+; --- A. Callbacks - `CallbackGeneral` -------------------------------------------------------------
 
 ; Let's say I'm trying to find a problem in my code causing the application to consume more memory
 ; than expected. I'm having trouble finding it programmatically, so I'm just going to visually
