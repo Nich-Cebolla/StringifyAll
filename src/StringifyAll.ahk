@@ -111,8 +111,8 @@
  * processes each individual object a maximum of 1 time, and all other encounters result in
  * `StringifyAll` printing a placeholder string that is a string representation of the object path
  * at which the object was first encountered.
- * @param {Map} [Options.PropsTypeMap={ __Class: "Map", Default: 1, Count: 0 }] - A `Map` object where the keys are object types
- * and the values are either:
+ * @param {Map} [Options.PropsTypeMap={ __Class: "Map", Default: 1, Count: 0 }] - A `Map` object
+ * where the keys are object types and the values are either:
  * - A boolean indicating whether or not `StringifyAll` should process the object's properties. A
  * nonzero value directs `StringifyAll` to process the properties. A falsy value directs `StringifyAll`
  * to skip the properties.
