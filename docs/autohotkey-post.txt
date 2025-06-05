@@ -26,12 +26,12 @@ There are some considerations to keep in mind when using [c]StringifyAll[/c] wit
 
 The above considerations are mitigated by keeping separate configurations for separate purposes. For example, keep one configuration to use when intending to later parse the string back into AHK data, and keep another configuration to use when intending to visually inspect the string.
 
-There are some conditions which will cause [c]Stringify[/c] to skip stringifying an object. When this occurs, [c]Stringify[/c] prints a placeholder string instead. The conditions are:
+There are some conditions which will cause [c]StringifyAll[/c] to skip stringifying an object. When this occurs, [c]StringifyAll[/c] prints a placeholder string instead. The conditions are:
 [list][*]The object is a [c]ComObject[/c] or [c]ComValue[/c].
 [*]The maximum depth is reached.
-[*]Your callback function returned a value directing [c]Stringify[/c] to skip the object.[/list]
+[*]Your callback function returned a value directing [c]StringifyAll[/c] to skip the object.[/list]
 
-When [c]StringifyAll[/c] encounters an object multiple times, it may skip the object and print a string representation of the object path at which the object was first encountered. Using the object path instead of the standard placeholder is so one's code or one's self can identify the correct object that was at that location when [c]Stringify[/c] was processing. This will occur when one or both of the following are true:
+When [c]StringifyAll[/c] encounters an object multiple times, it may skip the object and print a string representation of the object path at which the object was first encountered. Using the object path instead of the standard placeholder is so one's code or one's self can identify the correct object that was at that location when [c]StringifyAll[/c] was processing. This will occur when one or both of the following are true:
 [list][*][c]Options.Multiple[/c] is false (the default is false). (added in 1.1.0).
 [*]Processing the object will result in infinite recursion.[/list]
 
