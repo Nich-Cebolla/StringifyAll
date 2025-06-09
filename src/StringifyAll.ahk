@@ -1,7 +1,7 @@
 ﻿/*
     Github: https://github.com/Nich-Cebolla/AutoHotkey-StringifyAll
     Author: Nich-Cebolla
-    Version: 1.1.3
+    Version: 1.1.4
     License: MIT
 */
 
@@ -337,7 +337,6 @@ class StringifyAll {
         controller.Path := Options.RootName
         ptrList := Map(ObjPtr(Obj), controller)
         ptrList.Capacity := Options.InitialPtrListCapacity
-        OutStr := ''
 
         Recurse(controller, Obj, &OutStr)
 
