@@ -1,5 +1,5 @@
 
-# StringifyAll - v1.1.3
+# StringifyAll - v1.1.4
 A customizable solution for serializing AutoHotkey (AHK) object properties, including inherited properties, and/or items into a 100% valid JSON string.
 
 ## AutoHotkey forum post
