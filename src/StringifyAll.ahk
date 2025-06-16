@@ -143,6 +143,7 @@
  * @param {Integer} [Options.CondenseCharLimit=0]
  * @param {Integer} [Options.CondenseCharLimitEnum1=0]
  * @param {Integer} [Options.CondenseCharLimitEnum2=0]
+ * @param {Integer} [Options.CondenseCharLimitEnum2Item=0]
  * @param {Integer} [Options.CondenseCharLimitProps=0] -
  * Sets a threshold which `StringifyAll` uses to determine whether an object's JSON substring should
  * be condensed to a single line as a function of the character length of the substring.
@@ -201,9 +202,15 @@ class StringifyAll {
         controllerBase := {}
         controllerBase.PrepareNextProp := _PrepareNextProp1
         controllerBase.PrepareNextEnum1 := _PrepareNextEnum11
-        controllerBase.PrepareNextEnum2 := _PrepareNextEnum21
         controllerBase.ProcessEnum1 := _ProcessEnum1
-        controllerBase.ProcessEnum2 := _ProcessEnum2
+        if Options.CondenseCharLimitEnum2Item {
+            controllerBase.PrepareNextEnum2 := _PrepareNextEnum23
+            controllerBase.ProcessEnum2 := _ProcessEnum22
+            condenseCharLimitEnum2Item := Options.CondenseCharLimitEnum2Item
+        } else {
+            controllerBase.PrepareNextEnum2 := _PrepareNextEnum21
+            controllerBase.ProcessEnum2 := _ProcessEnum21
+        }
         controllerBase.GetPlaceholder := ObjBindMethod(this, 'GetPlaceholder')
 
         ; Enum options
@@ -428,8 +435,8 @@ class StringifyAll {
             indentLevel--
             if count {
                 OutStr .= nl() ind() ']'
-                if container := lenContainer.Get(ObjPtr(controller) '-1') {
-                    if StrLen(OutStr) - container.Len - (diff := whitespaceChars - container.whitespaceChars) <= container.limit {
+                if container := lenContainer.Get(controller.Path) {
+                    if StrLen(OutStr) - container.Len - (diff := whitespaceChars - container.whitespaceChars) <= condenseCharLimitEnum1 {
                         whitespaceChars -= diff
                         OutStr := RegExReplace(OutStr, '\R *(?!$)', '', , , container.len || 1)
                     }
@@ -450,8 +457,8 @@ class StringifyAll {
             indentLevel--
             if count {
                 OutStr .= nl() ind() ']'
-                if container := lenContainer.Get(ObjPtr(controller) '-2') {
-                    if StrLen(OutStr) - container.Len - (diff := whitespaceChars - container.whitespaceChars) <= container.limit {
+                if container := lenContainer.Get(controller.Path) {
+                    if StrLen(OutStr) - container.Len - (diff := whitespaceChars - container.whitespaceChars) <= condenseCharLimitEnum2 {
                         whitespaceChars -= diff
                         OutStr := RegExReplace(OutStr, '\R *(?!$)', '', , , container.len || 1)
                     }
@@ -467,8 +474,8 @@ class StringifyAll {
         _CloseProps2(controller, &OutStr) {
             indentLevel--
             OutStr .= nl() ind() '}'
-            if container := lenContainer.Get(ObjPtr(controller) '-3') {
-                if StrLen(OutStr) - container.Len - (diff := whitespaceChars - container.whitespaceChars) <= container.limit {
+            if container := lenContainer.Get(controller.Path) {
+                if StrLen(OutStr) - container.Len - (diff := whitespaceChars - container.whitespaceChars) <= condenseCharLimitProps {
                     whitespaceChars -= diff
                     OutStr := RegExReplace(OutStr, '\R *(?!$)', '', , , container.len || 1)
                 }
@@ -769,7 +776,7 @@ class StringifyAll {
             indentLevel++
         }
         _OpenEnum12(controller, &OutStr) {
-            lenContainer.Set(ObjPtr(controller) '-1', { len: StrLen(OutStr), whitespaceChars: whitespaceChars, limit: condenseCharLimitEnum1 })
+            lenContainer.Set(controller.Path, { len: StrLen(OutStr), whitespaceChars: whitespaceChars })
             OutStr .= '['
             indentLevel++
         }
@@ -781,7 +788,7 @@ class StringifyAll {
             indentLevel++
         }
         _OpenEnum22(controller, &OutStr) {
-            lenContainer.Set(ObjPtr(controller) '-2', { len: StrLen(OutStr), whitespaceChars: whitespaceChars, limit: condenseCharLimitEnum2 })
+            lenContainer.Set(controller.Path, { len: StrLen(OutStr), whitespaceChars: whitespaceChars })
             OutStr .= '['
             indentLevel++
         }
@@ -794,7 +801,7 @@ class StringifyAll {
             indentLevel++
         }
         _OpenProps2(controller, &OutStr) {
-            lenContainer.Set(ObjPtr(controller) '-3', { len: StrLen(OutStr), whitespaceChars: whitespaceChars, limit: condenseCharLimitProps })
+            lenContainer.Set(controller.Path, { len: StrLen(OutStr), whitespaceChars: whitespaceChars })
             OutStr .= '{'
             indentLevel++
         }
@@ -816,6 +823,19 @@ class StringifyAll {
         }
         _PrepareNextEnum22(controller, &OutStr) {
             OutStr .= ',' nl() ind() '['
+            indentLevel++
+            OutStr .= nl() ind()
+        }
+        _PrepareNextEnum23(controller, &OutStr) {
+            OutStr .= nl() ind() '['
+            controller.LenContainer := { len: StrLen(OutStr), whitespaceChars: whitespaceChars }
+            indentLevel++
+            OutStr .= nl() ind()
+            controller.PrepareNextEnum2 := _PrepareNextEnum24
+        }
+        _PrepareNextEnum24(controller, &OutStr) {
+            OutStr .= ',' nl() ind() '['
+            controller.LenContainer := { len: StrLen(OutStr), whitespaceChars: whitespaceChars }
             indentLevel++
             OutStr .= nl() ind()
         }
@@ -845,7 +865,7 @@ class StringifyAll {
             }
             return count
         }
-        _ProcessEnum2(controller, Obj, &OutStr) {
+        _ProcessEnum21(controller, Obj, &OutStr) {
             count := 0
             for Key, Val in Obj {
                 count++
@@ -864,6 +884,32 @@ class StringifyAll {
                 }
                 indentLevel--
                 OutStr .= nl() ind() ']'
+            }
+            return count
+        }
+        _ProcessEnum22(controller, Obj, &OutStr) {
+            count := 0
+            for Key, Val in Obj {
+                count++
+                if IsObject(Key) {
+                    Key := '"{ ' this.GetType(Key) ':' ObjPtr(Key) ' }"'
+                } else {
+                    _GetVal(&Key, quoteNumericKeys)
+                }
+                if IsObject(Val) {
+                    controller.HandleEnum2(Val, &Key, &OutStr)
+                } else {
+                    controller.PrepareNextEnum2(&OutStr)
+                    OutStr .= Key ',' nl() ind()
+                    _GetVal(&Val)
+                    OutStr .= Val
+                }
+                indentLevel--
+                OutStr .= nl() ind() ']'
+                if StrLen(OutStr) - controller.LenContainer.len - (diff := whitespaceChars - controller.LenContainer.whitespaceChars) <= condenseCharLimitEnum2Item {
+                    whitespaceChars -= diff
+                    OutStr := RegExReplace(OutStr, '\R *(?!$)', '', , , controller.LenContainer.len || 1)
+                }
             }
             return count
         }
@@ -1021,6 +1067,7 @@ class StringifyAll {
           , CondenseCharLimit: 0
           , CondenseCharLimitEnum1: 0
           , CondenseCharLimitEnum2: 0
+          , CondenseCharLimitEnum2Item: 0
           , CondenseCharLimitProps: 0
           , NewlineDepthLimit: 0
           , Singleline: false

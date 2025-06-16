@@ -1,5 +1,5 @@
 
-# StringifyAll - v1.1.4
+# StringifyAll - v1.1.5
 A customizable solution for serializing AutoHotkey (AHK) object properties, including inherited properties, and/or items into a 100% valid JSON string.
 
 ## AutoHotkey forum post
@@ -90,6 +90,7 @@ Jump to:
 <a href="#condensecharlimit"><br>CondenseCharLimit</a>
 <a href="#condensecharlimitenum1"><br>CondenseCharLimitEnum1</a>
 <a href="#condensecharlimitenum2"><br>CondenseCharLimitEnum2</a>
+<a href="#condensecharlimitenum2item"><br>CondenseCharLimitEnum2Item</a>
 <a href="#condensecharlimitprops"><br>CondenseCharLimitProps</a>
 <a href="#enumtypemap"><br>EnumTypeMap</a>
 <a href="#excludemethods"><br>ExcludeMethods</a>
@@ -376,7 +377,7 @@ MyPlaceholderFunc(controller, obj, &prop?, &key?) {
 
 ### Newline and indent options
 
-<ul style="margin-top: 0;">Each of <code>CondenseCharLimit</code>, <code>CondenseCharLimitEnum1</code>, <code>CondenseCharLimitEnum2</code>, and <code>CondenseCharLimitProps</code> set a threshold which <code>StringifyAll</code> will use to condense an object's substring if the length, in characters, of the substring is less than or equal to the value. The substring length is measured beginning from the open brace and excludes external whitespace such as newline characters and indentation that are not part of a string literal value.</ul>
+<ul style="margin-top: 0;">Each of <code>CondenseCharLimit</code>, <code>CondenseCharLimitEnum1</code>, <code>CondenseCharLimitEnum2</code>, <code>CondenseCharLimitEnum2Item</code>, and <code>CondenseCharLimitProps</code> set a threshold which <code>StringifyAll</code> will use to condense an object's substring if the length, in characters, of the substring is less than or equal to the value. The substring length is measured beginning from the open brace and excludes external whitespace such as newline characters and indentation that are not part of a string literal value.</ul>
 
 <ul id="condensecharlimit" style="margin-top: 0; margin-bottom: 0;"><b>{Integer}</b> [ <b>CondenseCharLimit</b>  = <code>0</code> ]
   <ul style="padding-left:24px;">Applies to all substrings. If <code>CondenseCharLimit</code> is set, you can still specify individual options for the other three and the individual option will take precedence over <code>CondenseCharLimit</code>.</ul>
@@ -388,6 +389,10 @@ MyPlaceholderFunc(controller, obj, &prop?, &key?) {
 
 <ul id="condensecharlimitenum2" style="margin-top: 0; margin-bottom: 0;"><b>{Integer}</b> [ <b>CondenseCharLimitEnum2</b>  = <code>0</code> ]
   <ul style="padding-left:24px;">Applies to substrings that are created by calling an object's enumerator in 2-param mode.</ul>
+</ul>
+
+<ul id="condensecharlimitenum2item" style="margin-top: 0; margin-bottom: 0;"><b>{Integer}</b> [ <b>CondenseCharLimitEnum2Item</b>  = <code>0</code> ]
+  <ul style="padding-left:24px;">Applies to substrings that are created for each key-value pair when iterating an object's enumerator in 2-param mode. (Added in 1.1.5).</ul>
 </ul>
 
 <ul id="condensecharlimitprops" style="margin-top: 0; margin-bottom: 0;"><b>{Integer}</b> [ <b>CondenseCharLimitProps</b>  = <code>0</code> ]
@@ -576,6 +581,10 @@ Then, the value is processed:
 After processing the enumerator, if <code>count == 0</code>, adds the closing bracket(s) to the output string. If <code>count > 0</code>, adds a newline, indentation, and the closing bracket to the output string.
 
 ## Changelog
+
+<h4>2025-06-08 - 1.1.5</h4>
+- Improved the handling of the "CondenseCharLimit" options.
+- Implemented `Options.CondenseCharLimitEnum2Item`.
 
 <h4>2025-06-08 - 1.1.4</h4>
 
