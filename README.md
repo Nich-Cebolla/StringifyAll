@@ -583,6 +583,7 @@ After processing the enumerator, if <code>count == 0</code>, adds the closing br
 ## Changelog
 
 <h4>2025-06-08 - 1.1.5</h4>
+
 - Improved the handling of the "CondenseCharLimit" options.
 - Implemented `Options.CondenseCharLimitEnum2Item`.
 
