@@ -428,14 +428,14 @@ class StringifyAll {
             indentLevel--
             if count {
                 OutStr .= nl() ind() ']'
+                if container := lenContainer.Get(ObjPtr(controller) '-1') {
+                    if StrLen(OutStr) - container.Len - (diff := whitespaceChars - container.whitespaceChars) <= container.limit {
+                        whitespaceChars -= diff
+                        OutStr := RegExReplace(OutStr, '\R *(?!$)', '', , , container.len || 1)
+                    }
+                }
             } else {
                 OutStr .= ']'
-            }
-            if container := lenContainer.Get(ObjPtr(controller) '-1') {
-                if (obj.result := StrLen(OutStr) - container.Len - (diff := whitespaceChars - container.whitespaceChars)) <= container.limit {
-                    whitespaceChars -= diff
-                    OutStr := RegExReplace(OutStr, '\R *(?!$)', '', , , container.len || 1)
-                }
             }
         }
         _CloseEnum21(controller, count, &OutStr) {
@@ -450,14 +450,14 @@ class StringifyAll {
             indentLevel--
             if count {
                 OutStr .= nl() ind() ']'
+                if container := lenContainer.Get(ObjPtr(controller) '-2') {
+                    if StrLen(OutStr) - container.Len - (diff := whitespaceChars - container.whitespaceChars) <= container.limit {
+                        whitespaceChars -= diff
+                        OutStr := RegExReplace(OutStr, '\R *(?!$)', '', , , container.len || 1)
+                    }
+                }
             } else {
                 OutStr .= '[]]'
-            }
-            if container := lenContainer.Get(ObjPtr(controller) '-2') {
-                if (obj.result := StrLen(OutStr) - container.Len - (diff := whitespaceChars - container.whitespaceChars)) <= container.limit {
-                    whitespaceChars -= diff
-                    OutStr := RegExReplace(OutStr, '\R *(?!$)', '', , , container.len || 1)
-                }
             }
         }
         _CloseProps1(controller, &OutStr) {
@@ -468,7 +468,7 @@ class StringifyAll {
             indentLevel--
             OutStr .= nl() ind() '}'
             if container := lenContainer.Get(ObjPtr(controller) '-3') {
-                if (obj.result := StrLen(OutStr) - container.Len - (diff := whitespaceChars - container.whitespaceChars)) <= container.limit {
+                if StrLen(OutStr) - container.Len - (diff := whitespaceChars - container.whitespaceChars) <= container.limit {
                     whitespaceChars -= diff
                     OutStr := RegExReplace(OutStr, '\R *(?!$)', '', , , container.len || 1)
                 }
