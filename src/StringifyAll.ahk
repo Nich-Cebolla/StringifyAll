@@ -1,7 +1,7 @@
 ﻿/*
     Github: https://github.com/Nich-Cebolla/AutoHotkey-StringifyAll
     Author: Nich-Cebolla
-    Version: 1.1.4
+    Version: 1.1.5
     License: MIT
 */
 
