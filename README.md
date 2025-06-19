@@ -494,7 +494,61 @@ if propsTypeMap.Has(Type(Obj)) {
 
   - If the return value is falsy, `StringifyAll` skips the properties for that object and goes on to check if the enumerator will be called.
 
-This will come into play if you want an `Array` or `Map` object's string representation to have the appearance of what we typically expect for arrays and maps. To accomplish this, `StringifyAll` must not process any properties for those objects. You can accomplish this by simply defining two items in the map: `Options.PropsTypeMap := Map("Array", 0, "Map", 0)`. Don't forget to set `Options.PropsTypeMap.Default := 1` if you still want other objects to have their properties processed.
+This will come into play if you want an `Array` or `Map` object's string representation to have the appearance of what we typically expect for arrays and maps. To accomplish this, `StringifyAll` must not process any properties for those objects. There are two ways you can approach this:
+- Define `Options.PropsTypeMap` to exclude properties for `Array` and `Map` objects: `Options.PropsTypeMap := Map("Array", 0, "Map", 0)`. Don't forget to set `Options.PropsTypeMap.Default := 1` if you still want other objects to have their properties processed.
+- Define `Options.FilterTypeMap` to exclude inherited properties for `Map` and `Array` objects:
+
+```ahk
+filter := PropsInfo.FilterGroup(1) ; The function associated with index `1` filters out inherited properties.
+FilterTypeMap := Map('Array', filter, 'Map', filter)
+obj := [
+    { prop: 'val' }
+  , Map('key', 'val')
+  , [ 'val' ]
+  , { prop2: 'val2' }
+  , Map('key2', 'val2')
+  , [ 'val2']
+]
+obj[5].prop := 'val'
+obj[6].prop := 'val'
+OutputDebug('`n' StringifyAll(obj, { FilterTypeMap: FilterTypeMap }))
+```
+
+With this option, `StringifyAll` includes the own properties assigned directly to the `Map` and `Array` objects, and excludes all inherited properties.
+```json
+[
+    {
+        "prop": "val"
+    },
+    [
+        [
+            "key",
+            "val"
+        ]
+    ],
+    [
+        "val"
+    ],
+    {
+        "prop2": "val2"
+    },
+    {
+        "prop": "val",
+        "__Items__": [
+            [
+                "key2",
+                "val2"
+            ]
+        ]
+    },
+    {
+        "prop": "val",
+        "__Items__": [
+            "val2"
+        ]
+    }
+]
+```
 
 ### CallbackGeneral
 
