@@ -17,13 +17,14 @@ class StringifyAllConfig {
     static CallbackPlaceholder := unset
 
 ; ==== Newline and indent options ------------------------------------------------------------------
-    static Indent := unset
-    static Newline := unset
     static CondenseCharLimit := unset
     static CondenseCharLimitEnum1 := unset
     static CondenseCharLimitEnum2 := unset
     static CondenseCharLimitEnum2Item := unset
     static CondenseCharLimitProps := unset
+    static Indent := unset
+    static InitialIndent := unset
+    static Newline := unset
     static NewlineDepthLimit := unset
     static Singleline := unset
 

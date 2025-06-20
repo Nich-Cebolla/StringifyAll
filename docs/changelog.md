@@ -1,9 +1,14 @@
+<h4>2025-06-19 - 1.1.6</h4>
+
+- Implemented `Options.InitialIndent`.
 
 <h4>2025-06-15 - 1.1.5</h4>
+
 - Improved the handling of the "CondenseCharLimit" options.
 - Implemented `Options.CondenseCharLimitEnum2Item`.
 
 <h4>2025-06-08 - 1.1.4</h4>
+
 - Removed duplicate line of code.
 
 <h4>2025-05-31 - 1.1.3</h4>

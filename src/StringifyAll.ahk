@@ -1,7 +1,7 @@
 ﻿/*
     Github: https://github.com/Nich-Cebolla/AutoHotkey-StringifyAll
     Author: Nich-Cebolla
-    Version: 1.1.5
+    Version: 1.1.6
     License: MIT
 */
 
@@ -26,6 +26,11 @@
  * "templates\ConfigLibrary.ahk".
  * - Define a class `StringifyAllConfig` anywhere in your code.
  * - Pass an object to the `Options` parameter.
+ *
+ * Note that `StringifyAll` changes the base of the `StringifyAllConfig` class to
+ * `StringifyAll.Options.Default`, and changes the base of the input options object to either
+ * `StringifyAllConfig` if it exists, or to `StringifyAll.Options.Default` if `StringifyAllConfig`
+ * does not exist.
  *
  * The options defined by the `Options` parameter supercede options defined by the `StringifyConfig`
  * class. This is convenient for setting your own defaults based on your personal preferences /
@@ -85,7 +90,7 @@
  *
  * @param {Object|String} [Options] - If you are using `ConfigLibrary, the name of the configuration.
  * Or, the options object with zero or more of the following properties.
- * @param {Map} [Options.EnumTypeMap=Map('Array', 1, 'Map', 2, 'RegExMatchInfo', 2)] - A `Map` object
+ * @param {Map} [Options.EnumTypeMap = Map('Array', 1, 'Map', 2, 'RegExMatchInfo', 2) ] - A `Map` object
  * where the keys are object types and the values are either:
  * - An integer:
  *   - 1: Directs `StringifyAll` to call the object's enumerator in 1-param mode.
@@ -95,23 +100,23 @@
  *   - The function should accept the object being evaluated as its only parameter.
  *   - The function should return one of the above listed integers.
  * Use the `Map`'s `Default` property to set a condition for all types not included within the `Map`.
- * @param {Boolean} [Options.ExcludeMethods=true] - If true, properties with a `Call`
+ * @param {Boolean} [Options.ExcludeMethods = true ] - If true, properties with a `Call`
  * accessor and properties with only a `Set` accessor are excluded from stringification.
- * @param {String} [Options.ExcludeProps=''] - A comma-delimited, case-insensitive list of
+ * @param {String} [Options.ExcludeProps = '' ] - A comma-delimited, case-insensitive list of
  * property names to exclude from stringification. Also see `Options.Filter` and
  * `Options.FilterTypeMap`.
- * @param {Map} [Options.FilterTypeMap=''] - A `Map` object where the keys are object types
+ * @param {Map} [Options.FilterTypeMap = '' ] - A `Map` object where the keys are object types
  * and the values are `PropsInfo.FilterGroup` objects. `StringifyAll` will apply the filter when
  * iterating the properties of an object of the indicated types.
- * @param {Integer} [Options.MaxDepth=0] - The maximum depth `StringifyAll` will recurse
+ * @param {Integer} [Options.MaxDepth = 0 ] - The maximum depth `StringifyAll` will recurse
  * into. The root depth is 1. Note "Depth" and "indent level" do not necessarily line up.
- * @param {Boolean} [Options.Multiple=false] - When true, there is no limit to how many times
+ * @param {Boolean} [Options.Multiple = false ] - When true, there is no limit to how many times
  * `StringifyAll` will process an object. Each time an individual object is encountered, it will
  * be processed unless doing so will result in infinite recursion. When false, `StringifyAll`
  * processes each individual object a maximum of 1 time, and all other encounters result in
  * `StringifyAll` printing a placeholder string that is a string representation of the object path
  * at which the object was first encountered.
- * @param {Map} [Options.PropsTypeMap={ __Class: "Map", Default: 1, Count: 0 }] - A `Map` object
+ * @param {Map} [Options.PropsTypeMap = { __Class: "Map", Default: 1, Count: 0 } ] - A `Map` object
  * where the keys are object types and the values are either:
  * - A boolean indicating whether or not `StringifyAll` should process the object's properties. A
  * nonzero value directs `StringifyAll` to process the properties. A falsy value directs `StringifyAll`
@@ -120,7 +125,7 @@
  *   - The function should accept the object being evaluated as its only parameter.
  *   - The function should return a boolean value described above.
  * Use the `Map`'s `Default` property to set a condition for all types not included within the `Map`.
- * @param {Map} [Options.StopAtTypeMap=''] - A `Map` object where the keys are object types and
+ * @param {Map} [Options.StopAtTypeMap = '' ] - A `Map` object where the keys are object types and
  * the values are either:
  * - A string or number that will be passed to the `StopAt` parameter of `GetPropsInfo`.
  * - A function or callable object:
@@ -128,32 +133,33 @@
  *   - The function should return a string or number to be passed to the `StopAt` parameter of
  * `GetPropsInfo`.
  * Use the `Map`'s `Default` property to set a condition for all types not included within the `Map`.
- * @param {*} [Options.CallbackError=''] - A function or callable object that is called when `StringifyAll`
+ * @param {*} [Options.CallbackError = '' ] - A function or callable object that is called when `StringifyAll`
  * encounters an error when attempting to access the value of a property.
- * @param {*} [Options.CallbackGeneral=''] - A function or callable object, or an array of
+ * @param {*} [Options.CallbackGeneral = '' ] - A function or callable object, or an array of
  * one or more functions or callable objects, that will be called for each object prior to processing.
- * @param {*} [Options.CallbackPlaceholder=''] - When `StringifyAll` skips processing an
+ * @param {*} [Options.CallbackPlaceholder = '' ] - When `StringifyAll` skips processing an
  * object, a placeholder is printed instead. You can define `Options.CallbackPlaceholder`
  * with any callable object to customize the string that gets printed.
- * @param {String} [Options.Indent='`s`s`s`s'] - The literal string that will be used for one level
- * of indentation.
- * @param {String} [Options.Newline='`r`n'] - The literal string that will be used for line
- * breaks. If set to zero or an empty string, the `Options.Singleline` option is effectively
- * enabled.
- * @param {Integer} [Options.CondenseCharLimit=0]
- * @param {Integer} [Options.CondenseCharLimitEnum1=0]
- * @param {Integer} [Options.CondenseCharLimitEnum2=0]
- * @param {Integer} [Options.CondenseCharLimitEnum2Item=0]
- * @param {Integer} [Options.CondenseCharLimitProps=0] -
+ * @param {Integer} [Options.CondenseCharLimit = 0 ]
+ * @param {Integer} [Options.CondenseCharLimitEnum1 = 0 ]
+ * @param {Integer} [Options.CondenseCharLimitEnum2 = 0 ]
+ * @param {Integer} [Options.CondenseCharLimitEnum2Item = 0 ]
+ * @param {Integer} [Options.CondenseCharLimitProps = 0 ] -
  * Sets a threshold which `StringifyAll` uses to determine whether an object's JSON substring should
  * be condensed to a single line as a function of the character length of the substring.
- * @param {Integer} [Options.NewlineDepthLimit=0] - Sets a threshold directing `StringifyAll`
+ * @param {String} [Options.Indent = '`s`s`s`s' ] - The literal string that will be used for one level
+ * of indentation. Note that the first line with the opening brace is not indented.
+ * @param {String} [Options.InitialIndent = 0 ] - The initial indent level.
+ * @param {String} [Options.Newline = '`r`n' ] - The literal string that will be used for line
+ * breaks. If set to zero or an empty string, the `Options.Singleline` option is effectively
+ * enabled.
+ * @param {Integer} [Options.NewlineDepthLimit = 0 ] - Sets a threshold directing `StringifyAll`
  * to stop adding line breaks between values after exceeding the threshold.
- * @param {Boolean} [Options.Singleline=false] - If true, the JSON string is printed without
+ * @param {Boolean} [Options.Singleline = false ] - If true, the JSON string is printed without
  * line breaks or indentation. All other "Newline and indent options" are ignored.
- * @param {String} [Options.ItemProp='__Item__'] - The name that `StringifyAll` will use as a
+ * @param {String} [Options.ItemProp = '__Item__' ] - The name that `StringifyAll` will use as a
  * faux-property for including an object's items returned by its enumerator.
- * @param {Boolean|String} [Options.PrintErrors=false] - When `StringifyAll` encounters an error
+ * @param {Boolean|String} [Options.PrintErrors = false ] - When `StringifyAll` encounters an error
  * accessing a property's value, `Options.PrintErrors` influences how it is handled. `Options.PrintErrors`
  * is ignored if `Options.CallbackError` is set.
  * - If `Options.PrintErrors` is a string value, it should be a comma-delimited list of `Error` property
@@ -161,18 +167,18 @@
  * - If any other nonzero value, `StringifyAll` will print just the "Message" property of the `Error`
  * object in the string.
  * - If zero or an empty string, `StringifyAll` skips the property.
- * @param {Boolean} [Options.QuoteNumericKeys=false] - When true, and when `StringifyAll` is
+ * @param {Boolean} [Options.QuoteNumericKeys = false ] - When true, and when `StringifyAll` is
  * processing an object's enumerator in 2-param mode, if the value returned to the first parameter
  * (the "key") is numeric, it will be quoted in the JSON string.
- * @param {String} [Options.RootName='$'] - Specifies the name of the root object used in the
+ * @param {String} [Options.RootName = '$' ] - Specifies the name of the root object used in the
  * string representation of an object's path when the object is skipped due to already having been
  * stringified.
- * @param {String} [Options.UnsetArrayItem='""'] - The string to print for unset array items.
- * @param {Integer} [Options.InitialPtrListCapacity=64] - `StringifyAll` tracks the ptr
+ * @param {String} [Options.UnsetArrayItem = '""' ] - The string to print for unset array items.
+ * @param {Integer} [Options.InitialPtrListCapacity = 64 ] - `StringifyAll` tracks the ptr
  * addresses of every object it stringifies to prevent infinite recursion. `StringifyAll` will set
  * the initial capacity of the `Map` object used for this purpose to
  * `Options.InitialPtrListCapacity`.
- * @param {Integer} [Options.InitialStrCapacity=65536] - `StringifyAll` calls `VarSetStrCapacity`
+ * @param {Integer} [Options.InitialStrCapacity = 65536 ] - `StringifyAll` calls `VarSetStrCapacity`
  * using `Options.InitialStrCapacity` for the output string during the initialization stage.
  * For the best performance, you can overestimate the approximate length of the string; `StringifyAll`
  * calls `VarSetStrCapacity(&OutStr, -1)` at the end of the function to release any unused memory.
@@ -278,7 +284,7 @@ class StringifyAll {
         Recurse := _Recurse1
         OutStr := ''
         VarSetStrCapacity(&OutStr, Options.InitialStrCapacity)
-        depth := indentlevel := 0
+        depth := 0
 
         ; The functions set in this block are: nl, ind, controller.OpenProps, controller.OpenEnum1,
         ; controller.OpenEnum2, controller.CloseProps, controller.CloseEnum1, controller.CloseEnum2,
@@ -296,8 +302,6 @@ class StringifyAll {
             IncDepth := _IncDepth2
         } else {
             ; Newline / indent options
-            indent := [Options.Indent]
-            newline := Options.Newline
             CondenseCharLimitEnum1 := Options.CondenseCharLimitEnum1 || Options.CondenseCharLimit
             CondenseCharLimitEnum2 := Options.CondenseCharLimitEnum2 || Options.CondenseCharLimit
             CondenseCharLimitProps := Options.CondenseCharLimitProps || Options.CondenseCharLimit
@@ -314,6 +318,7 @@ class StringifyAll {
             indent.Capacity := Options.MaxDepth ? Options.MaxDepth + 1 : 16
             nlStr := Options.Newline
             newlineLen := StrLen(nlStr)
+            indentlevel := Options.InitialIndent
             nl := _nl1
             ind := _ind1
             if CondenseCharLimitProps > 0 {
@@ -1062,13 +1067,14 @@ class StringifyAll {
           , CallbackPlaceholder: ''
 
             ; Newline and indent options
-          , Indent: '`s`s`s`s'
-          , Newline: '`r`n'
           , CondenseCharLimit: 0
           , CondenseCharLimitEnum1: 0
           , CondenseCharLimitEnum2: 0
           , CondenseCharLimitEnum2Item: 0
           , CondenseCharLimitProps: 0
+          , Indent: '`s`s`s`s'
+          , InitialIndent: 0
+          , Newline: '`r`n'
           , NewlineDepthLimit: 0
           , Singleline: false
 

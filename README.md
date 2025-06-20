@@ -1,5 +1,5 @@
 
-# StringifyAll - v1.1.5
+# StringifyAll - v1.1.6
 A customizable solution for serializing AutoHotkey (AHK) object properties, including inherited properties, and/or items into a 100% valid JSON string.
 
 ## AutoHotkey forum post
@@ -36,6 +36,8 @@ https://www.autohotkey.com/boards/viewtopic.php?f=83&t=137415&p=604407#p604407
 - Prepare the `ConfigLibrary` class and reference the configuration by name. See the file "templates\ConfigLibrary.ahk". (Added 1.0.3).
 - Define a class `StringifyAllConfig` anywhere in your code.
 - Pass an object to the `Options` parameter.
+
+Note that `StringifyAll` changes the base of the `StringifyAllConfig` class to `StringifyAll.Options.Default`, and changes the base of the input options object to either `StringifyAllConfig` if it exists, or to `StringifyAll.Options.Default` if `StringifyAllConfig` does not exist.
 
 The options defined by the `Options` parameter supercede options defined by the `StringifyAllConfig` class. This is convenient for setting your own defaults based on your personal preferences / project needs using the class object, and then passing an object to the `Options` parameter to adjust your defaults on-the-fly.
 
@@ -97,6 +99,7 @@ Jump to:
 <a href="#excludeprops"><br>ExcludeProps</a>
 <a href="#filtertypemap"><br>FilterTypeMap</a>
 <a href="#indent"><br>Indent</a>
+<a href="#initialindent"><br>InitialIndent</a>
 <a href="#initialptrlistcapacity"><br>InitialPtrListCapacity</a>
 <a href="#initialstrcapacity"><br>InitialStrCapacity</a>
 <a href="#itemprop"><br>ItemProp</a>
@@ -403,6 +406,32 @@ MyPlaceholderFunc(controller, obj, &prop?, &key?) {
   <ul style="padding-left:24px;">The literal string that will be used for one level of indentation.</ul>
 </ul>
 
+<ul id="initialindent"><b>{String}</b> [ <b>InitialIndent</b>  = <code>0</code> ]
+  <ul style="padding-left:24px;">The initial indent level. Note that the first line with the opening brace is not indented. This is to make it easier to use the output from one `StringifyAll` call as a property value in a separate JSON string.</ul>
+</ul>
+
+```ahk
+obj1 := { prop1: { prop2: 'val2' } }
+obj2 := { prop3: { prop4: 'val3' } }
+; To exclude the `Object` inherited properties.
+filter := PropsInfo.FilterGroup(1)
+FilterTypeMap := Map('Object', filter)
+json := StringifyAll(obj1, { FilterTypeMap: FilterTypeMap })
+json := StrReplace(json, '"val2"', StringifyAll(obj2, { InitialIndent: 2, FilterTypeMap: FilterTypeMap }))
+OutputDebug(A_Clipboard := json)
+```
+```json
+{
+    "prop1": {
+        "prop2": {
+            "prop3": {
+                "prop4": "val3"
+            }
+        }
+    }
+}
+```
+
 <ul id="newline"><b>{String}</b> [ <b>Newline</b>  = <code>"`r`n"</code> ]
   <ul style="padding-left:24px;">The literal string that will be used for line breaks. If set to zero or an empty string, the <code>Singleline</code> option is effectively enabled and <code>StringifyAll</code> disables <code>Options.Indent</code> for you. If you have a need to direct <code>StringifyAll</code> to not use newline characters but still use indentation where it typically would, you should set <code>Options.Newline</code> with a zero-width character like 0xFEFF.</ul>
 </ul>
@@ -635,6 +664,10 @@ Then, the value is processed:
 After processing the enumerator, if <code>count == 0</code>, adds the closing bracket(s) to the output string. If <code>count > 0</code>, adds a newline, indentation, and the closing bracket to the output string.
 
 ## Changelog
+
+<h4>2025-06-19 - 1.1.6</h4>
+
+- Implemented `Options.InitialIndent`.
 
 <h4>2025-06-15 - 1.1.5</h4>
 
