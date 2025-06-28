@@ -1,5 +1,5 @@
 
-# StringifyAll - v1.1.6
+# StringifyAll - v1.1.7
 A customizable solution for serializing AutoHotkey (AHK) object properties, including inherited properties, and/or items into a 100% valid JSON string.
 
 ## AutoHotkey forum post
@@ -664,6 +664,11 @@ Then, the value is processed:
 After processing the enumerator, if <code>count == 0</code>, adds the closing bracket(s) to the output string. If <code>count > 0</code>, adds a newline, indentation, and the closing bracket to the output string.
 
 ## Changelog
+
+<h4>2025-06-28 - 1.1.7</h4>
+
+- Fixed `StringifyAll.StrUnescapeJson`.
+- Added "test\test-StrUnescapeJson.ahk".
 
 <h4>2025-06-19 - 1.1.6</h4>
 

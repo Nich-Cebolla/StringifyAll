@@ -1,7 +1,7 @@
 ﻿/*
     Github: https://github.com/Nich-Cebolla/AutoHotkey-StringifyAll
     Author: Nich-Cebolla
-    Version: 1.1.6
+    Version: 1.1.7
     License: MIT
 */
 
@@ -684,7 +684,7 @@ class StringifyAll {
                     _WriteProp1(controller, &Prop, &Val, &OutStr)
                     return
                 }
-            } else if depth >= maxDepth  || Val is ComObject || Val is ComValue {
+            } else if depth >= maxDepth || Val is ComObject || Val is ComValue {
                 _WriteProp2(controller, &Prop, controller.GetPlaceholder(Val, &Prop), &OutStr)
                 return
             }
@@ -706,7 +706,7 @@ class StringifyAll {
                     _WriteProp1(controller, &Prop, &Val, &OutStr)
                     return
                 }
-            } else if depth >= maxDepth  || Val is ComObject || Val is ComValue {
+            } else if depth >= maxDepth || Val is ComObject || Val is ComValue {
                 _WriteProp2(controller, &Prop, controller.GetPlaceholder(Val, &Prop), &OutStr)
                 return
             }
@@ -1004,7 +1004,11 @@ class StringifyAll {
      * @param {VarRef} Str - The string to unescape.
      */
     static StrUnescapeJson(&Str) {
-        Str := StrReplace(StrReplace(StrReplace(StrReplace(StrReplace(Str, '\n', '`n'), '\r', '`r'), '\"', '"'), '\t', '`t'), '\\', '\')
+        n := 0xFFFD
+        while InStr(Str, Chr(n)) {
+            n++
+        }
+        Str := StrReplace(StrReplace(StrReplace(StrReplace(StrReplace(StrReplace(Str, '\\', Chr(n)), '\n', '`n'), '\r', '`r'), '\"', '"'), '\t', '`t'), Chr(n), '\')
     }
 
     /**

@@ -1,3 +1,8 @@
+<h4>2025-06-28 - 1.1.7</h4>
+
+- Fixed `StringifyAll.StrUnescapeJson`.
+- Added "test\test-StrUnescapeJson.ahk".
+
 <h4>2025-06-19 - 1.1.6</h4>
 
 - Implemented `Options.InitialIndent`.
