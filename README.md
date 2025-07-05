@@ -335,9 +335,9 @@ FilterTypeMap.Default := filter
         <b>{Object}</b> - The <code>controller</code> object. The <code>controller</code> is an internal mechanism with various callable properties, but the only property of use for this purpose is <code>Path</code>, which has a string value representing the object path up to the object that is currently being evaluated. In the below example, if your function is called for a placeholder for the object at <code>obj.nestedObj.doubleNestedObj</code>, the path will be "$.nestedObj.doubleNestedObj".
         <pre>
 Obj := {
-  nestedObj: {
-      doubleNestedObj: {  prop: 'value' }
-  }
+    nestedObj: {
+        doubleNestedObj: { prop: 'value' }
+    }
 }</pre>
       </li>
       <li><b>{*}</b> - The object being evaluated.</li>
@@ -349,19 +349,19 @@ Obj := {
           The "key" (the value received by the first variable in a for-loop) for objects that are encountered while enumerating an object in 2-parameter mode. The key will already have been escaped and enclosed in double quotes at this point, making it somewhat awkward to work with because escaping it again will re-escape the existing escape sequences. If your function will use the key for some purpose, then you will likely want to do something like the below example.
           <pre>
 MyPlaceholderFunc(controller, obj, &prop?, &key?) {
-  if IsSet(prop) {
-      ; make something
-  } else if IsSet(key) {
-      if IsNumber(key) {
-          ; make something
-      } else {
-          key := Trim(key, '"')
-          if InStr(key, '\') {
-              StringifyAll.StrUnescapeJson(&key)
-          }
-          ; make something
-      }
-  }
+    if IsSet(prop) {
+        ; make something
+    } else if IsSet(key) {
+        if IsNumber(key) {
+            ; make something
+        } else {
+            key := SubStr(key, 2, -1) ; remove the external quotes
+            if InStr(key, '\') {
+                StringifyAll.StrUnescapeJson(&key)
+            }
+            ; make something
+        }
+    }
 }</pre>
         </li>
       </ul>
