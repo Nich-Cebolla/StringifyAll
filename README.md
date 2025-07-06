@@ -614,7 +614,7 @@ The following is a description of the part of the process which the function(s) 
   <code>StringifyAll</code> proceeds in two stages, initialization and recursive processing. After initialization, the function <code>Recurse</code> is called once, which starts the second stage.
   <br>When <code>StringifyAll</code> encounters a value that is an object, it proceeds through a series of condition checks to determine if it will call <code>Recurse</code> again for that value. When a value is skipped, a placeholder is printed instead.<code>StringifyAll</code> checks the following conditions.
   <ul style="padding-left:48px;">
-    <li>If the value has already been stringified, processes the object according to <a href="#multiple"><br>Multple</a>.</li>
+    <li>If the value has already been stringified, processes the object according to <a href="#multiple">Multple</a>.</li>
     <li>If the value is a <code>ComObject</code> or <code>ComValue</code>, the value is skipped.</li>
     <li>If <code>MaxDepth</code> has been reached, the value is skipped.</li>
   </ul>
