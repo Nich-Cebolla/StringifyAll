@@ -22,6 +22,11 @@ class StringifyAllConfig {
     static CondenseCharLimitEnum2 := unset
     static CondenseCharLimitEnum2Item := unset
     static CondenseCharLimitProps := unset
+    static CondenseDepthThreshold := unset
+    static CondenseDepthThresholdEnum1 := unset
+    static CondenseDepthThresholdEnum2 := unset
+    static CondenseDepthThresholdEnum2Item := unset
+    static CondenseDepthThresholdProps := unset
     static Indent := unset
     static InitialIndent := unset
     static Newline := unset
