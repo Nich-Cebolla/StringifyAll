@@ -603,96 +603,9 @@ This section describes `StringifyAll`'s process. This section is intended to hel
 
 ### Properties
 
-For every object, prior to adding the object's open brace to the string, `StringifyAll` proceeds through these steps:
+This section needs updated.
 
-  - If `Options.PropsTypeMap.HasOwnProp('Default')` then this code is used:
-
-```
-if IsObject(Item := propsTypeMap.Get(Type(Obj))) {
-    return Item(Obj)
-} else {
-    return Item
-}
-```
-
-  - Else, this code is used:
-
-```
-if propsTypeMap.Has(Type(Obj)) {
-    if IsObject(Item := propsTypeMap.Get(Type(Obj))) {
-        return Item(Obj)
-    } else {
-        return Item
-    }
-}
-```
-  - If the return value is nonzero:
-
-    - `StringifyAll` calls `PropsInfoObj := GetPropsInfo(Obj, StopAt, excludeProps, false, , excludeMethods)`.
-    - If `PropsInfoObj.Count > 0`, `StringifyAll` processes only the properties exposed by `PropsInfoObj`. You can control this with two options.
-
-      - `Options.ExcludeProps` is effective and straightforward. Write a comma-delimited string of property names to exclude. This would apply to all objects.
-      - `Options.FilterTypeMap` affords greater flexibility. `PropsInfo` objects are designed with a filter system to make it easy to programmatically include a set of properties, and exclude the other, from whatever one's code is doing with the `PropsInfo` object. See "example\example.ahk" and/or "inheritance\example-Inheritance.ahk" for examples.
-
-    - Else, `StringifyAll` skips the properties for that object and goes on to check if the enumerator will be called.
-
-  - If the return value is falsy, `StringifyAll` skips the properties for that object and goes on to check if the enumerator will be called.
-
-This will come into play if you want an `Array` or `Map` object's string representation to have the appearance of what we typically expect for arrays and maps. To accomplish this, `StringifyAll` must not process any properties for those objects. There are two ways you can approach this:
-- Define `Options.PropsTypeMap` to exclude properties for `Array` and `Map` objects: `Options.PropsTypeMap := Map("Array", 0, "Map", 0)`. Don't forget to set `Options.PropsTypeMap.Default := 1` if you still want other objects to have their properties processed.
-- Define `Options.FilterTypeMap` to exclude inherited properties for `Map` and `Array` objects:
-
-```ahk
-filter := PropsInfo.FilterGroup(1) ; The function associated with index `1` filters out inherited properties.
-FilterTypeMap := Map('Array', filter, 'Map', filter)
-obj := [
-    { prop: 'val' }
-  , Map('key', 'val')
-  , [ 'val' ]
-  , { prop2: 'val2' }
-  , Map('key2', 'val2')
-  , [ 'val2']
-]
-obj[5].prop := 'val'
-obj[6].prop := 'val'
-OutputDebug('`n' StringifyAll(obj, { FilterTypeMap: FilterTypeMap }))
-```
-
-With this option, `StringifyAll` includes the own properties assigned directly to the `Map` and `Array` objects, and excludes all inherited properties.
-```json
-[
-    {
-        "prop": "val"
-    },
-    [
-        [
-            "key",
-            "val"
-        ]
-    ],
-    [
-        "val"
-    ],
-    {
-        "prop2": "val2"
-    },
-    {
-        "prop": "val",
-        "__Items__": [
-            [
-                "key2",
-                "val2"
-            ]
-        ]
-    },
-    {
-        "prop": "val",
-        "__Items__": [
-            "val2"
-        ]
-    }
-]
-```
+<!-- a copy of the previous text is in .archive -->
 
 ### CallbackGeneral
 
@@ -711,72 +624,9 @@ The following is a description of the part of the process which the function(s) 
 
 ### Calling the enumerator
 
-One of the first actions within `Recurse` is `flag_enum := CheckEnum(Obj)`. `CheckEnum` is one of the following:
+This section needs updated.
 
-If `Options.EnumTypeMap.HasOwnProp('Default')`:
-```ahk
-if IsObject(Item := enumTypeMap.Get(Type(Obj))) {
-    return Item(Obj)
-} else {
-    return Item
-}
-```
-If `!Options.EnumTypeMap.HasOwnprop('Default')`:
-```ahk
-if enumTypeMap.Has(Type(Obj)) {
-    if IsObject(Item := enumTypeMap.Get(Type(Obj))) {
-        return Item(Obj)
-    } else {
-        return Item
-    }
-}
-```
-The return value should be 1, 2, or 0. `StringifyAll` then processes the properties as described in <a href="#properties">Properties</a>. `StringifyAll`'s behavior when calling the enumerator varies slightly depending on whether any properties were processed for the object.
-
-If `StringifyAll` processed properties, and if `flag_enum` is `1` or `2`, `StringifyAll` adds the comma, newline, indentation, open quote, <a href="#itemprop">Options.ItemProp</a>, close quote, colon, space, and open square bracket to the output string. `OutStr .= ',' nl() ind() '"' itemProp '": ['`. (This is actually split into two function calls so the code looks different in the source file).
-
-If `StringifyAll` did not process properties for the object, and if `flag_enum` is `1` or `2`, `StringifyAll` adds the open brace to the output string: `OutStr .= '['`
-
-After handling the open bracket:
-<ol type="1">
-  <li><code>StringifyAll</code> increases the indent level by 1.</li>
-  <li>If <code>Options.CondenseCharLimit</code> or the individual <code>Options.CondenseCharLimitEnum1</code> / <code>Options.CondenseCharLimitEnum2</code> are set, caches some values needed later to handle that option.</li>
-  <li>Initializes a variable <code>count := 0</code>.</li>
-  <li>Calls the enumerator, incrementing <code>count</code> for each item. How the output string is constructed varies if <code>flag_enum == 1</code> and <code>flag_enum == 2</code>, but the processing logic is the same. The main difference between the two, of course, is that there are two values to handle when calling the enumerator in 2-param mode. The following only applies when calling an enumerator in 2-param mode:</li>
-  <ol type="i">
-    <li>Prior to processing the value that is received by the second parameter, <code>StringifyAll</code> first processes the first parameter (<code>Key</code>):</li>
-    <li>If <code>IsObject(Key)</code>: <code>StringifyAll</code> will not process an object that is received by the first parameter. Instead, it creates a placeholder string to use as the key: <code>Key := '"{ ' this.GetType(Key) ':' ObjPtr(Key) ' }"'</code>.</li>
-    <li>If <code>!IsObject(Key)</code></li>
-    <ul>
-      <li><code>StringifyAll</code> processes the <code>Key</code> for escape sequences</li>
-      <li>If <code>Options.QuoteNumericKeys</code> and <code>IsNumber(Key)</code>, or if <code>!IsNumber(Key)</code>, encloses it in double-quotes.</li>
-    </ul>
-  </ol>
-</ol>
-Then, the value is processed:
-<ol start="5">
-  <li>If <code>IsObject(Val)</code></li>
-  <ul>
-    <li>If the object has been processed before</li>
-    <ul>
-      <li>If <code>Options.Multiple</code></li>
-      <ul>
-        <li>Checks if the new object shares a parent-child relationship with the current object using <code>InStr('$.' controller.Path, '$.' ptrList.Get(ObjPtr(Val)).Path)</code>. This is comparing the string representation of the object path for the two objects. If the object has been processed multiple times already, each path is checked. The leading "$." is just to ensure the two strings must match at the beginning of the string. Using this approach should be slightly more performant than <code>RegExMatch</code>, which matters when processing thousands of iterations. The reason this is an effective way to determine parent-child relationship is because, if they are parent-child, they will always share the same path up to the parent.</li>
-        <ul>
-          <li>If they are parent-child, skips the object printing the path instead.</li>
-          <li>If not, proceeds to the next step.</li>
-        </ul>
-        <li>If <code>!Options.Multiple</code>, prints the placeholder and skips the object.</li>
-      </ul>
-    </ul>
-    <li>If <code>depth >= maxDepth || Val is ComObject || Val is ComValue </code>, prints a placeholder string and skips the object.</li>
-    <li>If <code>Options.CallbackGeneral</code>, iterates the callbacks. Processing behavior is described in the <a href="#callbackgeneral">CallbackGeneral</a> section.</li>
-    <li>If <code>!Options.CallbackGeneral</code> or none of the callbacks directed <code>StringifyAll</code> to skip the object, <code>StringifyAll</code> proceeds through some initialization steps then calls <code>Recurse</code> with the object.</li>
-    </ul>
-  </ul>
-  <li>If <code>!IsObject(Val)</code>, processes the value for escape sequences and encloses it in double quotes, then writes it to the output string.</li>
-</ol>
-After processing the enumerator, if <code>count == 0</code>, adds the closing bracket(s) to the output string. If <code>count > 0</code>, adds a newline, indentation, and the closing bracket to the output string.
+<!-- a copy of the previous text is in .archive -->
 
 ## Changelog
 
