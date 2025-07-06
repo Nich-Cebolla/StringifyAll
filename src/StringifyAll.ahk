@@ -392,10 +392,11 @@ class StringifyAll {
             if CondenseCharLimitEnum2Item > 0 {
                 CondenseDepthThresholdEnum2Item := Options.CondenseDepthThresholdEnum2Item || Options.CondenseDepthThreshold
                 if CondenseDepthThresholdEnum2Item > 0 {
+                    controllerBase.PrepareNextEnum2 := _PrepareNextEnum25
                 } else {
                     controllerBase.PrepareNextEnum2 := _PrepareNextEnum23
-                    controllerBase.ProcessEnum2 := _ProcessEnum22
                 }
+                controllerBase.ProcessEnum2 := _ProcessEnum22
             } else {
                 controllerBase.PrepareNextEnum2 := _PrepareNextEnum21
                 controllerBase.ProcessEnum2 := _ProcessEnum21
@@ -498,20 +499,6 @@ class StringifyAll {
             }
         }
         _CloseEnum12(controller, count, &OutStr) {
-            indentLevel--
-            if count {
-                OutStr .= nl() ind() ']'
-                if container := controller.LenContainerEnum {
-                    if StrLen(OutStr) - container.Len - (diff := whitespaceChars - container.whitespaceChars) <= condenseCharLimitEnum1 {
-                        whitespaceChars -= diff
-                        OutStr := RegExReplace(OutStr, '\R *(?!$)', '', , , container.len || 1)
-                    }
-                }
-            } else {
-                OutStr .= ']'
-            }
-        }
-        _CloseEnum13(controller, count, &OutStr) {
             indentLevel--
             if count {
                 OutStr .= nl() ind() ']'
@@ -1019,9 +1006,9 @@ class StringifyAll {
                 indentLevel--
                 OutStr .= nl() ind() ']'
                 if container := controller.LenContainerEnum2Item {
-                    if StrLen(OutStr) - controller.LenContainer.len - (diff := whitespaceChars - controller.LenContainer.whitespaceChars) <= condenseCharLimitEnum2Item {
+                    if StrLen(OutStr) - container.len - (diff := whitespaceChars - container.whitespaceChars) <= condenseCharLimitEnum2Item {
                         whitespaceChars -= diff
-                        OutStr := RegExReplace(OutStr, '\R *(?!$)', '', , , controller.LenContainer.len || 1)
+                        OutStr := RegExReplace(OutStr, '\R *(?!$)', '', , , container.len || 1)
                     }
                 }
             }
