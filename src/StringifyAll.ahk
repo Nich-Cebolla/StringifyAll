@@ -1,7 +1,7 @@
 ﻿/*
     Github: https://github.com/Nich-Cebolla/AutoHotkey-StringifyAll
     Author: Nich-Cebolla
-    Version: 1.1.7
+    Version: 1.2.0
     License: MIT
 */
 
@@ -12,10 +12,7 @@
 
 /**
  * @description - A customizable solution for serializing an object's properties, including inherited
- * properties, and/or items into a 100% valid JSON string.
- *
- * `StringifyAll` utilizes `GetPropsInfo` from the "Inheritance" library linked at the top of the
- * file. This allows us to include every property, even inherited properties, in the JSON string.
+ * properties, and/or items into a 100% valid JSON string. See the documentation for full details.
  *
  * `StringifyAll` exposes many options to programmatically restrict what gets included in the JSON
  * string. It also includes options for adjusting the spacing in the string. To set your options, you
@@ -37,109 +34,62 @@
  * project needs using the class object, and then passing an object to the `Options` parameter to
  * adjust your defaults on-the-fly.
  *
- * Callback functions must not call `StringifyAll`. `StringifyAll` relies on several variables in
- * the function's scope. Concurrent function calls would change their values, causing unexpected
- * behavior for earlier calls.
- *
- * For usage examples, see "example\example.ahk".
- *
- * There are some considerations to keep in mind when using `StringifyAll` with the intent to later
- * parse it back into a data object.
- * - All objects that have one or more of its property values written to the JSON string are represented
- * as an object using curly braces, including array objects and map objects. Since square brackets
- * are the typical indicator that a substring is representing an array object, a parser will interpret
- * the substring as an object with a property that is an array, rather than just an array. (Keep an
- * eye out for my updated JSON parser to pair with `StringifyAll`).
- * - A parser would need to handle read-only properties in some way.
- * - Some properties don't necessarily need to be parsed. For example, if I stringified an array object
- * including its native properties, a parser setting the `Length` property would be redundant.
- *
- * The above considerations are mitigated by keeping separate configuration files for separate purposes.
- * For example, keep one configuration to use when intending to later parse the string back into AHK
- * data, and keep another configuration to use when intending to visually inspect the string.
- *
- * There are some conditions which will cause `Stringify` to skip stringifying an object. When this
- * occurs, `Stringify` prints a placeholder string instead. The conditions are:
- * - The object is a `ComObject` or `ComValue`.
- * - The maximum depth is reached.
- * - Your callback function returned a value directing `Stringify` to skip the object.
- *
- * When `StringifyAll` encounters an object multiple times, it may skip the object and print a
- * string representation of the object path at which the object was first encountered. Using the
- * object path instead of the standard placeholder is so one's code or one's self can identify the
- * correct object that was at that location when `Stringify` was processing. This will occur when one or
- * both of the following are true:
- * - `Options.Multiple` is false (the default is false).
- * - Processing the object will result in infinite recursion.
- *
- * `StringifyAll` does not inherently direct the flow of action as a condition of whether an object
- * is a map, array, or some other type of object. Instead, the options can be used to specify precisely
- * what should be included in the JSON string and what should not be included.
- *
- * `StringifyAll` will require more setup to be useful compared to other stringify functions, because
- * we usually don't need information about every property. `StringifyAll` is not intended to be a
- * replacement for other stringify functions. Where `StringifyAll` shines is in cases where we need
- * a way to programmatically define specifically what properties we want represented in the JSON
- * string and what we want to exclude; at the cost of requiring greater setup time investment, we
- * receive in exchange the potential to fine-tune precisely what will be present in the JSON string.
- *
  * Note that these are short descriptions of the options. For complete details about the options,
- * see the documentation within "docs\README.md".
+ * see the documentation "README.md".
  *
  * @param {*} Obj - The object to stringify.
  *
  * @param {Object|String} [Options] - If you are using `ConfigLibrary, the name of the configuration.
  * Or, the options object with zero or more of the following properties.
- * @param {Map} [Options.EnumTypeMap = Map('Array', 1, 'Map', 2, 'RegExMatchInfo', 2) ] - A `Map` object
- * where the keys are object types and the values are either:
- * - An integer:
- *   - 1: Directs `StringifyAll` to call the object's enumerator in 1-param mode.
- *   - 2: Directs `StringifyAll` to call the object's enumerator in 2-param mode.
- *   - 0: Directs `StringifyAll` to not call the object's enumerator.
- * - A function or callable object:
- *   - The function should accept the object being evaluated as its only parameter.
- *   - The function should return one of the above listed integers.
- * Use the `Map`'s `Default` property to set a condition for all types not included within the `Map`.
+ *
+ * ## Options
+ *
+ * ### Enum options -------------
+ *
+ * @param {*} [Options.EnumTypeMap = Map('Array', 1, 'Map', 2, 'RegExMatchInfo', 2) ] -
+ * `Options.EnumTypeMap` controls which objects have `__Enum` called, and if it is called in 1-param
+ * mode or 2-param mode.
+ *
  * @param {Boolean} [Options.ExcludeMethods = true ] - If true, properties with a `Call`
  * accessor and properties with only a `Set` accessor are excluded from stringification.
+ *
  * @param {String} [Options.ExcludeProps = '' ] - A comma-delimited, case-insensitive list of
  * property names to exclude from stringification. Also see `Options.Filter` and
  * `Options.FilterTypeMap`.
- * @param {Map} [Options.FilterTypeMap = '' ] - A `Map` object where the keys are object types
- * and the values are `PropsInfo.FilterGroup` objects. `StringifyAll` will apply the filter when
- * iterating the properties of an object of the indicated types.
+ *
+ * @param {*} [Options.FilterTypeMap = '' ] - `Options.FilterTypeMap` controls the filter applied to
+ * the `PropsInfo` objects, if any.
+ *
  * @param {Integer} [Options.MaxDepth = 0 ] - The maximum depth `StringifyAll` will recurse
- * into. The root depth is 1. Note "Depth" and "indent level" do not necessarily line up.
+ * into. The root depth is 1. Note "depth" and "indent level" do not necessarily line up.
+ *
  * @param {Boolean} [Options.Multiple = false ] - When true, there is no limit to how many times
  * `StringifyAll` will process an object. Each time an individual object is encountered, it will
  * be processed unless doing so will result in infinite recursion. When false, `StringifyAll`
  * processes each individual object a maximum of 1 time, and all other encounters result in
  * `StringifyAll` printing a placeholder string that is a string representation of the object path
  * at which the object was first encountered.
- * @param {Map} [Options.PropsTypeMap = { __Class: "Map", Default: 1, Count: 0 } ] - A `Map` object
- * where the keys are object types and the values are either:
- * - A boolean indicating whether or not `StringifyAll` should process the object's properties. A
- * nonzero value directs `StringifyAll` to process the properties. A falsy value directs `StringifyAll`
- * to skip the properties.
- * - A function or callable object:
- *   - The function should accept the object being evaluated as its only parameter.
- *   - The function should return a boolean value described above.
- * Use the `Map`'s `Default` property to set a condition for all types not included within the `Map`.
- * @param {Map} [Options.StopAtTypeMap = '' ] - A `Map` object where the keys are object types and
- * the values are either:
- * - A string or number that will be passed to the `StopAt` parameter of `GetPropsInfo`.
- * - A function or callable object:
- *   - The function should accept the object being evaluated as its only parameter.
- *   - The function should return a string or number to be passed to the `StopAt` parameter of
- * `GetPropsInfo`.
- * Use the `Map`'s `Default` property to set a condition for all types not included within the `Map`.
+ *
+ * @param {*} [Options.PropsTypeMap = 1 ] - `Options.PropsTypeMap` controls which objects have
+ * their properties iterated and written to the JSON string.
+ *
+ * @param {*} [Options.StopAtTypeMap = "-Object" ] - `Options.StopAtTypeMap` controls the value
+ * that is passed to the `StopAt` parameter of `GetPropsInfo`.
+ *
+ * ### Callbacks ----------------
+ *
  * @param {*} [Options.CallbackError = '' ] - A function or callable object that is called when `StringifyAll`
  * encounters an error when attempting to access the value of a property.
+ *
  * @param {*} [Options.CallbackGeneral = '' ] - A function or callable object, or an array of
  * one or more functions or callable objects, that will be called for each object prior to processing.
+ *
  * @param {*} [Options.CallbackPlaceholder = '' ] - When `StringifyAll` skips processing an
  * object, a placeholder is printed instead. You can define `Options.CallbackPlaceholder`
  * with any callable object to customize the string that gets printed.
+ *
+ * ### Newline and indent options
+ *
  * @param {Integer} [Options.CondenseCharLimit = 0 ]
  * @param {Integer} [Options.CondenseCharLimitEnum1 = 0 ]
  * @param {Integer} [Options.CondenseCharLimitEnum2 = 0 ]
@@ -147,18 +97,38 @@
  * @param {Integer} [Options.CondenseCharLimitProps = 0 ] -
  * Sets a threshold which `StringifyAll` uses to determine whether an object's JSON substring should
  * be condensed to a single line as a function of the character length of the substring.
+ *
+ * @param {Boolean} [Options.CondenseDepthThreshold = 0
+ * @param {Integer} [Options.CondenseDepthThresholdEnum1 = 0 ]
+ * @param {Integer} [Options.CondenseDepthThresholdEnum2 = 0 ]
+ * @param {Integer} [Options.CondenseDepthThresholdEnum2Item = 0 ]
+ * @param {Integer} [Options.CondenseDepthThresholdProps = 0 ] -
+ * If any of the `Options.CondenseCharLimit` options are in use, the `Options.CondenseDepthThreshold`
+ * options set a depth requirement to apply the option. For example, if
+ * `Options.CondenseDepthThreshold == 2`, all `Options.CondenseCharLimit` options will only be
+ * applied if the current depth is 2 or more; values at the root depth (1) will be processed without
+ * applying the `Options.CondenseCharLimit` option.
+ *
  * @param {String} [Options.Indent = '`s`s`s`s' ] - The literal string that will be used for one level
  * of indentation. Note that the first line with the opening brace is not indented.
+ *
  * @param {String} [Options.InitialIndent = 0 ] - The initial indent level.
+ *
  * @param {String} [Options.Newline = '`r`n' ] - The literal string that will be used for line
  * breaks. If set to zero or an empty string, the `Options.Singleline` option is effectively
  * enabled.
+ *
  * @param {Integer} [Options.NewlineDepthLimit = 0 ] - Sets a threshold directing `StringifyAll`
  * to stop adding line breaks between values after exceeding the threshold.
+ *
  * @param {Boolean} [Options.Singleline = false ] - If true, the JSON string is printed without
  * line breaks or indentation. All other "Newline and indent options" are ignored.
+ *
+ * ### Print options ------------
+ *
  * @param {String} [Options.ItemProp = '__Item__' ] - The name that `StringifyAll` will use as a
  * faux-property for including an object's items returned by its enumerator.
+ *
  * @param {Boolean|String} [Options.PrintErrors = false ] - When `StringifyAll` encounters an error
  * accessing a property's value, `Options.PrintErrors` influences how it is handled. `Options.PrintErrors`
  * is ignored if `Options.CallbackError` is set.
@@ -167,21 +137,30 @@
  * - If any other nonzero value, `StringifyAll` will print just the "Message" property of the `Error`
  * object in the string.
  * - If zero or an empty string, `StringifyAll` skips the property.
+ *
  * @param {Boolean} [Options.QuoteNumericKeys = false ] - When true, and when `StringifyAll` is
  * processing an object's enumerator in 2-param mode, if the value returned to the first parameter
  * (the "key") is numeric, it will be quoted in the JSON string.
+ *
  * @param {String} [Options.RootName = '$' ] - Specifies the name of the root object used in the
  * string representation of an object's path when the object is skipped due to already having been
  * stringified.
+ *
  * @param {String} [Options.UnsetArrayItem = '""' ] - The string to print for unset array items.
+ *
+ * ### General options ----------
+ *
  * @param {Integer} [Options.InitialPtrListCapacity = 64 ] - `StringifyAll` tracks the ptr
  * addresses of every object it stringifies to prevent infinite recursion. `StringifyAll` will set
  * the initial capacity of the `Map` object used for this purpose to
  * `Options.InitialPtrListCapacity`.
+ *
  * @param {Integer} [Options.InitialStrCapacity = 65536 ] - `StringifyAll` calls `VarSetStrCapacity`
  * using `Options.InitialStrCapacity` for the output string during the initialization stage.
  * For the best performance, you can overestimate the approximate length of the string; `StringifyAll`
  * calls `VarSetStrCapacity(&OutStr, -1)` at the end of the function to release any unused memory.
+ *
+ * ------------------------------
  *
  * @param {VarRef} [OutStr] - A variable that will be set with the JSON string value. The value
  * is also returned as the return value, but for very long strings receiving the string via the
@@ -205,90 +184,154 @@ class StringifyAll {
         } else {
             Options := this.Options({})
         }
-        controllerBase := {}
-        controllerBase.PrepareNextProp := _PrepareNextProp1
-        controllerBase.PrepareNextEnum1 := _PrepareNextEnum11
-        controllerBase.ProcessEnum1 := _ProcessEnum1
-        if Options.CondenseCharLimitEnum2Item {
-            controllerBase.PrepareNextEnum2 := _PrepareNextEnum23
-            controllerBase.ProcessEnum2 := _ProcessEnum22
-            condenseCharLimitEnum2Item := Options.CondenseCharLimitEnum2Item
-        } else {
-            controllerBase.PrepareNextEnum2 := _PrepareNextEnum21
-            controllerBase.ProcessEnum2 := _ProcessEnum21
+        controllerBase := {
+            LenContainerEnum: ''
+          , LenContainerEnum2Item: ''
+          , LenContainerProps: ''
+          , PrepareNextProp: _PrepareNextProp1
+          , PrepareNextEnum1: _PrepareNextEnum11
+          , ProcessProps: (excludeMethods := Options.ExcludeMethods) ? _ProcessProps1 : _ProcessProps2
         }
-        controllerBase.GetPlaceholder := ObjBindMethod(this, 'GetPlaceholder')
-
-        ; Enum options
-        if enumTypeMap := Options.EnumTypeMap {
-            CheckEnum := enumTypeMap.HasOwnProp('Default') ? _CheckEnum1 : _CheckEnum2
-        } else {
-            CheckEnum := (*) => 0
-        }
-        if excludeMethods := Options.ExcludeMethods {
-            controllerBase.ProcessProps := _ProcessProps1
-        } else {
-            controllerBase.ProcessProps := _ProcessProps2
-        }
-        excludeProps := Options.ExcludeProps
-        filterTypeMap := Options.FilterTypeMap
-        maxDepth := Options.MaxDepth > 0 ? Options.MaxDepth : 9223372036854775807
-        controllerBase.HandleMultiple := Options.Multiple ? _HandleMultiple : (*) => 1
-        if !(propsTypeMap := Options.PropsTypeMap) {
-            throw ValueError('The option ``PropsTypeMap`` must be set with an object value.', -1)
-        }
-        CheckProps := propsTypeMap.HasOwnProp('Default') ? _CheckProps1 : _CheckProps2
-        stopAtTypeMap := Options.StopAtTypeMap
-        if filterTypeMap {
-            _GetPropsInfo := stopAtTypeMap ? _GetPropsInfo1 : _GetPropsInfo2
-        } else if stopAtTypeMap {
-            _GetPropsInfo := _GetPropsInfo3
-        } else {
-            _GetPropsInfo := _GetPropsInfo4
-        }
-        ; Callbacks
-        if CallbackError := Options.CallbackError {
-            controllerBase.HandleError := CallbackError
-        }
-        if CallbackGeneral := Options.CallbackGeneral {
-            if not CallbackGeneral is Array {
-                CallbackGeneral := [CallbackGeneral]
-            }
-            controllerBase.HandleProp := _HandleProp2
-            controllerBase.HandleEnum1 := _HandleEnum12
-            controllerBase.HandleEnum2 := _HandleEnum22
-        } else {
-            controllerBase.HandleProp := _HandleProp1
-            controllerBase.HandleEnum1 := _HandleEnum11
-            controllerBase.HandleEnum2 := _HandleEnum21
-        }
-        if Options.CallbackPlaceholder {
-            controllerBase.GetPlaceholder := Options.CallbackPlaceholder
-        }
-        ; Print options
-        itemProp := Options.ItemProp
-        if !CallbackError {
-            if printErrors := Options.PrintErrors {
-                if IsNumber(printErrors) {
-                    controllerBase.HandleError := _HandleError1
+        objectsToDeleteDefault := []
+        objectsToDeleteDefault.Capacity := 4
+        controllerBase.DefineProp('Path', { Get: (Self) => Self.PathObj.Call() })
+        enumTypeMap := Options.EnumTypeMap
+        if IsObject(enumTypeMap) {
+            if enumTypeMap is Map {
+                if enumTypeMap.Count {
+                    if !enumTypeMap.HasOwnProp('Default') {
+                        enumTypeMap.Default := 0
+                        objectsToDeleteDefault.Push(enumTypeMap)
+                    }
+                    CheckEnum := _CheckEnum1
                 } else {
-                    controllerBase.HandleError := _HandleError2
+                    enumTypeMap := enumTypeMap.HasOwnProp('Default') ? enumTypeMap.Default : 0
+                    CheckEnum := IsObject(enumTypeMap) ? enumTypeMap : _CheckEnum2
                 }
             } else {
-                controllerBase.HandleError := _HandleError3
+                CheckEnum := enumTypeMap
+            }
+        } else {
+            CheckEnum := _CheckEnum2
+        }
+        excludeProps := Options.ExcludeProps
+        maxDepth := Options.MaxDepth > 0 ? Options.MaxDepth : 9223372036854775807
+        propsTypeMap := Options.PropsTypeMap
+        if IsObject(propsTypeMap) {
+            if propsTypeMap is Map {
+                if propsTypeMap.Count {
+                    if !propsTypeMap.HasOwnProp('Default') {
+                        propsTypeMap.Default := 0
+                        objectsToDeleteDefault.Push(propsTypeMap)
+                    }
+                    CheckProps := _CheckProps1
+                } else {
+                    propsTypeMap := propsTypeMap.HasOwnProp('Default') ? propsTypeMap.Default : 0
+                    CheckProps := IsObject(propsTypeMap) ? propsTypeMap : _CheckProps2
+                }
+            } else {
+                CheckProps := propsTypeMap
+            }
+        } else {
+            CheckProps := _CheckProps2
+        }
+        if filterTypeMap := Options.FilterTypeMap {
+            if filterTypeMap is Map {
+                if filterTypeMap.Count {
+                    if !filterTypeMap.HasOwnProp('Default') {
+                        filterTypeMap.Default := 0
+                        objectsToDeleteDefault.Push(filterTypeMap)
+                    }
+                    SetFilter := _SetFilter1
+                } else {
+                    if filterTypeMap.HasOwnProp('Default') && filterTypeMap.Default {
+                        filterTypeMap := filterTypeMap.Default
+                        SetFilter := HasMethod(filterTypeMap, 'Call') ? _SetFilter2 : _SetFilter3
+                    }
+                }
+            } else if HasMethod(filterTypeMap, 'Call') {
+                SetFilter := _SetFilter2
+            } else {
+                throw ValueError('If ``Options.FilterTypeMap`` is nonzero, it must inherit from ``Map``'
+                ' or must be an object with a "Call" property.', -1)
             }
         }
+        stopAtTypeMap := Options.StopAtTypeMap
+        if IsSet(SetFilter) {
+            if IsObject(stopAtTypeMap) {
+                if stopAtTypeMap is Map {
+                    if stopAtTypeMap.Count {
+                        if !stopAtTypeMap.HasOwnProp('Default') {
+                            stopAtTypeMap.Default := '-Object'
+                            objectsToDeleteDefault.Push(stopAtTypeMap)
+                        }
+                        _GetPropsInfo := _GetPropsInfo1
+                    } else {
+                        stopAtTypeMap := stopAtTypeMap.HasOwnProp('Default') ? stopAtTypeMap.Default : '-Object'
+                        _GetPropsInfo := IsObject(stopAtTypeMap) ? _GetPropsInfo2 : _GetPropsInfo3
+                    }
+                } else {
+                    _GetPropsInfo := _GetPropsInfo2
+                }
+            } else {
+                _GetPropsInfo := _GetPropsInfo3
+            }
+        } else {
+            if IsObject(stopAtTypeMap) {
+                if stopAtTypeMap is Map {
+                    if stopAtTypeMap.Count {
+                        if !stopAtTypeMap.HasOwnProp('Default') {
+                            stopAtTypeMap.Default := '-Object'
+                            flag_deleteStopAtTypeMapDefault := true
+                        }
+                        _GetPropsInfo := _GetPropsInfo4
+                    } else {
+                        stopAtTypeMap := stopAtTypeMap.HasOwnProp('Default') ? stopAtTypeMap.Default : '-Object'
+                        _GetPropsInfo := IsObject(stopAtTypeMap) ? _GetPropsInfo5 : _GetPropsInfo6
+                    }
+                } else {
+                    _GetPropsInfo := _GetPropsInfo5
+                }
+            } else {
+                _GetPropsInfo := _GetPropsInfo6
+            }
+        }
+        HandleMultiple := Options.Multiple ? _HandleMultiple : (*) => 1
+        if Options.CallbackError {
+            HandleError := Options.CallbackError
+        } else if printErrors := Options.PrintErrors {
+            if IsNumber(printErrors) {
+                HandleError := _HandleError1
+            } else {
+                HandleError := _HandleError2
+            }
+        } else {
+            HandleError := _HandleError3
+        }
+        if Options.CallbackGeneral {
+            if Options.CallbackGeneral is Array {
+                CallbackGeneral := Options.CallbackGeneral
+            } else {
+                CallbackGeneral := [Options.CallbackGeneral]
+            }
+            HandleProp := _HandleProp2
+            HandleEnum1 := _HandleEnum12
+            HandleEnum2 := _HandleEnum22
+        } else {
+            HandleProp := _HandleProp1
+            HandleEnum1 := _HandleEnum11
+            HandleEnum2 := _HandleEnum21
+        }
+        GetPlaceholder := Options.CallbackPlaceholder ? Options.CallbackPlaceholder : _GetPlaceholder
+        itemProp := Options.ItemProp
         quoteNumericKeys := Options.QuoteNumericKeys
         unsetArrayItem := Options.UnsetArrayItem
-        ; Init vars
+
         Recurse := _Recurse1
         OutStr := ''
         VarSetStrCapacity(&OutStr, Options.InitialStrCapacity)
         depth := 0
 
-        ; The functions set in this block are: nl, ind, controller.OpenProps, controller.OpenEnum1,
-        ; controller.OpenEnum2, controller.CloseProps, controller.CloseEnum1, controller.CloseEnum2,
-        ; IncDepth
         if Options.SingleLine || !Options.Newline {
             singleLineActive := 1
             nl := _nl2
@@ -299,11 +342,14 @@ class StringifyAll {
             controllerBase.CloseProps := _CloseProps1
             controllerBase.CloseEnum1 := _CloseEnum11
             controllerBase.CloseEnum2 := _CloseEnum21
+            controllerBase.PrepareNextEnum2 := _PrepareNextEnum21
+            controllerBase.ProcessEnum2 := _ProcessEnum21
             IncDepth := _IncDepth2
         } else {
             ; Newline / indent options
             CondenseCharLimitEnum1 := Options.CondenseCharLimitEnum1 || Options.CondenseCharLimit
             CondenseCharLimitEnum2 := Options.CondenseCharLimitEnum2 || Options.CondenseCharLimit
+            CondenseCharLimitEnum2Item := Options.CondenseCharLimitEnum2Item || Options.CondenseCharLimit
             CondenseCharLimitProps := Options.CondenseCharLimitProps || Options.CondenseCharLimit
             if Options.newlineDepthLimit > 0 {
                 newlineDepthLimit := Options.NewlineDepthLimit
@@ -312,8 +358,6 @@ class StringifyAll {
                 IncDepth := _IncDepth2
             }
             newlineCount := whitespaceChars := singleLineActive := 0
-            lenContainer := Map()
-            lenContainer.Default := 0
             indent := [Options.Indent]
             indent.Capacity := Options.MaxDepth ? Options.MaxDepth + 1 : 16
             nlStr := Options.Newline
@@ -321,38 +365,67 @@ class StringifyAll {
             indentlevel := Options.InitialIndent
             nl := _nl1
             ind := _ind1
-            if CondenseCharLimitProps > 0 {
-                controllerBase.OpenProps := _OpenProps2
-                controllerBase.CloseProps := _CloseProps2
-            } else {
-                controllerBase.OpenProps := _OpenProps1
-                controllerBase.CloseProps := _CloseProps1
-            }
             if CondenseCharLimitEnum1 > 0 {
-                controllerBase.OpenEnum1 := _OpenEnum12
+                CondenseDepthThresholdEnum1 := Options.CondenseDepthThresholdEnum1 || Options.CondenseDepthThreshold
+                if CondenseDepthThresholdEnum1 > 0 {
+                    controllerBase.OpenEnum1 := _OpenEnum14
+                } else {
+                    controllerBase.OpenEnum1 := _OpenEnum12
+                }
                 controllerBase.CloseEnum1 := _CloseEnum12
             } else {
                 controllerBase.OpenEnum1 := _OpenEnum11
                 controllerBase.CloseEnum1 := _CloseEnum11
             }
             if CondenseCharLimitEnum2 > 0 {
-                controllerBase.OpenEnum2 := _OpenEnum22
+                CondenseDepthThresholdEnum2 := Options.CondenseDepthThresholdEnum2 || Options.CondenseDepthThreshold
+                if CondenseDepthThresholdEnum2 > 0 {
+                    controllerBase.OpenEnum2 := _OpenEnum24
+                } else {
+                    controllerBase.OpenEnum2 := _OpenEnum22
+                }
                 controllerBase.CloseEnum2 := _CloseEnum22
             } else {
                 controllerBase.OpenEnum2 := _OpenEnum21
                 controllerBase.CloseEnum2 := _CloseEnum21
             }
+            if CondenseCharLimitEnum2Item > 0 {
+                CondenseDepthThresholdEnum2Item := Options.CondenseDepthThresholdEnum2Item || Options.CondenseDepthThreshold
+                if CondenseDepthThresholdEnum2Item > 0 {
+                } else {
+                    controllerBase.PrepareNextEnum2 := _PrepareNextEnum23
+                    controllerBase.ProcessEnum2 := _ProcessEnum22
+                }
+            } else {
+                controllerBase.PrepareNextEnum2 := _PrepareNextEnum21
+                controllerBase.ProcessEnum2 := _ProcessEnum21
+            }
+            if CondenseCharLimitProps > 0 {
+                CondenseDepthThresholdProps := Options.CondenseDepthThresholdProps || Options.CondenseDepthThreshold
+                if CondenseDepthThresholdProps > 0 {
+                    controllerBase.OpenProps := _OpenProps4
+                } else {
+                    controllerBase.OpenProps := _OpenProps2
+                }
+                controllerBase.CloseProps := _CloseProps2
+            } else {
+                controllerBase.OpenProps := _OpenProps1
+                controllerBase.CloseProps := _CloseProps1
+            }
         }
 
         GetController := ClassFactory(controllerBase)
         controller := GetController()
-        controller.Path := Options.RootName
+        controller.PathObj := StringifyAll.Path(Options.RootName)
         ptrList := Map(ObjPtr(Obj), controller)
         ptrList.Capacity := Options.InitialPtrListCapacity
 
         Recurse(controller, Obj, &OutStr)
 
         VarSetStrCapacity(&OutStr, -1)
+        for o in objectsToDeleteDefault {
+            o.DeleteProp('Default')
+        }
 
         return OutStr
 
@@ -370,7 +443,7 @@ class StringifyAll {
                 if flag_enum == 1 {
                     OutStr .= ',' nl() ind() '"' itemProp '": '
                     controller.OpenEnum1(&OutStr)
-                    controller.CloseEnum1(controller.ProcessEnum1(Obj, &OutStr), &OutStr)
+                    controller.CloseEnum1(_ProcessEnum1(controller, Obj, &OutStr), &OutStr)
                 } else if flag_enum == 2 {
                     OutStr .= ',' nl() ind() '"' itemProp '": '
                     controller.OpenEnum2(&OutStr)
@@ -381,7 +454,7 @@ class StringifyAll {
                 controller.CloseProps(&OutStr)
             } else if flag_enum == 1 {
                 controller.OpenEnum1(&OutStr)
-                controller.CloseEnum1(controller.ProcessEnum1(Obj, &OutStr), &OutStr)
+                controller.CloseEnum1(_ProcessEnum1(controller, Obj, &OutStr), &OutStr)
             } else if flag_enum == 2 {
                 controller.OpenEnum2(&OutStr)
                 controller.CloseEnum2(controller.ProcessEnum2(Obj, &OutStr), &OutStr)
@@ -403,14 +476,8 @@ class StringifyAll {
                 return Item
             }
         }
-        _CheckEnum2(Obj) {
-            if enumTypeMap.Has(Type(Obj)) {
-                if IsObject(Item := enumTypeMap.Get(Type(Obj))) {
-                    return Item(Obj)
-                } else {
-                    return Item
-                }
-            }
+        _CheckEnum2(*) {
+            return enumTypeMap
         }
         _CheckProps1(Obj) {
             if IsObject(Item := propsTypeMap.Get(Type(Obj))) {
@@ -419,14 +486,8 @@ class StringifyAll {
                 return Item
             }
         }
-        _CheckProps2(Obj) {
-            if propsTypeMap.Has(Type(Obj)) {
-                if IsObject(Item := propsTypeMap.Get(Type(Obj))) {
-                    return Item(Obj)
-                } else {
-                    return Item
-                }
-            }
+        _CheckProps2(*) {
+            return propsTypeMap
         }
         _CloseEnum11(controller, count, &OutStr) {
             indentLevel--
@@ -440,7 +501,21 @@ class StringifyAll {
             indentLevel--
             if count {
                 OutStr .= nl() ind() ']'
-                if container := lenContainer.Get(controller.Path) {
+                if container := controller.LenContainerEnum {
+                    if StrLen(OutStr) - container.Len - (diff := whitespaceChars - container.whitespaceChars) <= condenseCharLimitEnum1 {
+                        whitespaceChars -= diff
+                        OutStr := RegExReplace(OutStr, '\R *(?!$)', '', , , container.len || 1)
+                    }
+                }
+            } else {
+                OutStr .= ']'
+            }
+        }
+        _CloseEnum13(controller, count, &OutStr) {
+            indentLevel--
+            if count {
+                OutStr .= nl() ind() ']'
+                if container := controller.LenContainerEnum {
                     if StrLen(OutStr) - container.Len - (diff := whitespaceChars - container.whitespaceChars) <= condenseCharLimitEnum1 {
                         whitespaceChars -= diff
                         OutStr := RegExReplace(OutStr, '\R *(?!$)', '', , , container.len || 1)
@@ -462,7 +537,7 @@ class StringifyAll {
             indentLevel--
             if count {
                 OutStr .= nl() ind() ']'
-                if container := lenContainer.Get(controller.Path) {
+                if container := controller.LenContainerEnum {
                     if StrLen(OutStr) - container.Len - (diff := whitespaceChars - container.whitespaceChars) <= condenseCharLimitEnum2 {
                         whitespaceChars -= diff
                         OutStr := RegExReplace(OutStr, '\R *(?!$)', '', , , container.len || 1)
@@ -479,54 +554,47 @@ class StringifyAll {
         _CloseProps2(controller, &OutStr) {
             indentLevel--
             OutStr .= nl() ind() '}'
-            if container := lenContainer.Get(controller.Path) {
+            if container := controller.LenContainerProps {
                 if StrLen(OutStr) - container.Len - (diff := whitespaceChars - container.whitespaceChars) <= condenseCharLimitProps {
                     whitespaceChars -= diff
                     OutStr := RegExReplace(OutStr, '\R *(?!$)', '', , , container.len || 1)
                 }
             }
         }
+        _GetPlaceholder(PathObj, Val, *) {
+            return '"{ ' this.GetType(Val) ':' ObjPtr(Val) ' }"'
+        }
         _GetPropsInfo1(Obj) {
-            if stopAtTypeMap.Has(Type(Obj)) || stopAtTypeMap.HasOwnProp('Default') {
-                if IsObject(Item := stopAtTypeMap.Get(Type(Obj))) {
-                    pi := GetPropsInfo(Obj, Item(Obj), excludeProps, false, , excludeMethods)
-                } else {
-                    pi := GetPropsInfo(Obj, Item, excludeProps, false, , excludeMethods)
-                }
+            if IsObject(Item := stopAtTypeMap.Get(Type(Obj))) {
+                pi := GetPropsInfo(Obj, Item(Obj), excludeProps, false, , excludeMethods)
             } else {
-                pi := GetPropsInfo(Obj, '-Object', excludeProps, false, , excludeMethods)
+                pi := GetPropsInfo(Obj, Item, excludeProps, false, , excludeMethods)
             }
-            if filterTypeMap.Has(Type(Obj)) || filterTypeMap.HasOwnProp('Default') {
-                if val := filterTypeMap.Get(Type(Obj)) {
-                    pi.DefineProp('Filter', { Value: val })
-                    pi.FilterActivate()
-                }
-            }
+            SetFilter(Obj, pi)
             return pi
         }
         _GetPropsInfo2(Obj) {
-            pi := GetPropsInfo(Obj, '-Object', excludeProps, false, , excludeMethods)
-            if filterTypeMap.Has(Type(Obj)) || filterTypeMap.HasOwnProp('Default') {
-                if val := filterTypeMap.Get(Type(Obj)) {
-                    pi.DefineProp('Filter', { Value: val })
-                    pi.FilterActivate()
-                }
-            }
+            pi := GetPropsInfo(Obj, stopAtTypeMap(Obj), excludeProps, false, , excludeMethods)
+            SetFilter(Obj, pi)
             return pi
         }
         _GetPropsInfo3(Obj) {
-            if stopAtTypeMap.Has(Type(Obj)) || stopAtTypeMap.HasOwnProp('Default') {
-                if IsObject(Item := stopAtTypeMap.Get(Type(Obj))) {
-                    return GetPropsInfo(Obj, Item(Obj), excludeProps, false, , excludeMethods)
-                } else {
-                    return GetPropsInfo(Obj, Item, excludeProps, false, , excludeMethods)
-                }
-            } else {
-                return GetPropsInfo(Obj, '-Object', excludeProps, false, , excludeMethods)
-            }
+            pi := GetPropsInfo(Obj, stopAtTypeMap, excludeProps, false, , excludeMethods)
+            SetFilter(Obj, pi)
+            return pi
         }
         _GetPropsInfo4(Obj) {
-            return GetPropsInfo(Obj, '-Object', excludeProps, false, , excludeMethods)
+            if IsObject(Item := stopAtTypeMap.Get(Type(Obj))) {
+                return GetPropsInfo(Obj, Item(Obj), excludeProps, false, , excludeMethods)
+            } else {
+                return GetPropsInfo(Obj, Item, excludeProps, false, , excludeMethods)
+            }
+        }
+        _GetPropsInfo5(Obj) {
+            return GetPropsInfo(Obj, stopAtTypeMap(Obj), excludeProps, false, , excludeMethods)
+        }
+        _GetPropsInfo6(Obj) {
+            return GetPropsInfo(Obj, stopAtTypeMap, excludeProps, false, , excludeMethods)
         }
         _GetVal(&Val, flag_quote_number := false) {
             if IsNumber(Val) {
@@ -540,49 +608,49 @@ class StringifyAll {
         _HandleEnum11(controller, Val, &Key, &OutStr) {
             controller.PrepareNextEnum1(&OutStr)
             if ptrList.Has(ptr := ObjPtr(Val)) {
-                if controller.HandleMultiple(Val) {
+                if HandleMultiple(controller.PathObj, Val) {
                     OutStr .= '"{ ' ptrList.Get(ptr)[1].Path ' }"'
                 } else {
                     newController := GetController()
-                    newController.Path := controller.Path '[' Key ']'
+                    newController.PathObj := controller.PathObj.MakeItem(&Key)
                     ptrList.Get(ptr).Push(newController)
                     Recurse(newController, Val, &OutStr)
                 }
             } else if depth >= maxDepth || Val is ComObject || Val is ComValue {
-                OutStr .= controller.GetPlaceholder(Val, , &Key)
+                OutStr .= GetPlaceholder(controller.PathObj, Val, , &Key)
             } else {
                 newController := GetController()
-                newController.Path := controller.Path '[' Key ']'
+                newController.PathObj := controller.PathObj.MakeItem(&Key)
                 ptrList.Set(ptr, [newController])
                 Recurse(newController, Val, &OutStr)
             }
         }
         _HandleEnum12(controller, Val, &Key, &OutStr) {
             if ptrList.Has(ptr := ObjPtr(Val)) {
-                if controller.HandleMultiple(Val) {
+                if HandleMultiple(controller.PathObj, Val) {
                     controller.PrepareNextEnum1(&OutStr)
                     OutStr .= '"{ ' ptrList.Get(ptr)[1].Path ' }"'
                     return
                 }
             } else if depth >= maxDepth || Val is ComObject || Val is ComValue {
                 controller.PrepareNextEnum1(&OutStr)
-                OutStr .= controller.GetPlaceholder(Val, , &Key)
+                OutStr .= GetPlaceholder(controller.PathObj, Val, , &Key)
                 return
             }
             for cb in CallbackGeneral {
-                if result := cb(controller, Val, &OutStr, , key) {
+                if result := cb(controller.PathObj, Val, &OutStr, , key) {
                     if result is String {
                         controller.PrepareNextEnum1(&OutStr)
                         OutStr .= result
                     } else if result !== -1 {
                         controller.PrepareNextEnum1(&OutStr)
-                        OutStr .= controller.GetPlaceholder(Val, , &Key)
+                        OutStr .= GetPlaceholder(controller.PathObj, Val, , &Key)
                     }
                     return
                 }
             }
             newController := GetController()
-            newController.Path := controller.Path '[' Key ']'
+            newController.PathObj := controller.PathObj.MakeItem(&Key)
             if ptrList.Has(ptr) {
                 ptrList.Get(ptr).Push(newController)
             } else {
@@ -595,26 +663,26 @@ class StringifyAll {
             controller.PrepareNextEnum2(&OutStr)
             OutStr .= Key ',' nl() ind()
             if ptrList.Has(ptr := ObjPtr(Val)) {
-                if controller.HandleMultiple(Val) {
+                if HandleMultiple(controller.PathObj, Val) {
                     OutStr .= '"{ ' ptrList.Get(ptr)[1].Path ' }"'
                 } else {
                     newController := GetController()
-                    newController.Path := controller.Path '[' Key ']'
+                    newController.PathObj := controller.PathObj.MakeItem(&Key)
                     ptrList.Get(ptr).Push(newController)
                     Recurse(newController, Val, &OutStr)
                 }
             } else if depth >= maxDepth || Val is ComObject || Val is ComValue {
-                OutStr .= controller.GetPlaceholder(Val, , &Key)
+                OutStr .= GetPlaceholder(controller.PathObj, Val, , &Key)
             } else {
                 newController := GetController()
-                newController.Path := controller.Path '[' Key ']'
+                newController.PathObj := controller.PathObj.MakeItem(&Key)
                 ptrList.Set(ptr, [newController])
                 Recurse(newController, Val, &OutStr)
             }
         }
         _HandleEnum22(controller, Val, &Key, &OutStr) {
             if ptrList.Has(ptr := ObjPtr(Val)) {
-                if controller.HandleMultiple(Val) {
+                if HandleMultiple(controller.PathObj, Val) {
                     controller.PrepareNextEnum2(&OutStr)
                     OutStr .= Key ',' nl() ind()
                     OutStr .= '"{ ' ptrList.Get(ptr)[1].Path ' }"'
@@ -623,11 +691,11 @@ class StringifyAll {
             } else if depth >= maxDepth || Val is ComObject || Val is ComValue {
                 controller.PrepareNextEnum2(&OutStr)
                 OutStr .= Key ',' nl() ind()
-                OutStr .= controller.GetPlaceholder(Val, , &Key)
+                OutStr .= GetPlaceholder(controller.PathObj, Val, , &Key)
                 return
             }
             for cb in CallbackGeneral {
-                if result := cb(controller, Val, &OutStr, , key) {
+                if result := cb(controller.PathObj, Val, &OutStr, , key) {
                     if result is String {
                         controller.PrepareNextEnum2(&OutStr)
                         OutStr .= Key ',' nl() ind()
@@ -635,7 +703,7 @@ class StringifyAll {
                     } else if result !== -1 {
                         controller.PrepareNextEnum2(&OutStr)
                         OutStr .= Key ',' nl() ind()
-                        OutStr .= controller.GetPlaceholder(Val, , &Key)
+                        OutStr .= GetPlaceholder(controller.PathObj, Val, , &Key)
                     }
                     return
                 }
@@ -643,7 +711,7 @@ class StringifyAll {
             controller.PrepareNextEnum2(&OutStr)
             OutStr .= Key ',' nl() ind()
             newController := GetController()
-            newController.Path := controller.Path '[' Key ']'
+            newController.PathObj := controller.PathObj.MakeItem(&Key)
             if ptrList.Has(ptr) {
                 ptrList.Get(ptr).Push(newController)
             } else {
@@ -651,12 +719,12 @@ class StringifyAll {
             }
             Recurse(newController, Val, &OutStr)
         }
-        _HandleError1(controller, Err, *) {
+        _HandleError1(PathObj, Err, *) {
             local s := Err.Message
             StringifyAll.StrEscapeJson(&s, true)
             return s
         }
-        _HandleError2(controller, Err, *) {
+        _HandleError2(PathObj, Err, *) {
             local str := ''
             for s in StrSplit(Options.PrintErrors, ',') {
                 if s {
@@ -670,28 +738,29 @@ class StringifyAll {
         _HandleError3(*) {
             return -1
         }
-        _HandleMultiple(controller, Val) {
+        _HandleMultiple(PathObj, Val) {
+            path := '$.' PathObj()
             for c in ptrList.Get(ObjPtr(Val)) {
-                if InStr('$.' controller.Path, '$.' c.Path) {
+                if InStr(path, '$.' c.Path) {
                     return 1
                 }
             }
         }
         _HandleProp1(controller, Val, &Prop, &OutStr) {
             if ptrList.Has(ptr := ObjPtr(Val)) {
-                if controller.HandleMultiple(Val) {
+                if HandleMultiple(controller.PathObj, Val) {
                     Val := '{ ' ptrList.Get(ptr)[1].Path ' }'
                     _WriteProp1(controller, &Prop, &Val, &OutStr)
                     return
                 }
             } else if depth >= maxDepth || Val is ComObject || Val is ComValue {
-                _WriteProp2(controller, &Prop, controller.GetPlaceholder(Val, &Prop), &OutStr)
+                _WriteProp2(controller, &Prop, GetPlaceholder(controller.PathObj, Val, &Prop), &OutStr)
                 return
             }
             controller.PrepareNextProp(&OutStr)
             OutStr .= '"' Prop '": '
             newController := GetController()
-            newController.Path := controller.Path '.' Prop
+            newController.PathObj := controller.PathObj.MakeProp(&Prop)
             if ptrList.Has(ptr) {
                 ptrList.Get(ptr).Push(newController)
             } else {
@@ -701,21 +770,21 @@ class StringifyAll {
         }
         _HandleProp2(controller, Val, &Prop, &OutStr) {
             if ptrList.Has(ptr := ObjPtr(Val)) {
-                if controller.HandleMultiple(Val) {
+                if HandleMultiple(controller.PathObj, Val) {
                     Val := '{ ' ptrList.Get(ptr)[1].Path ' }'
                     _WriteProp1(controller, &Prop, &Val, &OutStr)
                     return
                 }
             } else if depth >= maxDepth || Val is ComObject || Val is ComValue {
-                _WriteProp2(controller, &Prop, controller.GetPlaceholder(Val, &Prop), &OutStr)
+                _WriteProp2(controller, &Prop, GetPlaceholder(controller.PathObj, Val, &Prop), &OutStr)
                 return
             }
             for cb in CallbackGeneral {
-                if result := cb(controller, Val, &OutStr, Prop) {
+                if result := cb(controller.PathObj, Val, &OutStr, Prop) {
                     if result is String {
                         _WriteProp3(controller, &Prop, &result, &OutStr)
                     } else if result !== -1 {
-                        _WriteProp2(controller, &Prop, controller.GetPlaceholder(Val, &Prop), &OutStr)
+                        _WriteProp2(controller, &Prop, GetPlaceholder(controller.PathObj, Val, &Prop), &OutStr)
                     }
                     return
                 }
@@ -723,7 +792,7 @@ class StringifyAll {
             controller.PrepareNextProp(&OutStr)
             OutStr .= '"' Prop '": '
             newController := GetController()
-            newController.Path := controller.Path '.' Prop
+            newController.PathObj := controller.PathObj.MakeProp(&Prop)
             if ptrList.Has(ptr) {
                 ptrList.Get(ptr).Push(newController)
             } else {
@@ -781,23 +850,37 @@ class StringifyAll {
             indentLevel++
         }
         _OpenEnum12(controller, &OutStr) {
-            lenContainer.Set(controller.Path, { len: StrLen(OutStr), whitespaceChars: whitespaceChars })
+            controller.LenContainerEnum := { len: StrLen(OutStr), whitespaceChars: whitespaceChars }
             OutStr .= '['
             indentLevel++
         }
         _OpenEnum13(controller, &OutStr) {
             OutStr .= '['
         }
+        _OpenEnum14(controller, &OutStr) {
+            if depth >= CondenseDepthThresholdEnum1 {
+                controller.LenContainerEnum := { len: StrLen(OutStr), whitespaceChars: whitespaceChars }
+            }
+            OutStr .= '['
+            indentLevel++
+        }
         _OpenEnum21(controller, &OutStr) {
             OutStr .= '['
             indentLevel++
         }
         _OpenEnum22(controller, &OutStr) {
-            lenContainer.Set(controller.Path, { len: StrLen(OutStr), whitespaceChars: whitespaceChars })
+            controller.LenContainerEnum := { len: StrLen(OutStr), whitespaceChars: whitespaceChars }
             OutStr .= '['
             indentLevel++
         }
         _OpenEnum23(controller, &OutStr) {
+            OutStr .= '['
+            indentLevel++
+        }
+        _OpenEnum24(controller, &OutStr) {
+            if depth >= CondenseDepthThresholdEnum2 {
+                controller.LenContainerEnum := { len: StrLen(OutStr), whitespaceChars: whitespaceChars }
+            }
             OutStr .= '['
             indentLevel++
         }
@@ -806,12 +889,19 @@ class StringifyAll {
             indentLevel++
         }
         _OpenProps2(controller, &OutStr) {
-            lenContainer.Set(controller.Path, { len: StrLen(OutStr), whitespaceChars: whitespaceChars })
+            controller.LenContainerProps := { len: StrLen(OutStr), whitespaceChars: whitespaceChars }
             OutStr .= '{'
             indentLevel++
         }
         _OpenProps3(controller, &OutStr) {
             OutStr .= '{'
+        }
+        _OpenProps4(controller, &OutStr) {
+            if depth >= CondenseDepthThresholdProps {
+                controller.LenContainerProps := { len: StrLen(OutStr), whitespaceChars: whitespaceChars }
+            }
+            OutStr .= '{'
+            indentLevel++
         }
         _PrepareNextEnum11(controller, &OutStr) {
             OutStr .= nl() ind()
@@ -833,14 +923,31 @@ class StringifyAll {
         }
         _PrepareNextEnum23(controller, &OutStr) {
             OutStr .= nl() ind() '['
-            controller.LenContainer := { len: StrLen(OutStr), whitespaceChars: whitespaceChars }
+            controller.LenContainerEnum2Item := { len: StrLen(OutStr), whitespaceChars: whitespaceChars }
             indentLevel++
             OutStr .= nl() ind()
             controller.PrepareNextEnum2 := _PrepareNextEnum24
         }
         _PrepareNextEnum24(controller, &OutStr) {
             OutStr .= ',' nl() ind() '['
-            controller.LenContainer := { len: StrLen(OutStr), whitespaceChars: whitespaceChars }
+            controller.LenContainerEnum2Item := { len: StrLen(OutStr), whitespaceChars: whitespaceChars }
+            indentLevel++
+            OutStr .= nl() ind()
+        }
+        _PrepareNextEnum25(controller, &OutStr) {
+            OutStr .= nl() ind() '['
+            if depth >= CondenseDepthThresholdEnum2Item {
+                controller.LenContainerEnum2Item := { len: StrLen(OutStr), whitespaceChars: whitespaceChars }
+            }
+            indentLevel++
+            OutStr .= nl() ind()
+            controller.PrepareNextEnum2 := _PrepareNextEnum26
+        }
+        _PrepareNextEnum26(controller, &OutStr) {
+            OutStr .= ',' nl() ind() '['
+            if depth >= CondenseDepthThresholdEnum2Item {
+                controller.LenContainerEnum2Item := { len: StrLen(OutStr), whitespaceChars: whitespaceChars }
+            }
             indentLevel++
             OutStr .= nl() ind()
         }
@@ -857,7 +964,7 @@ class StringifyAll {
                 count++
                 if IsSet(Val) {
                     if IsObject(Val) {
-                        controller.HandleEnum1(Val, &(i := A_Index), &OutStr)
+                        HandleEnum1(controller, Val, &(i := A_Index), &OutStr)
                     } else {
                         controller.PrepareNextEnum1(&OutStr)
                         _GetVal(&Val)
@@ -880,7 +987,7 @@ class StringifyAll {
                     _GetVal(&Key, quoteNumericKeys)
                 }
                 if IsObject(Val) {
-                    controller.HandleEnum2(Val, &Key, &OutStr)
+                    HandleEnum2(controller, Val, &Key, &OutStr)
                 } else {
                     controller.PrepareNextEnum2(&OutStr)
                     OutStr .= Key ',' nl() ind()
@@ -902,7 +1009,7 @@ class StringifyAll {
                     _GetVal(&Key, quoteNumericKeys)
                 }
                 if IsObject(Val) {
-                    controller.HandleEnum2(Val, &Key, &OutStr)
+                    HandleEnum2(controller, Val, &Key, &OutStr)
                 } else {
                     controller.PrepareNextEnum2(&OutStr)
                     OutStr .= Key ',' nl() ind()
@@ -911,9 +1018,11 @@ class StringifyAll {
                 }
                 indentLevel--
                 OutStr .= nl() ind() ']'
-                if StrLen(OutStr) - controller.LenContainer.len - (diff := whitespaceChars - controller.LenContainer.whitespaceChars) <= condenseCharLimitEnum2Item {
-                    whitespaceChars -= diff
-                    OutStr := RegExReplace(OutStr, '\R *(?!$)', '', , , controller.LenContainer.len || 1)
+                if container := controller.LenContainerEnum2Item {
+                    if StrLen(OutStr) - controller.LenContainer.len - (diff := whitespaceChars - controller.LenContainer.whitespaceChars) <= condenseCharLimitEnum2Item {
+                        whitespaceChars -= diff
+                        OutStr := RegExReplace(OutStr, '\R *(?!$)', '', , , controller.LenContainer.len || 1)
+                    }
                 }
             }
             return count
@@ -923,7 +1032,7 @@ class StringifyAll {
             for Prop, InfoItem in PropsInfoObj {
                 if InfoItem.GetValue(&Val) {
                     if IsSet(Val) {
-                        if errorResult := controller.HandleError(Val, Obj, InfoItem) {
+                        if errorResult := HandleError(controller.PathObj, Val, Obj, InfoItem) {
                             if errorResult is String {
                                 _WriteProp3(controller, &Prop, &errorResult, &OutStr)
                             } else if errorResult !== -1 {
@@ -938,7 +1047,7 @@ class StringifyAll {
                     }
                 }
                 if IsObject(Val) {
-                    controller.HandleProp(Val, &Prop, &OutStr)
+                    HandleProp(controller, Val, &Prop, &OutStr)
                 } else {
                     _WriteProp1(controller, &Prop, &Val, &OutStr)
                 }
@@ -950,7 +1059,7 @@ class StringifyAll {
             for Prop, InfoItem in PropsInfoObj {
                 if InfoItem.GetValue(&Val) {
                     if IsSet(Val) {
-                        if errorResult := controller.HandleError(Val, Obj, InfoItem) {
+                        if errorResult := HandleError(controller.PathObj, Val, Obj, InfoItem) {
                             if errorResult is String {
                                 _WriteProp3(controller, &Prop, &errorResult, &OutStr)
                             } else if errorResult !== -1 {
@@ -965,12 +1074,31 @@ class StringifyAll {
                     }
                 }
                 if IsObject(Val) {
-                    controller.HandleProp(Val, &Prop, &OutStr)
+                    HandleProp(controller, Val, &Prop, &OutStr)
                 } else {
                     _WriteProp1(controller, &Prop, &Val, &OutStr)
                 }
                 Val := unset
             }
+        }
+        _SetFilter1(Obj, pi) {
+            if Item := filterTypeMap.Get(Type(Obj)) {
+                if HasMethod(Item, 'Call') {
+                    if val := Item(Obj) {
+                        pi.FilterSet(Val)
+                    }
+                } else {
+                    pi.FilterSet(Item)
+                }
+            }
+        }
+        _SetFilter2(Obj, pi) {
+            if val := filterTypeMap(Obj) {
+                pi.FilterSet(val)
+            }
+        }
+        _SetFilter3(Obj, pi) {
+            pi.FilterSet(filterTypeMap)
         }
         _WriteProp1(controller, &Prop, &Val, &OutStr) {
             controller.PrepareNextProp(&OutStr)
@@ -1031,20 +1159,10 @@ class StringifyAll {
 
     /**
      * @description - The function that produces the default placeholder string for skipped objects.
-     * @param {Object} Controller - An internal mechanism used by `Stringify`. It has a property `Path`
-     * that has a string value representing the object path up to but not including `Obj`. The
-     * `controller` is not used by this function, but exists as a parameter because the function is
-     * set as a method to the `controller` object.
      * @param {*} Obj - The object being evaluated.
      */
-    static GetPlaceholder(Controller, Obj, *) {
+    static GetPlaceholder(Obj) {
         return '"{ ' this.GetType(Obj) ':' ObjPtr(Obj) ' }"'
-    }
-
-    static __New() {
-        this.DeleteProp('__New')
-        this.Options.Default.PropsTypeMap := m := Map()
-        m.Default := 1
     }
 
 
@@ -1057,13 +1175,11 @@ class StringifyAll {
             EnumTypeMap: Map('Array', 1, 'Map', 2, 'RegExMatchInfo', 2)
           , ExcludeMethods: true
           , ExcludeProps: ''
-          , Filter: ''
           , FilterTypeMap: ''
           , MaxDepth: 0
           , Multiple: false
-          ; `PropsTypeMap` is set by `StringifyAll.__New`.
-          , PropsTypeMap: ''
-          , StopAtTypeMap: ''
+          , PropsTypeMap: 1
+          , StopAtTypeMap: '-Object'
 
             ; Callbacks
           , CallbackError: ''
@@ -1076,6 +1192,11 @@ class StringifyAll {
           , CondenseCharLimitEnum2: 0
           , CondenseCharLimitEnum2Item: 0
           , CondenseCharLimitProps: 0
+          , CondenseDepthThreshold: 0
+          , CondenseDepthThresholdEnum1: 0
+          , CondenseDepthThresholdEnum2: 0
+          , CondenseDepthThresholdEnum2Item: 0
+          , CondenseDepthThresholdProps: 0
           , Indent: '`s`s`s`s'
           , InitialIndent: 0
           , Newline: '`r`n'
@@ -1112,4 +1233,76 @@ class StringifyAll {
             return Options
         }
     }
+
+    /**
+     * @classdesc - This is a solution for tracking object paths using strings.
+     * @example
+     *  Obj := {
+     *      Prop1: {
+     *          NestedProp1: {
+     *              NestedMap: Map(
+     *                  'Key1', Map(
+     *                      'Key2', 'Val1'
+     *                  )
+     *              )
+     *          }
+     *      }
+     *  }
+     *  Root := PathObj('Obj')
+     *  O1 := Root.MakeProp('Prop1')
+     *  O2 := O1.MakeProp('NestedProp1')
+     *  O3 := O2.MakeProp('NestedMap')
+     *  O4 := O3.MakeItem('Key1')
+     *  O5 := O4.MakeItem('Key2')
+     *  OutputDebug(O5()) ; Obj.Prop1.NestedProp1.NestedMap["Key1"]["Key2"]
+     *
+     *  ; You can start another branch
+     *  Obj.Prop1.Branch := [ 1, 2, { Prop: 'Val' }, 4 ]
+     *  B1 := O1.MakeProp('Branch')
+     *  B2 := B1.MakeItem(3)
+     *  B3 := B2.MakeProp('Prop')
+     *  OutputDebug('`n' B3()) ; Obj.Prop1.Branch[3].Prop
+     * @
+     */
+    class Path {
+        __New(Name := '$') {
+            this.Name := Name
+            this.DefineProp('GetPathSegment', StringifyAll.Path.Prototype.GetOwnPropDesc('__GetPathSegmentRoot'))
+        }
+        Call(*) {
+            o := this
+            p := ''
+            loop {
+                if o.GetPathSegment(&p) {
+                    break
+                }
+                o := o.Base
+            }
+            return o.Name p
+        }
+        MakeProp(&Name) {
+            static desc := StringifyAll.Path.Prototype.GetOwnPropDesc('__GetPathSegmentProp')
+            ObjSetBase(Segment := { Name: Name }, this)
+            Segment.DefineProp('GetPathSegment', desc)
+            return Segment
+        }
+        MakeItem(&Name) {
+            static desc := StringifyAll.Path.Prototype.GetOwnPropDesc('__GetPathSegmentItem')
+            ObjSetBase(Segment := { Name: Name }, this)
+            Segment.DefineProp('GetPathSegment', desc)
+            return Segment
+        }
+        __GetPathSegmentItem(&Path) {
+            Path := '[' this.Name ']' Path
+        }
+        __GetPathSegmentProp(&Path) {
+            Path := '.' this.Name Path
+        }
+        __GetPathSegmentRoot(*) {
+            return 1
+        }
+
+        Path => this()
+    }
+
 }

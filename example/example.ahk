@@ -678,7 +678,7 @@ loop 10 {
 
 ; Define the function to return a nonzero value when the conditions are not met. We don't need the
 ; second parameter (which is the JSON string in its current state), so we use the "*" operator.
-CallbackGeneral(Obj, *) {
+CallbackGeneral(PathObj, Obj, *) {
     if ((not Obj is Map && not Obj is Array) || Obj.Capacity <= 1000) && not Obj is DataItem {
         return 1
     }
@@ -745,7 +745,7 @@ OutputDebug('`n' A_LineNumber '=========================`n' StringifyAll(arr, {
 ; As we can see, the object is represented by a placeholder indicating the type of object and its
 ; address. We can define our `CallbackGeneral` function to return a string value to use that
 ; as the placeholder instead.
-CallbackGeneral2(Obj, *) {
+CallbackGeneral2(PathObj, Obj, *) {
     if Obj is Map {
         if Obj.Capacity <= 1000 {
             StringifyAll.StrEscapeJson(&(Name := Obj['Index']))
@@ -803,13 +803,13 @@ OutputDebug('`n' A_LineNumber '=========================`n' StringifyAll(arr, { 
 */
 
 ; Or, if we want to skip the objects entirely, we can return `-1`.
-CallbackGeneral3(Obj, *) {
+CallbackGeneral3(PathObj, Obj, *) {
     if ((not Obj is Map && not Obj is Array) || Obj.Capacity <= 1000) && not Obj is DataItem {
         return -1
     }
 }
 
-OutputDebug('`n' A_LineNumber '=========================`n' StringifyAll(arr, { CallbackGeneral: CallbackGeneral3, PropsCondition: PropsCondition2 }))
+OutputDebug('`n' A_LineNumber '=========================`n' StringifyAll(arr, { CallbackGeneral: CallbackGeneral3, PropsTypeMap: propsTypeMap }))
 /*
 [
     {

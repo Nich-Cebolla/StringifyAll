@@ -1,5 +1,5 @@
 
-# StringifyAll - v1.1.7
+# StringifyAll - v1.2.0
 A customizable solution for serializing AutoHotkey (AHK) object properties, including inherited properties, and/or items into a 100% valid JSON string.
 
 ## AutoHotkey forum post
@@ -19,6 +19,7 @@ https://www.autohotkey.com/boards/viewtopic.php?f=83&t=137415&p=604407#p604407
     <li><a href="#print-options">Print options</a></li>
     <li><a href="#general-options">General options</a></li>
   </ol>
+  <li><a href="#stringifyallpath">StringifyAll.Path</a></li>
   <li><a href="#stringifyalls-process">StringifyAll's process</a></li>
   <ol type="A">
     <li><a href="#properties">Properties</a></li>
@@ -87,13 +88,18 @@ The format for these options are:<br>
 
 Jump to:
 <a href="#callbackerror"><br>CallbackError</a>
-<a href="#callbackgeneral"><br>CallbackGeneral</a>
+<a href="#options-callbackgeneral"><br>CallbackGeneral</a>
 <a href="#callbackplaceholder"><br>CallbackPlaceholder</a>
 <a href="#condensecharlimit"><br>CondenseCharLimit</a>
 <a href="#condensecharlimitenum1"><br>CondenseCharLimitEnum1</a>
 <a href="#condensecharlimitenum2"><br>CondenseCharLimitEnum2</a>
 <a href="#condensecharlimitenum2item"><br>CondenseCharLimitEnum2Item</a>
 <a href="#condensecharlimitprops"><br>CondenseCharLimitProps</a>
+<a href="#condensedepththreshold"><br>CondenseDepthThreshold</a>
+<a href="#condensedepththresholdenum1"><br>CondenseDepthThresholdEnum1</a>
+<a href="#condensedepththresholdenum2"><br>CondenseDepthThresholdEnum2</a>
+<a href="#condensedepththresholdenum2item"><br>CondenseDepthThresholdEnum2Item</a>
+<a href="#condensedepththresholdprops"><br>CondenseDepthThresholdProps</a>
 <a href="#enumtypemap"><br>EnumTypeMap</a>
 <a href="#excludemethods"><br>ExcludeMethods</a>
 <a href="#excludeprops"><br>ExcludeProps</a>
@@ -117,29 +123,40 @@ Jump to:
 
 ### Enum options
 
-<ul id="enumtypemap"><b>{Map}</b> [ <b>EnumTypeMap</b>  = <code>Map("Array", 1, "Map", 2, "RegExMatchInfo", 2)</code> ]
-  <ul style="padding-left: 24px; margin-top: 0; margin-bottom: 0;">
-    A <code>Map</code> object where the keys are object types and the values are either:
-    <ul style="margin-top: 4px; margin-bottom: 6px; ">
-      <li><b>Integer</b>:</li>
-      <ul style="margin-bottom: 0;">
-        <li><code>1</code>: Directs <code>StringifyAll</code> to call the object's enumerator in 1-param mode.</li>
-        <li><code>2</code>: Directs <code>StringifyAll</code> to call the object's enumerator in 2-param mode.</li>
-        <li><code>0</code>: Directs <code>StringifyAll</code> to not call the object's enumerator.</li>
-      </ul>
-      <li><b>Func</b> or callable <b>Object</b>:
-        <br>
-        <i>Parameters</i>
-        <ol type="1" style="margin-bottom: 0;">
-          <li>The <b>Object</b> being evaluated.</li>
-        </ol>
-        <i>Return</i>
-        <ul style="margin-bottom: 0;">
-          <li><b>Integer:</b> One of the above listed integers.</li>
-        </ol>
-      </ul>
+<ul id="enumtypemap"><b>{*}</b> [ <b>EnumTypeMap</b>  = <code>Map("Array", 1, "Map", 2, "RegExMatchInfo", 2)</code> ]
+  <ul style="padding-left: 24px; margin-top: 0; margin-bottom: 6px;">
+    <code>Options.EnumTypeMap</code> directs <code>StringifyAll</code> to call, or not to call, an object's <code>__Enum</code> method. If it is called, <code>Options.EnumTypeMap</code> also specifies whether it should be called in 1-param mode or 2-param mode.
+  </ul>
+  <ul style="padding-left: 24px; margin-top: 0; margin-bottom: 6px;">
+    <code>Options.EnumTypeMap</code> can be defined as a <code>Map</code> object that differentiates between object types, or it can be defined with a value that is applied to objects of any type. If it is a <code>Map</code> object, the keys are object type names and the values are either an <code>Integer</code>, or a function that accepts the object being evaluted as its only parameter and returns an <code>Integer</code>.
+  </ul>
+  <ul style="padding-left: 24px; margin-top: 12px; margin-bottom: 6px;">
+    If <code>Options.EnumTypeMap</code> is an <code>Integer</code>:
+    <ul style="margin-bottom: 6px;">
+      <li><code>1</code>: Directs <code>StringifyAll</code> to call the object's enumerator in 1-param mode.</li>
+      <li><code>2</code>: Directs <code>StringifyAll</code> to call the object's enumerator in 2-param mode.</li>
+      <li><code>0</code>: Directs <code>StringifyAll</code> to not call the object's enumerator.</li>
     </ul>
-    Use the <code>Map</code>'s <code>Default</code> property to set a condition for all types not included within the <code>Map</code>.
+  </ul>
+  <ul style="padding-left: 24px; margin-top: 12px; margin-bottom: 6px;">
+    If <code>Options.EnumTypeMap</code> is a <code>Func</code> or callable <code>Object</code>:
+    <br>
+    <i>Parameters</i>
+    <ol type="1" style="margin-bottom: 0;">
+      <li>The <code>Object</code> being evaluated.</li>
+    </ol>
+    <i>Return</i>
+    <ul style="margin-bottom: 0;">
+      <li><code>Integer:</code> One of the above listed integers.</li>
+    </ul>
+  </ul>
+  <ul style="padding-left: 24px; margin-top: 12px; margin-bottom: 6px;">
+    If <code>Options.EnumTypeMap</code> is a <code>Map</code> object:
+    <ul style="margin-bottom: 6px;">
+      <li>The keys are object types and the values are either <code>Integer</code>, <code>Func</code>, or callable <code>Object</code> as described above.</li>
+      <li>Use the <code>Map</code>'s <code>Default</code> property to set a condition for all types not included within the <code>Map</code>.</li>
+      <li>If you define <code>Options.EnumTypeMap</code> as a <code>Map</code> object, and if <code>Options.EnumTypeMap</code> does not have a property <code>Options.EnumTypeMap.Default</code>, <code>StringifyAll</code> sets <code>Options.EnumTypeMap.Default := 0</code> before processing then deletes it before returning. If an error occurs while processing that causes the thread to exit before the function returns, the <code>Options.EnumTypeMap.Default</code> property will not be deleted.</li>
+    </ul>
   </ul>
 </ul>
 
@@ -154,33 +171,70 @@ Jump to:
   <ul style="padding-left: 24px; margin-top: 0;">A comma-delimited, case-insensitive list of property names to exclude from stringification.</ul>
 </ul>
 
-<ul id="filtertypemap"><b>{Map}</b> [ <b>FilterTypeMap</b>  = <code>""</code> ]
-  <ul style="padding-left: 24px; margin-top: 0;">A <code>Map</code> object where the keys are object types and the values are <code>PropsInfo.FilterGroup</code> objects. <code>StringifyAll</code> will apply the filter when iterating the properties of an object of the indicated types. For usage examples you can review the "inheritance\example-Inheritance.ahk" walkthrough which demonstrates using filters in the context of the <code>PropsInfo</code> class, which is the same as how they are applied by <code>StringifyAll</code>. The following is a brief explanation of how to use filters:</ul>
-  <ul style="padding-left: 48px; margin-top: 0;">
-    <li>The term "filter" here refers to a collection of <code>PropsInfo.Filter</code> objects which comprise a <code>PropsInfo.FilterGroup</code> object. Just think of a "filter" as a collection of functions that <code>StringifyAll</code> processes to exclude properties from stringification.</li>
-    <li>Filters are functions that return a nonzero value to direct <code>PropsInfo.Prototype.FilterActivate</code> to exclude a property from being exposed by the <code>PropsInfo</code> object. Within the context of <code>StringifyAll</code>, this effectively causes <code>StringifyAll</code> to skip the property completely; the property's value does not get evaluated.</li>
-    <li>Although filters are applied on a per-object basis, <code>StringifyAll</code> must categorize objects by their type, and so <code>StringifyAll</code> uses the same filter group for all objects of the indicated type. The significance this has for you is that you can include code that responds to characteristics or conditions about individual objects. An example of this is within the "example\example.ahk" file in section I.D. "Enum options - <code>FilterTypeMap</code>". The function conditionally excludes the <code>Mark</code> property only if the property does not have a significant value.</li>
-    <li>There are five built-in filters, four of which can be added by simply adding the index to the filter.</li>
-    <ul>
-      <li><b>Exclude properties by name:</b> To exclude properties by name, simply add a comma-delimited list of property names to the filter.</li>
-      <pre>
+<ul id="filtertypemap"><b>{*}</b> [ <b>FilterTypeMap</b>  = <code>""</code> ]
+  <ul style="padding-left: 24px; margin-top: 0; margin-bottom: 6px;">
+    <code>Options.FilterTypeMap</code> directs <code>StringifyAll</code> to apply, or not to apply, a filter to the <code>PropsInfo</code> objects used when processing an object's properties.
+  </ul>
+  <ul style="padding-left: 24px; margin-top: 0; margin-bottom: 6px;">
+    <code>Options.FilterTypeMap</code> can be defined as a <code>Map</code> object that differentiates between object types, or it can be defined with a value that is applied to objects of any type. If it is a <code>Map</code> object, the keys are object type names and the values are either a <a href ="https://github.com/Nich-Cebolla/AutoHotkey-LibV2/tree/main/inheritance#propsinfofiltergroup">PropsInfo.FilterGroup</a> object, or a function that accepts the object being evaluted as its only parameter and returns a <code>PropsInfo.FilterGroup</code> object.
+  </ul>
+  <ul style="padding-left: 24px; margin-top: 12px; margin-bottom: 6px;">
+    If <code>Options.FilterTypeMap</code> is a <code>Func</code> or callable <code>Object</code>:
+    <br>
+    <i>Parameters</i>
+    <ol type="1" style="margin-bottom: 0;">
+      <li>The <code>Object</code> being evaluated.</li>
+    </ol>
+    <i>Return</i>
+    <ul style="margin-bottom: 0;">
+      <li>A <code>PropsInfo.FilterGroup</code> object to apply a filter, or zero or an empty string to not apply a filter.</li>
+    </ul>
+  </ul>
+  <ul style="padding-left: 24px; margin-top: 12px; margin-bottom: 6px;">
+    If <code>Options.EnumTypeMap</code> is a <code>Map</code> object:
+    <ul style="margin-bottom: 6px;">
+      <li>The keys are object types and the values are either <code>PropsInfo.FilterGroup</code>, <code>Func</code>, or callable <code>Object</code> as described above.</li>
+      <li>Use the <code>Map</code>'s <code>Default</code> property to set a condition for all types not included within the <code>Map</code>.</li>
+      <li>If you define <code>Options.FilterTypeMap</code> as a <code>Map</code> object, and if <code>Options.FilterTypeMap</code> does not have a property <code>Options.FilterTypeMap.Default</code>, <code>StringifyAll</code> sets <code>Options.FilterTypeMap.Default := 0</code> before processing then deletes it before returning. If an error occurs while processing that causes the thread to exit before the function returns, the <code>Options.FilterTypeMap.Default</code> property will not be deleted.</li>
+    </ul>
+  </ul>
+  <ul style="padding-left: 24px; margin-top: 12px; margin-bottom: 6px;">
+    For usage examples you can review the "inheritance\example-Inheritance.ahk" walkthrough which demonstrates using filters in the context of the <code>PropsInfo</code> class, which is the same as how they are applied by <code>StringifyAll</code>.
+    <br>
+    The following is a brief explanation of how to use filters:
+    <ul style="padding-left: 48px; margin-top: 0;">
+      <li>The term "filter" here refers to a collection of <code>PropsInfo.Filter</code> objects which comprise a <code>PropsInfo.FilterGroup</code> object. Just think of a "filter" as a collection of functions that <code>StringifyAll</code> processes to exclude properties from stringification.</li>
+      <li>Filters are functions that return a nonzero value to direct <code>PropsInfo.Prototype.FilterActivate</code> to exclude a property from being exposed by the <code>PropsInfo</code> object. Within the context of <code>StringifyAll</code>, this effectively causes <code>StringifyAll</code> to skip the property completely; the property's value does not get evaluated.</li>
+      <li>Although filters are applied on a per-object basis, <code>StringifyAll</code> must categorize objects by their type, and so <code>StringifyAll</code> uses the same filter group for all objects of the indicated type. The significance this has for you is that you can include code that responds to characteristics or conditions about individual objects. An example of this is within the "example\example.ahk" file in section I.D. "Enum options - <code>FilterTypeMap</code>". The function conditionally excludes the <code>Mark</code> property only if the property does not have a significant value.</li>
+    </ul>
+    <ul style="padding-left: 48px; margin-top: 12px; margin-bottom: 6px;">
+      <b>Built-in filters</b>:
+      <ul style="padding-left: 48px; margin-top: 12px; margin-bottom: 6px;">
+        There are five built-in filters, four of which can be added by simply adding the index to the filter.
+        <li><b>Exclude properties by name:</b> To exclude properties by name, simply add a comma-delimited list of property names to the filter.</li>
+        <pre>
 filter := PropsInfo.FilterGroup('__New,__Init,__Delete,Length,Capacity')
 filterTypeMap := Map('Array', filter)
 </pre>
-      <li><b>1:</b> Exclude all items that are not own properties of the root object.</li>
-      <li><b>2:</b> Exclude all items that are own properties of the root object.</li>
-      <li><b>3:</b> Exclude all items that have an <code>Alt</code> property, i.e. exclude all properties that have multiple owners.</li>
-      <li><b>4:</b> Exclude all items that do not have an <code>Alt</code> property, i.e. exclude all properties that have only one owner.</li>
-      <li>Example adding a filter by index:</li>
-      <pre>
+        <li><b>1:</b> Exclude all items that are not own properties of the root object.</li>
+        <li><b>2:</b> Exclude all items that are own properties of the root object.</li>
+        <li><b>3:</b> Exclude all items that have an <code>Alt</code> property, i.e. exclude all properties that have multiple owners.</li>
+        <li>
+          <b>4:</b> Exclude all items that do not have an <code>Alt</code> property, i.e. exclude all properties that have only one owner.
+          <br>
+          Example adding a filter by index:
+        </li>
+        <pre>
 ; Assume we are continuing with the filter created above.
 filter.Add(1)
 </pre>
-    </ul>
-    <li>You can define a filter with any function or callable object. The function must accept the <code>PropsInfoItem</code> object as its only parameter, and should return a nonzero value if the property should be skipped for the object. Understand that the filter gets called once for every property for every object of the indicated type (unless a property gets excluded by a filter before it). The filter function isn't evaluating the object, it's evaluating the <code>PropsInfoItem</code> objects associated with the object's properties.</li>
-    <li><code>Options.FilterTypeMap</code> is the only option that allows us to choose what properties are included at an individual-object level.</li>
-  <li>Example using a function and applying it to the <code>MapObj.Default</code>:</li>
-<pre>
+      </ul>
+      <b>Custom filters</b>:
+      <ul style="padding-left: 48px; margin-top: 12px; margin-bottom: 6px;">
+        <li>You can define a filter with any function or callable object. The function must accept the <code>PropsInfoItem</code> object as its only parameter, and should return a nonzero value if the property should be skipped for the object. Understand that the filter gets called once for every property for every object of the indicated type (unless a property gets excluded by a filter before it). The filter function isn't evaluating the object, it's evaluating the <code>PropsInfoItem</code> objects associated with the object's properties.</li>
+        <li><code>Options.FilterTypeMap</code> is the only option that allows us to choose what properties are included at an individual-object level.</li>
+        <li>Example using a function and applying it to the <code>MapObj.Default</code>:</li>
+        <pre>
 MyFilterFunc(InfoItem) {
     switch InfoItem.Kind {
         case 'Get', 'Get_Set':
@@ -196,6 +250,7 @@ filter := PropsInfo.FilterGroup(MyFilterFunc)
 FilterTypeMap := Map()
 FilterTypeMap.Default := filter
 </pre>
+      </ul>
     </ul>
   </ul>
 </ul>
@@ -208,56 +263,75 @@ FilterTypeMap.Default := filter
   <ul style="padding-left: 24px; margin-top: 0;">When true, there is no limit to how many times <code>StringifyAll</code> will process an object. Each time an individual object is encountered, it will be processed unless doing so will result in infinite recursion. When false, <code>StringifyAll</code> processes each individual object a maximum of 1 time, and all other encounters result in <code>StringifyAll</code> printing a placeholder string that is a string representation of the object path at which the object was first encountered.</ul>
 </ul>
 
-<ul id="propstypemap"><b>{Map}</b> [ <b>PropsTypeMap</b>  = <code>{ __Class: "Map", Default: 1, Count: 0 }</code> ]
-  <ul style="padding-left: 24px; margin-bottom: 0; margin-top: 0;">
-    A <code>Map</code> object where the keys are object types and the values are either:
-    <ul style="margin-top: 4px; margin-bottom: 6px;">
-      <li><b>Boolean</b>:</li>
-      <ul style="margin-bottom: 0; padding-left: 24px;">
-        <li><code>true</code>: Directs <code>StringifyAll</code> to process the properties.</li>
-        <li><code>false</code>: Directs <code>StringifyAll</code> to skip the properties.</li>
-      </ul>
-      <li><b>Func</b> or callable <b>Object</b>:
-        <br>
-        <i>Parameters</i>
-        <ol type="1" style="margin-bottom: 0;">
-          <li>The <b>Object</b> being evaluated.</li>
-        </ol>
-        <i>Return</i>
-        <ul style="margin-bottom: 0;">
-          <li><b>Boolean:</b> Either value described above.</li>
-        </ul>
-      </li>
+<ul id="propstypemap"><b>{*}</b> [ <b>PropsTypeMap</b>  = <code>1</code> ]
+  <ul style="padding-left: 24px; margin-top: 0; margin-bottom: 6px;">
+    <code>Options.PropsTypeMap</code> directs <code>StringifyAll</code> iterate an object's properties and include their values in the JSON string.
+  </ul>
+  <ul style="padding-left: 24px; margin-top: 0; margin-bottom: 6px;">
+    <code>Options.PropsTypeMap</code> can be defined as a <code>Map</code> object that differentiates between object types, or it can be defined with a value that is applied to objects of any type. If it is a <code>Map</code> object, the keys are object type names and the values are either an <code>Integer</code>, or a function that accepts the object being evaluted as its only parameter and returns an <code>Integer</code>.
+  </ul>
+  <ul style="padding-left: 24px; margin-top: 12px; margin-bottom: 6px;">
+    If <code>Options.PropsTypeMap</code> is an <code>Integer</code>:
+    <ul style="margin-bottom: 6px;">
+      <li><code>1</code>: Directs <code>StringifyAll</code> to process the properties.</li>
+      <li><code>0</code>: Directs <code>StringifyAll</code> to skip the properties.</li>
     </ul>
   </ul>
-  <ul style="padding-left: 24px; margin-bottom: 6px;">The default value is a <code>Map</code> object with <b>0</b> items and a <code>Default</code> property value of <code>1</code>, directing <code>StringifyAll</code> to process the properties of all object types. Keep this in mind when you set <code>PropsTypeMap</code>.
-  <ul style="margin-top: 4px; margin-bottom: 6px;">
-    <li>If you intend to direct <code>StringifyAll</code> to process object properties by default while using <code>PropsTypeMap</code> to exclude certain object types, you'll need to set the <code>Default</code> value to 1 as well.</li>
-    <li>If you want <code>StringifyAll</code> to not process any properties by default, and to use <code>PropsTypeMap</code> to specify which object types should have their properties processed, you can leave the <code>Default</code> property unset, or set it with <code>0</code>.</li>
+  <ul style="padding-left: 24px; margin-top: 12px; margin-bottom: 6px;">
+    If <code>Options.PropsTypeMap</code> is a <code>Func</code> or callable <code>Object</code>:
+    <br>
+    <i>Parameters</i>
+    <ol type="1" style="margin-bottom: 0;">
+      <li>The <code>Object</code> being evaluated.</li>
+    </ol>
+    <i>Return</i>
+    <ul style="margin-bottom: 0;">
+      <li><code>Integer:</code> One of the above listed integers.</li>
+    </ul>
   </ul>
-  <p style="padding-left: 24px;">Use the <code>Map</code>'s <code>Default</code> property to set a condition for all types not included within the <code>Map</code>.</ul>
+  <ul style="padding-left: 24px; margin-top: 12px; margin-bottom: 6px;">
+    If <code>Options.PropsTypeMap</code> is a <code>Map</code> object:
+    <ul style="margin-bottom: 6px;">
+      <li>The keys are object types and the values are either <code>Integer</code>, <code>Func</code>, or callable <code>Object</code> as described above.</li>
+      <li>Use the <code>Map</code>'s <code>Default</code> property to set a condition for all types not included within the <code>Map</code>.</li>
+      <li>If you define <code>Options.PropsTypeMap</code> as a <code>Map</code> object, and if <code>Options.PropsTypeMap</code> does not have a property <code>Options.PropsTypeMap.Default</code>, <code>StringifyAll</code> sets <code>Options.PropsTypeMap.Default := 0</code> before processing then deletes it before returning. If an error occurs while processing that causes the thread to exit before the function returns, the <code>Options.PropsTypeMap.Default</code> property will not be deleted.</li>
+    </ul>
+  </ul>
 </ul>
 
-<ul id="stopattypemap"><b>{Map}</b> [ <b>StopAtTypeMap</b>  = <code>""</code> ]
-  <ul style="padding-left: 24px; margin-bottom: 0; margin-top: 0;">A <code>Map</code> object where the keys are object types and the values are either:</ul>
-  <ul style="margin-top: 4px; margin-bottom: 6px; padding-left: 64px;">
-    <li><b>Integer</b> or <b>String</b>:</li>
-    <ul style="margin-bottom: 0; padding-left: 24px;">
-      <li>Both <b>Integer</b> and <b>String</b> are passed to the <code>StopAt</code> parameter of <code>GetPropsInfo</code>.</li>
-    </ul>
-    <li><b>Func</b> or callable <b>Object</b>:
-      <br>
-      <i>Parameters</i>
-      <ol type="1" style="margin-bottom: 0;">
-        <li>The <b>Object</b> being evaluated.</li>
-      </ol>
-      <i>Return</i>
-      <ul style="margin-bottom: 0;">
-        <li><b>Integer</b> or <b>String</b>: The value to pass to the <code>StopAt</code> parameter of <code>GetPropsInfo</code>.</li>
-      </ol>
+<ul id="stopattypemap"><b>{*}</b> [ <b>StopAtTypeMap</b>  = <code>"-Object"</code> ]
+  <ul style="padding-left: 24px; margin-top: 0; margin-bottom: 6px;">
+    <code>Options.StopAtTypeMap</code> defines the value that is passed to the <a href="https://github.com/Nich-Cebolla/AutoHotkey-LibV2/tree/main/inheritance#parameters">StopAt parameter of GetPropsInfo</a>.
+  </ul>
+  <ul style="padding-left: 24px; margin-top: 0; margin-bottom: 6px;">
+    <code>Options.StopAtTypeMap</code> can be defined as a <code>Map</code> object that differentiates between object types, or it can be defined with a value that is applied to objects of any type. If it is a <code>Map</code> object, the keys are object type names and the values are either an <code>Integer</code>, <code>String</code>, or a function that accepts the object being evaluted as its only parameter and returns an <code>Integer</code> or <code>String</code>.
+  </ul>
+  <ul style="padding-left: 24px; margin-top: 12px; margin-bottom: 6px;">
+    If <code>Options.StopAtTypeMap</code> is an <code>Integer</code> or <code>String</code>:
+    <ul style="margin-bottom: 6px;">
+      <li>The value is pass to the <code>StopAt</code> parameter of <code>GetPropsInfo</code></li>
     </ul>
   </ul>
-  <ul style="padding-left: 24px;">Use the <code>Map</code>'s <code>Default</code> property to set a condition for all types not included within the <code>Map</code>.</ul>
+  <ul style="padding-left: 24px; margin-top: 12px; margin-bottom: 6px;">
+    If <code>Options.StopAtTypeMap</code> is a <code>Func</code> or callable <code>Object</code>:
+    <br>
+    <i>Parameters</i>
+    <ol type="1" style="margin-bottom: 0;">
+      <li>The <code>Object</code> being evaluated.</li>
+    </ol>
+    <i>Return</i>
+    <ul style="margin-bottom: 0;">
+      <li>An <code>Integer</code> or <code>String</code>.</li>
+    </ul>
+  </ul>
+  <ul style="padding-left: 24px; margin-top: 12px; margin-bottom: 6px;">
+    If <code>Options.StopAtTypeMap</code> is a <code>Map</code> object:
+    <ul style="margin-bottom: 6px;">
+      <li>The keys are object types and the values are either <code>Integer</code>, <code>String</code>, <code>Func</code>, or callable <code>Object</code> as described above.</li>
+      <li>Use the <code>Map</code>'s <code>Default</code> property to set a condition for all types not included within the <code>Map</code>.</li>
+      <li>If you define <code>Options.StopAtTypeMap</code> as a <code>Map</code> object, and if <code>Options.StopAtTypeMap</code> does not have a property <code>Options.StopAtTypeMap.Default</code>, <code>StringifyAll</code> sets <code>Options.StopAtTypeMap.Default := "-Object"</code> before processing then deletes it before returning. If an error occurs while processing that causes the thread to exit before the function returns, the <code>Options.StopAtTypeMap.Default</code> property will not be deleted.</li>
+    </ul>
+  </ul>
 </ul>
 
 ### Callbacks
@@ -266,7 +340,7 @@ FilterTypeMap.Default := filter
   <ul style="padding-left: 24px; margin-top: 0; margin-bottom: 0;">A <b>Func</b> or callable <b>Object</b> that will be called when <code>StringifyAll</code> encounters an error attempting to access a property's value. When <code>CallbackError</code> is set, <code>StringifyAll</code> ignores <code>PrintErrors</code>.</ul>
   <ul style="padding-left: 24px; margin-top: 0; margin-bottom: 0;"><i>Parameters</i>
     <ol type="1" style="margin-top: 4px; margin-bottom: 6px; padding-left: 36px;">
-      <li><b>{Object}</b> - The <code>controller</code> object. The <code>controller</code> is an internal mechanism with various callable properties, but the only property of use for this purpose is <code>Path</code>, which has a string value representing the object path up to the object that is currently being evaluated. See the example in section <a href="#callbackplaceholder">CallbackPlaceholder</a>.</li>
+      <li><b>{StringifyAll.Path}</b> - An object with properties <code>Name</code> and <code>Path</code>. See the section <a href="#stringifyallpath">StringifyAll.Path</a>. Also see the example in section <a href="#callbackplaceholder">CallbackPlaceholder</a>.</li>
       <li><b>{Error}</b> - The error object.</li>
       <li><b>{*}</b> - The object currently being evaluated.</li>
       <li><b>{PropsInfoItem}</b> - The <code>PropsInfoItem</code> object associated with the property that caused the error.</li>
@@ -289,11 +363,11 @@ FilterTypeMap.Default := filter
 </ul>
 
 
-<ul id="callbackgeneral"><b>{*}</b> [ <b>CallbackGeneral</b>  = <code>""</code> ]
+<ul id="options-callbackgeneral"><b>{*}</b> [ <b>CallbackGeneral</b>  = <code>""</code> ]
   <ul style="padding-left: 24px; margin-top: 0; margin-bottom: 0;">A <b>Func</b> or callable <b>Object</b>, or an array of one or more <b>Func</b> or callable <b>Object</b> values, that will be called for each object prior to processing.</ul>
   <ul style="padding-left: 24px; margin-top: 0; margin-bottom: 0;"><i>Parameters</i>
     <ol type="1" style="margin-top: 4px; margin-bottom: 6px; padding-left: 36px;">
-      <li><b>{Object}</b> - The <code>controller</code> object. The <code>controller</code> is an internal mechanism with various callable properties, but the only property of use for this purpose is <code>Path</code>, which has a string value representing the object path up to the object that is currently being evaluated. See the example in section <a href="#callbackplaceholder">CallbackPlaceholder</a>.</li>
+      <li><b>{StringifyAll.Path}</b> - An object with properties <code>Name</code> and <code>Path</code>. See the section <a href="#stringifyallpath">StringifyAll.Path</a>. Also see the example in section <a href="#callbackplaceholder">CallbackPlaceholder</a>.</li>
       <li><b>{*}</b> - The object being evaluated.</li>
       <li><b>{VarRef}</b> - A variable that will receive a reference to the JSON string being created.</li>
       <li><b>{String}</b> - An <b>optional</b> parameter that will receive the name of the property for objects that are encountered while iterating the parent object's properties.</li>
@@ -332,7 +406,7 @@ FilterTypeMap.Default := filter
     <ul style="padding-left: 24px; margin-top: 0; margin-bottom: 0;">It does not matter if the function modifies the two <code>VarRef</code> parameters as <code>StringifyAll</code> will not use them again at that point.</ul>
     <ol type="1" style="margin-top: 4px; margin-bottom: 6px; padding-left: 64px;">
       <li>
-        <b>{Object}</b> - The <code>controller</code> object. The <code>controller</code> is an internal mechanism with various callable properties, but the only property of use for this purpose is <code>Path</code>, which has a string value representing the object path up to the object that is currently being evaluated. In the below example, if your function is called for a placeholder for the object at <code>obj.nestedObj.doubleNestedObj</code>, the path will be "$.nestedObj.doubleNestedObj".
+        <b>{StringifyAll.Path}</b> - An object with properties <code>Name</code> and <code>Path</code>. See the section <a href="#stringifyallpath">StringifyAll.Path</a>. In the below example, if your function is called for a placeholder for the object at <code>obj.nestedObj.doubleNestedObj</code>, the path will be "$.nestedObj.doubleNestedObj".
         <pre>
 Obj := {
     nestedObj: {
@@ -348,7 +422,7 @@ Obj := {
         <li>
           The "key" (the value received by the first variable in a for-loop) for objects that are encountered while enumerating an object in 2-parameter mode. The key will already have been escaped and enclosed in double quotes at this point, making it somewhat awkward to work with because escaping it again will re-escape the existing escape sequences. If your function will use the key for some purpose, then you will likely want to do something like the below example.
           <pre>
-MyPlaceholderFunc(controller, obj, &prop?, &key?) {
+MyPlaceholderFunc(PathObj, obj, &prop?, &key?) {
     if IsSet(prop) {
         ; make something
     } else if IsSet(key) {
@@ -380,10 +454,14 @@ MyPlaceholderFunc(controller, obj, &prop?, &key?) {
 
 ### Newline and indent options
 
-<ul style="margin-top: 0;">Each of <code>CondenseCharLimit</code>, <code>CondenseCharLimitEnum1</code>, <code>CondenseCharLimitEnum2</code>, <code>CondenseCharLimitEnum2Item</code>, and <code>CondenseCharLimitProps</code> set a threshold which <code>StringifyAll</code> will use to condense an object's substring if the length, in characters, of the substring is less than or equal to the value. The substring length is measured beginning from the open brace and excludes external whitespace such as newline characters and indentation that are not part of a string literal value.</ul>
+<ul style="margin-top: 0;">
+  Each of <code>CondenseCharLimit</code>, <code>CondenseCharLimitEnum1</code>, <code>CondenseCharLimitEnum2</code>, <code>CondenseCharLimitEnum2Item</code>, and <code>CondenseCharLimitProps</code> set a threshold which <code>StringifyAll</code> will use to condense an object's substring if the length, in characters, of the substring is less than or equal to the value. The substring length is measured beginning from the open brace and excludes external whitespace such as newline characters and indentation that are not part of a string literal value.
+  <br>
+  If any of the <code>Options.CondenseCharLimit</code> options are in use, the <code>Options.CondenseDepthThreshold</code> options set a depth requirement to apply the option. For example, if <code>Options.CondenseDepthThreshold == 2</code>, all <code>Options.CondenseCharLimit</code> options will only be applied if the current depth is 2 or more; values at the root depth (1) will be processed without applying the <code>Options.CondenseCharLimit</code> option.
+</ul>
 
 <ul id="condensecharlimit" style="margin-top: 0; margin-bottom: 0;"><b>{Integer}</b> [ <b>CondenseCharLimit</b>  = <code>0</code> ]
-  <ul style="padding-left:24px;">Applies to all substrings. If <code>CondenseCharLimit</code> is set, you can still specify individual options for the other three and the individual option will take precedence over <code>CondenseCharLimit</code>.</ul>
+  <ul style="padding-left:24px;">Applies to all substrings. If <code>Options.CondenseCharLimit</code> is set, you can still specify individual options for the others and the individual option will take precedence over <code>CondenseCharLimit</code>.</ul>
 </ul>
 
 <ul id="condensecharlimitenum1" style="margin-top: 0; margin-bottom: 0;"><b>{Integer}</b> [ <b>CondenseCharLimitEnum1</b>  = <code>0</code> ]
@@ -395,11 +473,31 @@ MyPlaceholderFunc(controller, obj, &prop?, &key?) {
 </ul>
 
 <ul id="condensecharlimitenum2item" style="margin-top: 0; margin-bottom: 0;"><b>{Integer}</b> [ <b>CondenseCharLimitEnum2Item</b>  = <code>0</code> ]
-  <ul style="padding-left:24px;">Applies to substrings that are created for each key-value pair when iterating an object's enumerator in 2-param mode. (Added in 1.1.5).</ul>
+  <ul style="padding-left:24px;">Applies to substrings that are created for each key-value pair when iterating an object's enumerator in 2-param mode. (Added in 1.1.5)</ul>
 </ul>
 
 <ul id="condensecharlimitprops" style="margin-top: 0; margin-bottom: 0;"><b>{Integer}</b> [ <b>CondenseCharLimitProps</b>  = <code>0</code> ]
   <ul style="padding-left:24px;">Applies to substrings that are created by processing an object's properties.</ul>
+</ul>
+
+<ul id="condensedepththreshold" style="margin-top: 0; margin-bottom: 0;"><b>{Integer}</b> [ <b>CondenseDepthThreshold</b>  = <code>0</code> ]
+  <ul style="padding-left:24px;">Applies to all substrings. If <code>Options.CondenseDepthThreshold</code> is set, you can still specify individual options for the others and the individual option will take precedence over <code>Options.CondenseDepthThreshold</code>. (Added in 1.2.0)</ul>
+</ul>
+
+<ul id="condensedepththresholdenum1" style="margin-top: 0; margin-bottom: 0;"><b>{Integer}</b> [ <b>CondenseDepthThresholdEnum1</b>  = <code>0</code> ]
+  <ul style="padding-left:24px;">Applies to substrings that are created by calling an object's enumerator in 1-param mode. (Added in 1.2.0)</ul>
+</ul>
+
+<ul id="condensedepththresholdenum2" style="margin-top: 0; margin-bottom: 0;"><b>{Integer}</b> [ <b>CondenseDepthThresholdEnum2</b>  = <code>0</code> ]
+  <ul style="padding-left:24px;">Applies to substrings that are created by calling an object's enumerator in 2-param mode. (Added in 1.2.0)</ul>
+</ul>
+
+<ul id="condensedepththresholdenum2item" style="margin-top: 0; margin-bottom: 0;"><b>{Integer}</b> [ <b>CondenseDepthThresholdEnum2Item</b>  = <code>0</code> ]
+  <ul style="padding-left:24px;">Applies to substrings that are created for each key-value pair when iterating an object's enumerator in 2-param mode. (Added in 1.2.0)</ul>
+</ul>
+
+<ul id="condensedepththresholdprops" style="margin-top: 0; margin-bottom: 0;"><b>{Integer}</b> [ <b>CondenseDepthThresholdProps</b>  = <code>0</code> ]
+  <ul style="padding-left:24px;">Applies to substrings that are created by processing an object's properties. (Added in 1.2.0)</ul>
 </ul>
 
 <ul id="indent"><b>{String}</b> [ <b>Indent</b>  = <code>"`s`s`s`s"</code> ]
@@ -480,6 +578,23 @@ OutputDebug(A_Clipboard := json)
 
 <ul id="initialstrcapacity"><b>{Integer}</b> [ <b>InitialStrCapacity</b>  = <code>65536</code> ]
   <ul style="padding-left:24px;"><code>StringifyAll</code> calls <code>VarSetStrCapacity</code> using <code>InitialStrCapacity</code> for the output string during the initialization stage. For the best performance, you can overestimate the approximate length of the string; <code>StringifyAll</code> calls <code>VarSetStrCapacity(&OutStr, -1)</code> at the end of the function to release any unused memory.</ul>
+</ul>
+
+## StringifyAll.Path
+
+`StringifyAll.Path` is a solution for tracking an object path as a string value. Some callback functions will receive an instance of `StringifyAll.Path` as the first parameter.
+
+### Instance properties
+
+<ul>
+  <li><b>Name</b>:
+    <ul>
+      <li>If the object associated with the <code>StringifyAll.Path</code> object was encountered when enumerating its parent object in 1-param mode, an <code>Integer</code> representing the index of the associated object.</li>
+      <li>If the object associated with the <code>StringifyAll.Path</code> object was encountered when enumerating its parent object in 2-param mode, a <code>String</code> representing the "key" (value set to the first parameter in the <code>for</code> loop) of the associated object.</li>
+      <li>If the object associated with the <code>StringifyAll.Path</code> object was encountered when iterating its parent object's properties, a <code>String</code> representing the property's name.</li>
+    </ul>
+  </li>
+  <li><b>Path</b>: A <code>String</code> representing the object path of the object associate with the <code>StringifyAll.Path</code> object, including the current object's <code>Name</code> as described above.</li>
 </ul>
 
 ## StringifyAll's process
@@ -664,6 +779,18 @@ Then, the value is processed:
 After processing the enumerator, if <code>count == 0</code>, adds the closing bracket(s) to the output string. If <code>count > 0</code>, adds a newline, indentation, and the closing bracket to the output string.
 
 ## Changelog
+
+<h4>2025-07-05 - 1.2.0</h4>
+
+- Added `StringifyAll.Path`.
+- Added `Options.CondenseDepthThreshold`, `Options.CondenseDepthThresholdEnum1`, `Options.CondenseDepthThresholdEnum2`, `Options.CondenseDepthThresholdEnum2Item`, and `Options.CondenseDepthThresholdProps`.
+- Removed `StringifyAll.__New` as it is no longer needed.
+- Removed some documentation in the parameter hint for `StringifyAll.Call`.
+- Fixed two errors in "example\example.ahk".
+- Fixed `Options.CallbackGeneral` not receiving the `controller` (now `Stringify.Path`) object to the first parameter as described in the documentation.
+- Adjusted the parameters passed to the callback functions. The `Controller` object is no longer passed to callback functions. Instead, a `StringifyAll.Path` object is passed to the parameters that used to receive the `Controller` object. In this documentation an instance of `StringifyAll.Path` is referred to as `PathObj`. `StringifyAll.Path` is a solution for tracking object paths using string values. Accessing the `PathObj.Path` property  returns the object path, so this change is backward-compatible (unless external code made use of any of the methods that are available on the `Controller` object, which will no longer be available). See the documentation section "StringifyAll.Path" for further details.
+- Adjusted the handling of all of the "TypeMap" options. If any of these options are defined with a value that does not inherit from `Map`, that value is used for all types. If any of these options are defined with an object that inherits from `Map` and that object has a property "Count" with a value of `0`, `StringifyAll` optimizes the handling of the option by creating a reference to the "Default" value and using that for all types.
+- Optimized handling of various options.
 
 <h4>2025-06-28 - 1.1.7</h4>
 

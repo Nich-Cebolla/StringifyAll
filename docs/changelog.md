@@ -1,3 +1,15 @@
+<h4>2025-07-05 - 1.2.0</h4>
+
+- Added `StringifyAll.Path`.
+- Added `Options.CondenseDepthThreshold`, `Options.CondenseDepthThresholdEnum1`, `Options.CondenseDepthThresholdEnum2`, `Options.CondenseDepthThresholdEnum2Item`, and `Options.CondenseDepthThresholdProps`.
+- Removed `StringifyAll.__New` as it is no longer needed.
+- Removed some documentation in the parameter hint for `StringifyAll.Call`.
+- Fixed two errors in "example\example.ahk".
+- Fixed `Options.CallbackGeneral` not receiving the `Controller` (now `Stringify.Path`) object to the first parameter as described in the documentation.
+- Adjusted the parameters passed to the callback functions. The `Controller` object is no longer passed to callback functions. Instead, a `StringifyAll.Path` object is passed to the parameters that used to receive the `Controller` object. In this documentation an instance of `StringifyAll.Path` is referred to as `PathObj`. `StringifyAll.Path` is a solution for tracking object paths using string values. Accessing the `PathObj.Path` property  returns the object path, so this change is backward-compatible (unless external code made use of any of the methods that are available on the `Controller` object, which will no longer be available). See the documentation section "StringifyAll.Path" for further details.
+- Adjusted the handling of all of the "TypeMap" options. If any of these options are defined with a value that does not inherit from `Map`, that value is used for all types. If any of these options are defined with an object that inherits from `Map` and that object has a property "Count" with a value of `0`, `StringifyAll` optimizes the handling of the option by creating a reference to the "Default" value and using that for all types.
+- Optimized handling of various options.
+
 <h4>2025-06-28 - 1.1.7</h4>
 
 - Fixed `StringifyAll.StrUnescapeJson`.
