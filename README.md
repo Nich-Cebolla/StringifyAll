@@ -125,7 +125,7 @@ Jump to:
 
 <ul id="enumtypemap"><b>{*}</b> [ <b>EnumTypeMap</b>  = <code>Map("Array", 1, "Map", 2, "RegExMatchInfo", 2)</code> ]
   <ul style="padding-left: 24px; margin-top: 0; margin-bottom: 6px;">
-    <code>Options.EnumTypeMap</code> directs <code>StringifyAll</code> to call, or not to call, an object's <code>__Enum</code> method. If it is called, <code>Options.EnumTypeMap</code> also specifies whether it should be called in 1-param mode or 2-param mode.
+    <code>Options.EnumTypeMap</code> directs <code>StringifyAll</code> to call, or not to call, an object's <code>__Enum</code> method. If it is called, <code>Options.EnumTypeMap</code> also specifies whether it should be called in 1-param mode or 2-param mode. If the object being evaluated does not have an <code>__Enum</code> method, <code>Options.EnumTypeMap</code> is ignored for that object.
   </ul>
   <ul style="padding-left: 24px; margin-top: 0; margin-bottom: 6px;">
     <code>Options.EnumTypeMap</code> can be defined as a <code>Map</code> object that differentiates between object types, or it can be defined with a value that is applied to objects of any type. If it is a <code>Map</code> object, the keys are object type names and the values are either an <code>Integer</code>, or a function that accepts the object being evaluted as its only parameter and returns an <code>Integer</code>.
@@ -640,6 +640,7 @@ This section needs updated.
 - Fixed `Options.CallbackGeneral` not receiving the `controller` (now `Stringify.Path`) object to the first parameter as described in the documentation.
 - Adjusted the parameters passed to the callback functions. The `Controller` object is no longer passed to callback functions. Instead, a `StringifyAll.Path` object is passed to the parameters that used to receive the `Controller` object. In this documentation an instance of `StringifyAll.Path` is referred to as `PathObj`. `StringifyAll.Path` is a solution for tracking object paths using string values. Accessing the `PathObj.Path` property  returns the object path, so this change is backward-compatible (unless external code made use of any of the methods that are available on the `Controller` object, which will no longer be available). See the documentation section "StringifyAll.Path" for further details.
 - Adjusted the handling of all of the "TypeMap" options. If any of these options are defined with a value that does not inherit from `Map`, that value is used for all types. If any of these options are defined with an object that inherits from `Map` and that object has a property "Count" with a value of `0`, `StringifyAll` optimizes the handling of the option by creating a reference to the "Default" value and using that for all types.
+- Adjusted `Recurse`. `HasMethod(Obj, "__Enum")` is checked prior to calling `CheckEnum`.
 - Optimized handling of various options.
 
 <h4>2025-06-28 - 1.1.7</h4>

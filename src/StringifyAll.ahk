@@ -433,7 +433,7 @@ class StringifyAll {
         _Recurse1(controller, Obj, &OutStr) {
             IncDepth(1)
             controller.Obj := Obj
-            flag_enum := CheckEnum(Obj)
+            flag_enum := HasMethod(Obj, '__Enum') ? CheckEnum(Obj) : 0
             if flag_props := CheckProps(Obj) {
                 PropsInfoObj := _GetPropsInfo(Obj)
                 flag_props := PropsInfoObj.Count
