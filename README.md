@@ -582,7 +582,7 @@ OutputDebug(A_Clipboard := json)
 
 ## StringifyAll.Path
 
-`StringifyAll.Path` is a solution for tracking an object path as a string value. Some callback functions will receive an instance of `StringifyAll.Path` as the first parameter.
+`StringifyAll.Path` is a solution for tracking an object path as a string value. Callback functions will receive an instance of `StringifyAll.Path` to the first parameter.
 
 ### Instance properties
 
