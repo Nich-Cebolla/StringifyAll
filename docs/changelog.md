@@ -1,3 +1,11 @@
+<h4>2025-07-06 - 1.3.0</h4>
+
+- Added `StringifyAll.GetPlaceholderSubstrings`.
+- Fixed: After 1.2.0, if `Options.FilterTypeMap` was set with a `PropsInfo.FilterGroup` object, `StringifyAll` erroneously treated the value as a `Map` object. This has been corrected.
+- Fixed: After 1.2.0, map keys had a change to not be escaped properly. This is corrected.
+- Adjusted how `StringifyAll` handles the "key" values (the value assigned to the first parameter of a 2-param <code>for</code> loop). The value is no longer escaped prior to calling `Options.CallbackPlaceholder` or `Options.CallbackGeneral`.
+- Adjusted `StringifyAll.Path`. It now caches the path value, and the process for constructing the path string has been optimized. Item names that are strings are quoted with single quote characters, and internal single quote characters are always escaped with a backtick.
+
 <h4>2025-07-05 - 1.2.0</h4>
 
 - Added `StringifyAll.Path`.

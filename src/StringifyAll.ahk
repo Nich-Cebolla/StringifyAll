@@ -1,7 +1,7 @@
 ﻿/*
     Github: https://github.com/Nich-Cebolla/AutoHotkey-StringifyAll
     Author: Nich-Cebolla
-    Version: 1.2.0
+    Version: 1.3.0
     License: MIT
 */
 
@@ -236,7 +236,9 @@ class StringifyAll {
             CheckProps := _CheckProps2
         }
         if filterTypeMap := Options.FilterTypeMap {
-            if filterTypeMap is Map {
+            if filterTypeMap is PropsInfo.FilterGroup {
+                SetFilter := _SetFilter3
+            } else if filterTypeMap is Map {
                 if filterTypeMap.Count {
                     if !filterTypeMap.HasOwnProp('Default') {
                         filterTypeMap.Default := 0
@@ -246,7 +248,14 @@ class StringifyAll {
                 } else {
                     if filterTypeMap.HasOwnProp('Default') && filterTypeMap.Default {
                         filterTypeMap := filterTypeMap.Default
-                        SetFilter := HasMethod(filterTypeMap, 'Call') ? _SetFilter2 : _SetFilter3
+                        if filterTypeMap is PropsInfo.FilterGroup {
+                            SetFilter := _SetFilter3
+                        } else if HasMethod(filterTypeMap, 'Call') {
+                            SetFilter := _SetFilter2
+                        } else {
+                            throw ValueError('If ``Options.FilterTypeMap`` is nonzero, it must inherit from ``Map``'
+                            ' or must be an object with a "Call" property.', -1)
+                        }
                     }
                 }
             } else if HasMethod(filterTypeMap, 'Call') {
@@ -596,7 +605,7 @@ class StringifyAll {
             controller.PrepareNextEnum1(&OutStr)
             if ptrList.Has(ptr := ObjPtr(Val)) {
                 if HandleMultiple(controller.PathObj, Val) {
-                    OutStr .= '"{ ' ptrList.Get(ptr)[1].Path ' }"'
+                    OutStr .= '"{ ' StrReplace(StrReplace(StrReplace(StrReplace(StrReplace(ptrList.Get(ptr)[1].PathObj.Unescaped(), '\', '\\'), '`n', '\n'), '`r', '\r'), '"', '\"'), '`t', '\t') ' }"'
                 } else {
                     newController := GetController()
                     newController.PathObj := controller.PathObj.MakeItem(&Key)
@@ -616,7 +625,7 @@ class StringifyAll {
             if ptrList.Has(ptr := ObjPtr(Val)) {
                 if HandleMultiple(controller.PathObj, Val) {
                     controller.PrepareNextEnum1(&OutStr)
-                    OutStr .= '"{ ' ptrList.Get(ptr)[1].Path ' }"'
+                    OutStr .= '"{ ' StrReplace(StrReplace(StrReplace(StrReplace(StrReplace(ptrList.Get(ptr)[1].PathObj.Unescaped(), '\', '\\'), '`n', '\n'), '`r', '\r'), '"', '\"'), '`t', '\t') ' }"'
                     return
                 }
             } else if depth >= maxDepth || Val is ComObject || Val is ComValue {
@@ -648,22 +657,28 @@ class StringifyAll {
         }
         _HandleEnum21(controller, Val, &Key, &OutStr) {
             controller.PrepareNextEnum2(&OutStr)
-            OutStr .= Key ',' nl() ind()
             if ptrList.Has(ptr := ObjPtr(Val)) {
                 if HandleMultiple(controller.PathObj, Val) {
-                    OutStr .= '"{ ' ptrList.Get(ptr)[1].Path ' }"'
+                    _GetVal(&Key, quoteNumericKeys)
+                    OutStr .= Key ',' nl() ind() '"{ ' StrReplace(StrReplace(StrReplace(StrReplace(StrReplace(ptrList.Get(ptr)[1].PathObj.Unescaped(), '\', '\\'), '`n', '\n'), '`r', '\r'), '"', '\"'), '`t', '\t') ' }"'
                 } else {
                     newController := GetController()
                     newController.PathObj := controller.PathObj.MakeItem(&Key)
                     ptrList.Get(ptr).Push(newController)
+                    _GetVal(&Key, quoteNumericKeys)
+                    OutStr .= Key ',' nl() ind()
                     Recurse(newController, Val, &OutStr)
                 }
             } else if depth >= maxDepth || Val is ComObject || Val is ComValue {
-                OutStr .= GetPlaceholder(controller.PathObj, Val, , &Key)
+                placeholder := GetPlaceholder(controller.PathObj, Val, , &Key)
+                _GetVal(&Key, quoteNumericKeys)
+                OutStr .= Key ',' nl() ind() placeholder
             } else {
                 newController := GetController()
                 newController.PathObj := controller.PathObj.MakeItem(&Key)
                 ptrList.Set(ptr, [newController])
+                _GetVal(&Key, quoteNumericKeys)
+                OutStr .= Key ',' nl() ind()
                 Recurse(newController, Val, &OutStr)
             }
         }
@@ -671,32 +686,33 @@ class StringifyAll {
             if ptrList.Has(ptr := ObjPtr(Val)) {
                 if HandleMultiple(controller.PathObj, Val) {
                     controller.PrepareNextEnum2(&OutStr)
-                    OutStr .= Key ',' nl() ind()
-                    OutStr .= '"{ ' ptrList.Get(ptr)[1].Path ' }"'
+                    _GetVal(&Key, quoteNumericKeys)
+                    OutStr .= Key ',' nl() ind() '"{ ' StrReplace(StrReplace(StrReplace(StrReplace(StrReplace(ptrList.Get(ptr)[1].PathObj.Unescaped(), '\', '\\'), '`n', '\n'), '`r', '\r'), '"', '\"'), '`t', '\t') ' }"'
                     return
                 }
             } else if depth >= maxDepth || Val is ComObject || Val is ComValue {
                 controller.PrepareNextEnum2(&OutStr)
-                OutStr .= Key ',' nl() ind()
-                OutStr .= GetPlaceholder(controller.PathObj, Val, , &Key)
+                placeholder := GetPlaceholder(controller.PathObj, Val, , &Key)
+                _GetVal(&Key, quoteNumericKeys)
+                OutStr .= Key ',' nl() ind() placeholder
                 return
             }
             for cb in CallbackGeneral {
                 if result := cb(controller.PathObj, Val, &OutStr, , key) {
                     if result is String {
                         controller.PrepareNextEnum2(&OutStr)
-                        OutStr .= Key ',' nl() ind()
-                        OutStr .= result
+                        _GetVal(&Key, quoteNumericKeys)
+                        OutStr .= Key ',' nl() ind() result
                     } else if result !== -1 {
                         controller.PrepareNextEnum2(&OutStr)
-                        OutStr .= Key ',' nl() ind()
-                        OutStr .= GetPlaceholder(controller.PathObj, Val, , &Key)
+                        placeholder := GetPlaceholder(controller.PathObj, Val, , &Key)
+                        _GetVal(&Key, quoteNumericKeys)
+                        OutStr .= Key ',' nl() ind() placeholder
                     }
                     return
                 }
             }
             controller.PrepareNextEnum2(&OutStr)
-            OutStr .= Key ',' nl() ind()
             newController := GetController()
             newController.PathObj := controller.PathObj.MakeItem(&Key)
             if ptrList.Has(ptr) {
@@ -704,12 +720,12 @@ class StringifyAll {
             } else {
                 ptrList.Set(ptr, [newController])
             }
+            _GetVal(&Key, quoteNumericKeys)
+            OutStr .= Key ',' nl() ind()
             Recurse(newController, Val, &OutStr)
         }
         _HandleError1(PathObj, Err, *) {
-            local s := Err.Message
-            StringifyAll.StrEscapeJson(&s, true)
-            return s
+            return '"' StrReplace(StrReplace(StrReplace(StrReplace(StrReplace(Err.Message, '\', '\\'), '`n', '\n'), '`r', '\r'), '"', '\"'), '`t', '\t') '"'
         }
         _HandleError2(PathObj, Err, *) {
             local str := ''
@@ -719,16 +735,15 @@ class StringifyAll {
                 }
             }
             str := SubStr(str, 1, -2)
-            StringifyAll.StrEscapeJson(&str, true)
-            return str
+            return '"' StrReplace(StrReplace(StrReplace(StrReplace(StrReplace(str, '\', '\\'), '`n', '\n'), '`r', '\r'), '"', '\"'), '`t', '\t') '"'
         }
         _HandleError3(*) {
             return -1
         }
         _HandleMultiple(PathObj, Val) {
-            path := '$.' PathObj()
+            path := '$.' PathObj.Unescaped()
             for c in ptrList.Get(ObjPtr(Val)) {
-                if InStr(path, '$.' c.Path) {
+                if InStr(path, '$.' c.PathObj.Unescaped()) {
                     return 1
                 }
             }
@@ -736,8 +751,8 @@ class StringifyAll {
         _HandleProp1(controller, Val, &Prop, &OutStr) {
             if ptrList.Has(ptr := ObjPtr(Val)) {
                 if HandleMultiple(controller.PathObj, Val) {
-                    Val := '{ ' ptrList.Get(ptr)[1].Path ' }'
-                    _WriteProp1(controller, &Prop, &Val, &OutStr)
+                    controller.PrepareNextProp(&OutStr)
+                    OutStr .= '"' Prop '": ' '"{ ' StrReplace(StrReplace(StrReplace(StrReplace(StrReplace(ptrList.Get(ptr)[1].PathObj.Unescaped(), '\', '\\'), '`n', '\n'), '`r', '\r'), '"', '\"'), '`t', '\t') ' }"'
                     return
                 }
             } else if depth >= maxDepth || Val is ComObject || Val is ComValue {
@@ -758,8 +773,8 @@ class StringifyAll {
         _HandleProp2(controller, Val, &Prop, &OutStr) {
             if ptrList.Has(ptr := ObjPtr(Val)) {
                 if HandleMultiple(controller.PathObj, Val) {
-                    Val := '{ ' ptrList.Get(ptr)[1].Path ' }'
-                    _WriteProp1(controller, &Prop, &Val, &OutStr)
+                    controller.PrepareNextProp(&OutStr)
+                    OutStr .= '"' Prop '": ' '"{ ' StrReplace(StrReplace(StrReplace(StrReplace(StrReplace(ptrList.Get(ptr)[1].PathObj.Unescaped(), '\', '\\'), '`n', '\n'), '`r', '\r'), '"', '\"'), '`t', '\t') ' }"'
                     return
                 }
             } else if depth >= maxDepth || Val is ComObject || Val is ComValue {
@@ -969,14 +984,13 @@ class StringifyAll {
             for Key, Val in Obj {
                 count++
                 if IsObject(Key) {
-                    Key := '"{ ' this.GetType(Key) ':' ObjPtr(Key) ' }"'
-                } else {
-                    _GetVal(&Key, quoteNumericKeys)
+                    Key := '{ ' this.GetType(Key) ':' ObjPtr(Key) ' }'
                 }
                 if IsObject(Val) {
                     HandleEnum2(controller, Val, &Key, &OutStr)
                 } else {
                     controller.PrepareNextEnum2(&OutStr)
+                    _GetVal(&Key, quoteNumericKeys)
                     OutStr .= Key ',' nl() ind()
                     _GetVal(&Val)
                     OutStr .= Val
@@ -991,14 +1005,13 @@ class StringifyAll {
             for Key, Val in Obj {
                 count++
                 if IsObject(Key) {
-                    Key := '"{ ' this.GetType(Key) ':' ObjPtr(Key) ' }"'
-                } else {
-                    _GetVal(&Key, quoteNumericKeys)
+                    Key := '{ ' this.GetType(Key) ':' ObjPtr(Key) ' }'
                 }
                 if IsObject(Val) {
                     HandleEnum2(controller, Val, &Key, &OutStr)
                 } else {
                     controller.PrepareNextEnum2(&OutStr)
+                    _GetVal(&Key, quoteNumericKeys)
                     OutStr .= Key ',' nl() ind()
                     _GetVal(&Val)
                     OutStr .= Val
@@ -1101,6 +1114,142 @@ class StringifyAll {
             OutStr .= '"' Prop '": ' Val
         }
     }
+
+    /**
+     * @description - The function that produces the default placeholder string for skipped objects.
+     * @param {*} Obj - The object being evaluated.
+     */
+    static GetPlaceholder(Obj) {
+        return '"{ ' this.GetType(Obj) ':' ObjPtr(Obj) ' }"'
+    }
+
+    /**
+     * @description - For use with the output from `StringifyAll` to parse the placeholder substrings
+     * that are printed due to one of the following conditions:
+     * - The object has already been stringified and `Options.Multiple == false`.
+     * - Stringifying the object would cause infinite recursion.
+     *
+     * The placeholder printed by `StringifyAll` is in the form: `"{ <Options.RootName><object path> }"`
+     * where <object path> is the string representation of the object path in AHK syntax
+     * (e.g. ".prop[3].prop[\"key\"][1]").
+     *
+     * The `RegExMatchInfo` objects in the output array match the entire placeholder, including the
+     * exterior quotation marks and curly braces. Two subcapture groups are available:
+     * - "root": Matches with just the root name.
+     * - "path": Matches with just <object path> as described above.
+     *
+     * For example, if the placeholder is: "{ $.prop[3].prop[\"key\"][1] }"
+     * - Match[0] == '"{ $.prop[3].prop[\"key\"][1] }"'
+     * - Match["root"] == "$"
+     * - Match["path"] == '.prop[3].prop[\"key\"][1]'
+     *
+     * If you want to supply a pattern to match with only a subset of the placeholders, just copy
+     * the pattern in this code file (in the body of the function) and add on one or more segments
+     * of the target path separated by "(?&segment)*". Note you only need to modify the part of the
+     * pattern in the "(?<path> ... )" subcapture group, and you will have to replace `RootName` with
+     * the actual root name. If you used the default `Options.RootName == "$"`, remember to escape the
+     * "$" character.
+     *
+     * For example, if we want to restrict the function to only match with placeholders that have
+     * a property "prop", we could do this:
+     * @example
+     *  Pattern := (
+     *      'S)'
+     *      ; This creates a callable subpattern that matches with a quoted string using single quotes,
+     *      ; skipping escaped quote characters.
+     *      "(?(DEFINE)(?<quote>(?<=\[)'.*?(?<!``)(?:````)*+'))"
+     *      ; This creates a callable subpattern that matches with one segment of the object path.
+     *      '(?(DEFINE)'
+     *          '(?<segment>'
+     *              ; This matches with a pair of square brackets, skipping any internally quoted strings so
+     *              ; brackets in the string literal don't disrupt the match.
+     *              '(?<body>\[((?&quote)|[^"\][]++|(?&body))*\])'
+     *          '|'
+     *              '\.'
+     *              ; This (I believe) is the correct pattern for characters that are valid when used within
+     *              ; AHK object property names.
+     *              '(?:[\p{L}_0-9]|[^\x00-\x7F\x80-\x9F])+'
+     *          ')'
+     *      ')'
+     *      '"\{ '
+     *      ; Escape "$" if you did not change `Options.RootName`.
+     *      '(?<root>\$)'
+     *      '(?<path>'
+     *          ; To allow zero or more segments before to the property "prop"
+     *          '(?&segment)*'
+     *          '\.prop'
+     *          ; To allow zero or more segments after to the property "prop"
+     *          '(?&segment)*'
+     *      ')'
+     *      ' \}"'
+     *  )
+     * @
+     *
+     * @param {VarRef} Json - The json string. This is passed by reference to avoid copying the
+     * string; the string will not be modified.
+     * @param {String} [RootName = "$"] - The value of `Options.RootName` when `StringifyAll`
+     * produced the json string. If your `RootName` contains characters that must be escaped to be
+     * used literally in PCRE RegEx, your code is responsible for escaping those characters.
+     * @param {String} [Pattern] - Supply your own pattern to parse the placeholders, for example,
+     * to match with only a subset of the placeholder.
+     *
+     * @returns {Array} - An array of `RegExMatchInfo` objects.
+     */
+    static GetPlaceholderSubstrings(&Json, RootName := '\$', Pattern?) {
+        if !IsSet(Pattern) {
+            Pattern := (
+                'S)'
+                ; This creates a callable subpattern that matches with a quoted string using single
+                ; quotes, skipping escaped quote characters.
+                "(?(DEFINE)(?<quote>(?<=\[)'.*?(?<!``)(?:````)*+'))"
+                ; This creates a callable subpattern that matches with one segment of the object path.
+                '(?(DEFINE)'
+                    '(?<segment>'
+                        ; This matches with a pair of square brackets, skipping any internally quoted
+                        ; strings so brackets in the string literal don't disrupt the match.
+                        '(?<body>\[((?&quote)|[^"\][]++|(?&body))*\])'
+                    '|'
+                        '\.'
+                        ; This (I believe) is the correct pattern for characters that are valid when
+                        ; used within AHK object property names.
+                        '(?:[\p{L}_0-9]|[^\x00-\x7F\x80-\x9F])+'
+                    ')'
+                ')'
+                '"\{ '
+                '(?<root>\$)'
+                '(?<path>(?&segment)+)'
+                ' \}"'
+            )
+        }
+
+        result := []
+        result.Capacity := 64
+        pos := 1
+        while RegExMatch(Json, Pattern, &Match, pos) {
+            pos := Match.Pos + Match.Len
+            result.Push(Match)
+        }
+        return result
+    }
+
+    /**
+     * @description - Returns a string with information about the object's type. There are two
+     * details included in the string, separated by a colon. The left side of the string is either
+     * "Class", "Prototype", or "Instance". The right side of the string is the name of the class to
+     * which the object is associated.
+     * @param {*} Obj - Any object.
+     * @returns {String}
+     */
+    static GetType(Obj) {
+        if Obj is Class {
+            return 'Class:' Obj.Prototype.__Class
+        }
+        if Type(Obj) == 'Prototype' {
+            return 'Prototype:' Obj.__Class
+        }
+        return 'Instance:' Type(Obj)
+    }
+
     /**
      * @description - Escapes the following with a backslash: tab, carriage return, line feed, double quote, backslash.
      * @param {VarRef} Str - The string to escape.
@@ -1124,32 +1273,6 @@ class StringifyAll {
             n++
         }
         Str := StrReplace(StrReplace(StrReplace(StrReplace(StrReplace(StrReplace(Str, '\\', Chr(n)), '\n', '`n'), '\r', '`r'), '\"', '"'), '\t', '`t'), Chr(n), '\')
-    }
-
-    /**
-     * @description - Returns a string with information about the object's type. There are two
-     * details included in the string, separated by a colon. The left side of the string is either
-     * "Class", "Prototype", or "Instance". The right side of the string is the name of the class to
-     * which the object is associated.
-     * @param {*} Obj - Any object.
-     * @returns {String}
-     */
-    static GetType(Obj) {
-        if Obj is Class {
-            return 'Class:' Obj.Prototype.__Class
-        }
-        if Type(Obj) == 'Prototype' {
-            return 'Prototype:' Obj.__Class
-        }
-        return 'Instance:' Type(Obj)
-    }
-
-    /**
-     * @description - The function that produces the default placeholder string for skipped objects.
-     * @param {*} Obj - The object being evaluated.
-     */
-    static GetPlaceholder(Obj) {
-        return '"{ ' this.GetType(Obj) ':' ObjPtr(Obj) ' }"'
     }
 
 
@@ -1224,72 +1347,311 @@ class StringifyAll {
     /**
      * @classdesc - This is a solution for tracking object paths using strings.
      * @example
+     *  ; Say we are processing this object and need to keep track of the object path somehow.
      *  Obj := {
      *      Prop1: {
      *          NestedProp1: {
      *              NestedMap: Map(
-     *                  'Key1', Map(
+     *                  'Key1 `r`n"`t``', Map(
      *                      'Key2', 'Val1'
      *                  )
      *              )
      *          }
+     *        , NestedProp2: [ 1, 2, { Prop: 'Val' }, 4 ]
      *      }
      *  }
+     *  ; Get an instance of `PathObj`
      *  Root := PathObj('Obj')
+     *  ; Process the properties / items
      *  O1 := Root.MakeProp('Prop1')
      *  O2 := O1.MakeProp('NestedProp1')
      *  O3 := O2.MakeProp('NestedMap')
-     *  O4 := O3.MakeItem('Key1')
+     *  O4 := O3.MakeItem('Key1 `r`n"`t``')
      *  O5 := O4.MakeItem('Key2')
-     *  OutputDebug(O5()) ; Obj.Prop1.NestedProp1.NestedMap["Key1"]["Key2"]
+     *
+     *  ; Calling the object produces a path that will apply AHK escape sequences using the backtick as needed.
+     *  OutputDebug(O5() '`n') ; Obj.Prop1.NestedProp1.NestedMap["Key1 `r`n`"`t``"]["Key2"]
      *
      *  ; You can start another branch
-     *  Obj.Prop1.Branch := [ 1, 2, { Prop: 'Val' }, 4 ]
-     *  B1 := O1.MakeProp('Branch')
+     *  B1 := O1.MakeProp('NestedProp2')
      *  B2 := B1.MakeItem(3)
      *  B3 := B2.MakeProp('Prop')
-     *  OutputDebug('`n' B3()) ; Obj.Prop1.Branch[3].Prop
+     *  OutputDebug(B3() '`n') ; Obj.Prop1.NestedProp2[3].Prop
+     *
+     *  ; Some operations don't benefit from having the keys escaped. Save processing time by calling
+     *  ; the "Unescaped" method.
+     *  OutputDebug(O5.Unescaped() '`n')
+     *  ; Obj.Prop1.NestedProp1.NestedMap["Key1
+     *  ; "	   `"]["Key2"]
+     *
+     *  ; Normally you would use `PathObj` in some type of recursive loop.
+     *  Recurse(obj, PathObj('obj'))
+     *  Recurse(obj, path) {
+     *      OutputDebug(path() '`n')
+     *      for p, v in obj.OwnProps() {
+     *          if IsObject(v) {
+     *              Recurse(v, path.MakeProp(p))
+     *          }
+     *      }
+     *      if HasMethod(obj, '__Enum') {
+     *          for k, v in obj {
+     *              if IsObject(v) {
+     *                  Recurse(v, path.MakeItem(k))
+     *              }
+     *          }
+     *      }
+     *  }
      * @
      */
     class Path {
-        __New(Name := '$') {
+        static InitialBufferSize := 32768
+        static __New() {
+            this.DeleteProp('__New')
+            this.hModule := DllCall('LoadLibrary', 'Str', 'msvcrt.dll', 'Ptr')
+            this.memmove := DllCall('GetProcAddress', 'Ptr', this.hModule, 'AStr', 'memmove', 'Ptr')
+            this.Prototype.DefineProp('propdesc', { Value:this.Prototype.GetOwnPropDesc('__GetPathSegmentProp_U') })
+        }
+        /**
+         * An instance of `StringifyAll.Path` should be used as the root object of the path is being constructed.
+         * All child segments should be created by calling `StringifyAll.Path.Prototype.MakeProp` or
+         * `StringifyAll.Path.Prototype.MakeItem`.
+         *
+         * @param {String} [Name = "$"] - The name to assign the object.
+         * @param {Boolean} [EscapePropNames = false] - If true, calling `StringifyAll.Path.Prototype.Call` will
+         * apply AHK escape sequences to property names using the backtick where appropriate. In AHK
+         * syntax, there are no characters which have AHK escape sequences that can be used within a
+         * property name, and so this should generally be left `false` to save processing time.
+         * `StringifyAll.Path.Prototype.Unescaped` is unaffected by this option.
+         */
+        __New(Name := '$', EscapePropNames := false) {
+            static desc := StringifyAll.Path.Prototype.GetOwnPropDesc('__GetPathSegmentRoot1')
+            , desc_u := StringifyAll.Path.Prototype.GetOwnPropDesc('__GetPathSegmentRoot_U')
+            , propdesc := StringifyAll.Path.Prototype.GetOwnPropDesc('__GetPathSegmentProp1')
             this.Name := Name
-            this.DefineProp('GetPathSegment', StringifyAll.Path.Prototype.GetOwnPropDesc('__GetPathSegmentRoot'))
+            this.DefineProp('GetPathSegment', desc)
+            this.DefineProp('GetPathSegment_U', desc_u)
+            if EscapePropNames {
+                this.DefineProp('propdesc', { Value: propdesc })
+            }
         }
         Call(*) {
-            o := this
-            p := ''
-            loop {
-                if o.GetPathSegment(&p) {
-                    break
+            if !this.HasOwnProp('__Path') {
+                o := this
+                buf := Buffer(StringifyAll.Path.InitialBufferSize)
+                offset := StringifyAll.Path.InitialBufferSize - 2
+                NumPut('ushort', 0, buf, offset) ; null terminator
+                loop {
+                    if o.GetPathSegment(buf, &offset) {
+                        break
+                    }
+                    o := o.Base
                 }
-                o := o.Base
+                this.DefineProp('__Path', { Value: { buf: buf, offset: offset } })
             }
-            return o.Name p
+            return StrGet(this.__Path.buf.Ptr + this.__Path.offset)
         }
         MakeProp(&Name) {
-            static desc := StringifyAll.Path.Prototype.GetOwnPropDesc('__GetPathSegmentProp')
+            static desc_u := StringifyAll.Path.Prototype.GetOwnPropDesc('__GetPathSegmentProp_U')
             ObjSetBase(Segment := { Name: Name }, this)
-            Segment.DefineProp('GetPathSegment', desc)
+            Segment.DefineProp('GetPathSegment', this.propdesc)
+            Segment.DefineProp('GetPathSegment_U', desc_u)
             return Segment
         }
         MakeItem(&Name) {
-            static desc := StringifyAll.Path.Prototype.GetOwnPropDesc('__GetPathSegmentItem')
+            static descNumber := StringifyAll.Path.Prototype.GetOwnPropDesc('__GetPathSegmentItem_Number')
+            , descString := StringifyAll.Path.Prototype.GetOwnPropDesc('__GetPathSegmentItem_String1')
+            , descString_u := StringifyAll.Path.Prototype.GetOwnPropDesc('__GetPathSegmentItem_String_U1')
             ObjSetBase(Segment := { Name: Name }, this)
-            Segment.DefineProp('GetPathSegment', desc)
+            if IsNumber(Name) {
+                Segment.DefineProp('GetPathSegment', descNumber)
+                Segment.DefineProp('GetPathSegment_U', descNumber)
+            } else {
+                Segment.DefineProp('GetPathSegment', descString)
+                Segment.DefineProp('GetPathSegment_U', descString_u)
+            }
             return Segment
         }
-        __GetPathSegmentItem(&Path) {
-            Path := '[' this.Name ']' Path
+        Unescaped(*) {
+            if !this.HasOwnProp('__Path_U') {
+                o := this
+                buf := Buffer(StringifyAll.Path.InitialBufferSize)
+                offset := StringifyAll.Path.InitialBufferSize - 2
+                NumPut('ushort', 0, buf, offset) ; null terminator
+                loop {
+                    if o.GetPathSegment_U(buf, &offset) {
+                        break
+                    }
+                    o := o.Base
+                }
+                this.DefineProp('__Path_U', { Value: { buf: buf, offset: offset } })
+            }
+            return StrGet(this.__Path_U.buf.Ptr + this.__Path_U.offset)
         }
-        __GetPathSegmentProp(&Path) {
-            Path := '.' this.Name Path
+        __GetPathSegmentItem_Number(buf, &offset) {
+            bytes := StrPut(this.Name) + 2 ; -2 for null terminator, then +4 for the brackets
+            if bytes > offset {
+                count := buf.Size - offset
+                buf.Size *= 2
+                DllCall(
+                    'msvcrt.dll\memmove'
+                  , 'ptr', buf.Ptr + buf.Size - count
+                  , 'ptr', buf.Ptr + offset
+                  , 'int', count
+                  , 'ptr'
+                )
+                offset := buf.Size - count
+            }
+            offset -= bytes
+            StrPut('[' this.Name ']', buf.Ptr + offset, bytes / 2)
         }
-        __GetPathSegmentRoot(*) {
+
+        ;@region Escaped
+        __GetPathSegmentItem_String1(buf, &offset) {
+            static desc2 := StringifyAll.Path.Prototype.GetOwnPropDesc('__GetPathSegmentItem_String2')
+            this.DefineProp('NameEscaped', { Value: StrReplace(StrReplace(StrReplace(StrReplace(StrReplace(this.Name, '``', '````'), '`n', '``n'), '`r', '``r'), "'", "``'"), '`t', '``t') })
+            this.DefineProp('GetPathSegment', desc2)
+            this.GetPathSegment(buf, &offset)
+        }
+        __GetPathSegmentItem_String2(buf, &offset) {
+            bytes := StrPut(this.NameEscaped) + 6 ; -2 for null terminator, then +4 for the brackets and +4 for the quotes
+            if bytes > offset {
+                count := buf.Size - offset
+                while bytes > offset {
+                    buf.Size *= 2
+                    DllCall(
+                        'msvcrt.dll\memmove'
+                      , 'ptr', buf.Ptr + buf.Size - count
+                      , 'ptr', buf.Ptr + offset
+                      , 'int', count
+                      , 'ptr'
+                    )
+                    offset := buf.Size - count
+                }
+            }
+            offset -= bytes
+            StrPut("['" this.NameEscaped "']", buf.Ptr + offset, bytes / 2)
+        }
+        __GetPathSegmentProp1(buf, &offset) {
+            static desc2 := StringifyAll.Path.Prototype.GetOwnPropDesc('__GetPathSegmentProp2')
+            this.DefineProp('NameEscaped', { Value: StrReplace(StrReplace(StrReplace(StrReplace(StrReplace(this.Name, '``', '````'), '`n', '``n'), '`r', '``r'), '"', '``"'), '`t', '``t') })
+            this.DefineProp('GetPathSegment', desc2)
+            this.GetPathSegment(buf, &offset)
+        }
+        __GetPathSegmentProp2(buf, &offset) {
+            bytes := StrPut(this.NameEscaped) ; -2 for null terminator, then +2 for the period
+            if bytes > offset {
+                count := buf.Size - offset
+                while bytes > offset {
+                    buf.Size *= 2
+                    DllCall(
+                        'msvcrt.dll\memmove'
+                      , 'ptr', buf.Ptr + buf.Size - count
+                      , 'ptr', buf.Ptr + offset
+                      , 'int', count
+                      , 'ptr'
+                    )
+                    offset := buf.Size - count
+                }
+            }
+            offset -= bytes
+            StrPut('.' this.NameEscaped, buf.Ptr + offset, bytes / 2)
+        }
+        __GetPathSegmentRoot1(buf, &offset) {
+            static desc2 := StringifyAll.Path.Prototype.GetOwnPropDesc('__GetPathSegmentRoot2')
+            this.DefineProp('NameEscaped', { Value: StrReplace(StrReplace(StrReplace(StrReplace(StrReplace(this.Name, '``', '````'), '`n', '``n'), '`r', '``r'), '"', '``"'), '`t', '``t') })
+            this.DefineProp('GetPathSegment', desc2)
+            return this.GetPathSegment(buf, &offset)
+        }
+        __GetPathSegmentRoot2(buf, &offset) {
+            bytes := StrPut(this.NameEscaped) - 2 ; -2 for null terminator
+            if bytes > offset {
+                count := buf.Size - offset
+                while bytes > offset {
+                    buf.Size *= 2
+                    DllCall(
+                        'msvcrt.dll\memmove'
+                      , 'ptr', buf.Ptr + buf.Size - count
+                      , 'ptr', buf.Ptr + offset
+                      , 'int', count
+                      , 'ptr'
+                    )
+                    offset := buf.Size - count
+                }
+            }
+            offset -= bytes
+            StrPut(this.NameEscaped, buf.Ptr + offset, bytes / 2)
             return 1
         }
+        ;@endregion
 
-        Path => this()
+        ;@region Unescaped
+        __GetPathSegmentItem_String_U1(buf, &offset) {
+            static desc2 := StringifyAll.Path.Prototype.GetOwnPropDesc('__GetPathSegmentItem_String_U2')
+            this.DefineProp('__NamePartialEscaped', { Value: StrReplace(this.Name, "'", "``'") })
+            this.DefineProp('GetPathSegment', desc2)
+            this.GetPathSegment(buf, &offset)
+        }
+        __GetPathSegmentItem_String_U2(buf, &offset) {
+            bytes := StrPut(this.__NamePartialEscaped) + 6 ; -2 for null terminator, then +4 for the brackets and +4 for the quotes
+            if bytes > offset {
+                count := buf.Size - offset
+                while bytes > offset {
+                    buf.Size *= 2
+                    DllCall(
+                        'msvcrt.dll\memmove'
+                      , 'ptr', buf.Ptr + buf.Size - count
+                      , 'ptr', buf.Ptr + offset
+                      , 'int', count
+                      , 'ptr'
+                    )
+                    offset := buf.Size - count
+                }
+            }
+            offset -= bytes
+            StrPut("['" this.__NamePartialEscaped "']", buf.Ptr + offset, bytes / 2)
+        }
+        __GetPathSegmentProp_U(buf, &offset) {
+            bytes := StrPut(this.Name) ; -2 for null terminator, then +2 for the period
+            if bytes > offset {
+                count := buf.Size - offset
+                while bytes > offset {
+                    buf.Size *= 2
+                    DllCall(
+                        'msvcrt.dll\memmove'
+                      , 'ptr', buf.Ptr + buf.Size - count
+                      , 'ptr', buf.Ptr + offset
+                      , 'int', count
+                      , 'ptr'
+                    )
+                    offset := buf.Size - count
+                }
+            }
+            offset -= bytes
+            StrPut('.' this.Name, buf.Ptr + offset, bytes / 2)
+        }
+        __GetPathSegmentRoot_U(buf, &offset) {
+            bytes := StrPut(this.Name) - 2 ; -2 for null terminator
+            if bytes > offset {
+                count := buf.Size - offset
+                while bytes > offset {
+                    buf.Size *= 2
+                    DllCall(
+                        'msvcrt.dll\memmove'
+                      , 'ptr', buf.Ptr + buf.Size - count
+                      , 'ptr', buf.Ptr + offset
+                      , 'int', count
+                      , 'ptr'
+                    )
+                    offset := buf.Size - count
+                }
+            }
+            offset -= bytes
+            StrPut(this.Name, buf.Ptr + offset, bytes / 2)
+            return 1
+        }
+        ;@endregion
+
+        Path => this.Unescaped()
+        PathEscaped => this()
     }
-
 }

@@ -1,5 +1,5 @@
 
-# StringifyAll - v1.2.0
+# StringifyAll - v1.3.0
 A customizable solution for serializing AutoHotkey (AHK) object properties, including inherited properties, and/or items into a 100% valid JSON string.
 
 ## AutoHotkey forum post
@@ -419,25 +419,7 @@ Obj := {
       <li><b>{VarRef}</b> - An <b>optional</b> <code>VarRef</code> parameter that will receive either of:</li>
       <ul style="margin-bottom: 0; padding-left: 24px;">
         <li>The loop index integer value for objects that are encountered while enumerating an object in 1-parameter mode.</li>
-        <li>
-          The "key" (the value received by the first variable in a for-loop) for objects that are encountered while enumerating an object in 2-parameter mode. The key will already have been escaped and enclosed in double quotes at this point, making it somewhat awkward to work with because escaping it again will re-escape the existing escape sequences. If your function will use the key for some purpose, then you will likely want to do something like the below example.
-          <pre>
-MyPlaceholderFunc(PathObj, obj, &prop?, &key?) {
-    if IsSet(prop) {
-        ; make something
-    } else if IsSet(key) {
-        if IsNumber(key) {
-            ; make something
-        } else {
-            key := SubStr(key, 2, -1) ; remove the external quotes
-            if InStr(key, '\') {
-                StringifyAll.StrUnescapeJson(&key)
-            }
-            ; make something
-        }
-    }
-}</pre>
-        </li>
+        <li>The "key" (the value received by the first variable in a for-loop) for objects that are encountered while enumerating an object in 2-parameter mode.</li>
       </ul>
     </ol>
   </ul>
@@ -582,7 +564,16 @@ OutputDebug(A_Clipboard := json)
 
 ## StringifyAll.Path
 
+Added 1.2.0.
+
 `StringifyAll.Path` is a solution for tracking an object path as a string value. Callback functions will receive an instance of `StringifyAll.Path` to the first parameter.
+
+### Instance methods
+
+<ul>
+  <li><b>Call</b>: Returns the object path applying AHK escape sequences with a backtick where appropriate.
+  <li><b>Unescaped</b>: Returns the object path without applying escape sequences.
+</ul>
 
 ### Instance properties
 
@@ -629,6 +620,14 @@ This section needs updated.
 <!-- a copy of the previous text is in .archive -->
 
 ## Changelog
+
+<h4>2025-07-06 - 1.3.0</h4>
+
+- Added `StringifyAll.GetPlaceholderSubstrings`.
+- Fixed: After 1.2.0, if `Options.FilterTypeMap` was set with a `PropsInfo.FilterGroup` object, `StringifyAll` erroneously treated the value as a `Map` object. This has been corrected.
+- Fixed: After 1.2.0, map keys had a change to not be escaped properly. This is corrected.
+- Adjusted how `StringifyAll` handles the "key" values (the value assigned to the first parameter of a 2-param <code>for</code> loop). The value is no longer escaped prior to calling `Options.CallbackPlaceholder` or `Options.CallbackGeneral`.
+- Adjusted `StringifyAll.Path`. It now caches the path value, and the process for constructing the path string has been optimized. Item names that are strings are quoted with single quote characters, and internal single quote characters are always escaped with a backtick.
 
 <h4>2025-07-05 - 1.2.0</h4>
 
