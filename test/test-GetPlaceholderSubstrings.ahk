@@ -11,7 +11,6 @@ class test_GetPlaceholderSubstrings {
           , EnumTypeMap: 2
         }
         StringifyAll(o, Options, &json)
-        A_Clipboard := json
         OutputDebug(json '`n')
         result := StringifyAll.GetPlaceholderSubstrings(&json)
 
