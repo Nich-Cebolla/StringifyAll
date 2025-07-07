@@ -1360,8 +1360,8 @@ class StringifyAll {
      *        , NestedProp2: [ 1, 2, { Prop: 'Val' }, 4 ]
      *      }
      *  }
-     *  ; Get an instance of `PathObj`
-     *  Root := PathObj('Obj')
+     *  ; Get an instance of `StringifyAll.Path`
+     *  Root := StringifyAll.Path('Obj')
      *  ; Process the properties / items
      *  O1 := Root.MakeProp('Prop1')
      *  O2 := O1.MakeProp('NestedProp1')
@@ -1384,8 +1384,8 @@ class StringifyAll {
      *  ; Obj.Prop1.NestedProp1.NestedMap["Key1
      *  ; "	   `"]["Key2"]
      *
-     *  ; Normally you would use `PathObj` in some type of recursive loop.
-     *  Recurse(obj, PathObj('obj'))
+     *  ; Normally you would use `StringifyAll.Path` in some type of recursive loop.
+     *  Recurse(obj, StringifyAll.Path('obj'))
      *  Recurse(obj, path) {
      *      OutputDebug(path() '`n')
      *      for p, v in obj.OwnProps() {
@@ -1404,7 +1404,7 @@ class StringifyAll {
      * @
      */
     class Path {
-        static InitialBufferSize := 32768
+        static InitialBufferSize := 256
         static __New() {
             this.DeleteProp('__New')
             this.hModule := DllCall('LoadLibrary', 'Str', 'msvcrt.dll', 'Ptr')
@@ -1446,9 +1446,9 @@ class StringifyAll {
                     }
                     o := o.Base
                 }
-                this.DefineProp('__Path', { Value: { buf: buf, offset: offset } })
+                this.DefineProp('__Path', { Value: StrGet(buf.Ptr + offset) })
             }
-            return StrGet(this.__Path.buf.Ptr + this.__Path.offset)
+            return this.__Path
         }
         MakeProp(&Name) {
             static desc_u := StringifyAll.Path.Prototype.GetOwnPropDesc('__GetPathSegmentProp_U')
@@ -1483,23 +1483,26 @@ class StringifyAll {
                     }
                     o := o.Base
                 }
-                this.DefineProp('__Path_U', { Value: { buf: buf, offset: offset } })
+                this.DefineProp('__Path_U', { Value: StrGet(buf.Ptr + offset) })
             }
-            return StrGet(this.__Path_U.buf.Ptr + this.__Path_U.offset)
+            return this.__Path_U
         }
         __GetPathSegmentItem_Number(buf, &offset) {
             bytes := StrPut(this.Name) + 2 ; -2 for null terminator, then +4 for the brackets
             if bytes > offset {
                 count := buf.Size - offset
-                buf.Size *= 2
-                DllCall(
-                    'msvcrt.dll\memmove'
-                  , 'ptr', buf.Ptr + buf.Size - count
-                  , 'ptr', buf.Ptr + offset
-                  , 'int', count
-                  , 'ptr'
-                )
-                offset := buf.Size - count
+                while bytes > offset {
+                    StringifyAll.Path.InitialBufferSize *= 2
+                    buf.Size *= 2
+                    DllCall(
+                        StringifyAll.Path.memmove
+                      , 'ptr', buf.Ptr + buf.Size - count
+                      , 'ptr', buf.Ptr + offset
+                      , 'int', count
+                      , 'ptr'
+                    )
+                    offset := buf.Size - count
+                }
             }
             offset -= bytes
             StrPut('[' this.Name ']', buf.Ptr + offset, bytes / 2)
@@ -1517,9 +1520,10 @@ class StringifyAll {
             if bytes > offset {
                 count := buf.Size - offset
                 while bytes > offset {
+                    StringifyAll.Path.InitialBufferSize *= 2
                     buf.Size *= 2
                     DllCall(
-                        'msvcrt.dll\memmove'
+                        StringifyAll.Path.memmove
                       , 'ptr', buf.Ptr + buf.Size - count
                       , 'ptr', buf.Ptr + offset
                       , 'int', count
@@ -1542,9 +1546,10 @@ class StringifyAll {
             if bytes > offset {
                 count := buf.Size - offset
                 while bytes > offset {
+                    StringifyAll.Path.InitialBufferSize *= 2
                     buf.Size *= 2
                     DllCall(
-                        'msvcrt.dll\memmove'
+                        StringifyAll.Path.memmove
                       , 'ptr', buf.Ptr + buf.Size - count
                       , 'ptr', buf.Ptr + offset
                       , 'int', count
@@ -1567,9 +1572,10 @@ class StringifyAll {
             if bytes > offset {
                 count := buf.Size - offset
                 while bytes > offset {
+                    StringifyAll.Path.InitialBufferSize *= 2
                     buf.Size *= 2
                     DllCall(
-                        'msvcrt.dll\memmove'
+                        StringifyAll.Path.memmove
                       , 'ptr', buf.Ptr + buf.Size - count
                       , 'ptr', buf.Ptr + offset
                       , 'int', count
@@ -1596,9 +1602,10 @@ class StringifyAll {
             if bytes > offset {
                 count := buf.Size - offset
                 while bytes > offset {
+                    StringifyAll.Path.InitialBufferSize *= 2
                     buf.Size *= 2
                     DllCall(
-                        'msvcrt.dll\memmove'
+                        StringifyAll.Path.memmove
                       , 'ptr', buf.Ptr + buf.Size - count
                       , 'ptr', buf.Ptr + offset
                       , 'int', count
@@ -1615,9 +1622,10 @@ class StringifyAll {
             if bytes > offset {
                 count := buf.Size - offset
                 while bytes > offset {
+                    StringifyAll.Path.InitialBufferSize *= 2
                     buf.Size *= 2
                     DllCall(
-                        'msvcrt.dll\memmove'
+                        StringifyAll.Path.memmove
                       , 'ptr', buf.Ptr + buf.Size - count
                       , 'ptr', buf.Ptr + offset
                       , 'int', count
@@ -1634,9 +1642,10 @@ class StringifyAll {
             if bytes > offset {
                 count := buf.Size - offset
                 while bytes > offset {
+                    StringifyAll.Path.InitialBufferSize *= 2
                     buf.Size *= 2
                     DllCall(
-                        'msvcrt.dll\memmove'
+                        StringifyAll.Path.memmove
                       , 'ptr', buf.Ptr + buf.Size - count
                       , 'ptr', buf.Ptr + offset
                       , 'int', count
