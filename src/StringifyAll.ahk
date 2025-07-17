@@ -427,7 +427,7 @@ class StringifyAll {
         GetController := ClassFactory(controllerBase)
         controller := GetController()
         controller.PathObj := StringifyAll.Path(Options.RootName)
-        ptrList := Map(ObjPtr(Obj), controller)
+        ptrList := Map(ObjPtr(Obj), [controller])
         ptrList.Capacity := Options.InitialPtrListCapacity
 
         Recurse(controller, Obj, &OutStr)
