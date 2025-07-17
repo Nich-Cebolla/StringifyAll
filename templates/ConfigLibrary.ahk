@@ -48,6 +48,15 @@ class ConfigLibrary {
           ; This configuration directs `StringifyAll` to not process any properties for arrays and maps.
           , { PropsTypeMap: SA_MapHelper(false, 1, 'Array', 0, 'Map', 0) }
         )
+        this.__Item.Set(
+            'general debug'
+          , {
+                EnumTypeMap: SA_MapHelper(false, 2, 'Array', 1)
+              , PropsTypeMap: SA_MapHelper(false, 1)
+              , StopAtTypeMap: SA_MapHelper(false, '-Object', 'Class', '-Class', 'Array', '-Array', 'Map', '-Map')
+              , ExcludeProps: '__Init,Prototype'
+            }
+        )
     }
 
     static Clear() => this.__Item.Clear()
