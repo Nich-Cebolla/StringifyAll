@@ -1,5 +1,5 @@
 ﻿/*
-    Github: https://github.com/Nich-Cebolla/AutoHotkey-StringifyAll
+    Github: https://github.com/Nich-Cebolla/StringifyAll
     Author: Nich-Cebolla
     Version: 1.3.0
     License: MIT
