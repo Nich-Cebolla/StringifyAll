@@ -191,7 +191,7 @@ Jump to:
     </ul>
   </ul>
   <ul style="padding-left: 24px; margin-top: 12px; margin-bottom: 6px;">
-    If <code>Options.EnumTypeMap</code> is a <code>Map</code> object:
+    If <code>Options.FilterTypeMap</code> is a <code>Map</code> object:
     <ul style="margin-bottom: 6px;">
       <li>The keys are object types and the values are either <code>PropsInfo.FilterGroup</code>, <code>Func</code>, or callable <code>Object</code> as described above.</li>
       <li>Use the <code>Map</code>'s <code>Default</code> property to set a condition for all types not included within the <code>Map</code>.</li>
