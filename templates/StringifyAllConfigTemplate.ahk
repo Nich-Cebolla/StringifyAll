@@ -34,6 +34,7 @@ class StringifyAllConfig {
     static Singleline := unset
 
 ; ==== Print options -------------------------------------------------------------------------------
+    static CorrectFloatingPoint := unset
     static ItemProp := unset
     static PrintErrors := unset
     static QuoteNumericKeys := unset
