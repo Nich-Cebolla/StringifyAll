@@ -694,8 +694,8 @@ This section needs updated.
 <h4>2025-09-19 - 1.3.1</h4>
 
 - Added `Options.CorrectFloatingPoint`.
-- Adjusted `StringifyAll.Options`. See section <a href="#options">Options</a>.
-- Added parameter "SkipOptions". See section <a href="#options">Options</a>.
+- Adjusted `StringifyAll.Options`. See section <a href="#new-in-v131">New in v1.3.1</a>.
+- Added parameter "SkipOptions". See section <a href="#new-in-v131">New in v1.3.1</a>.
 
 <h4>2025-07-06 - 1.3.0</h4>
 
