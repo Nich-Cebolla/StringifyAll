@@ -142,7 +142,7 @@ Previously, `StringifyAll.Options.Call` would change the base of the input `Opti
     ObjSetBase(Options, MyDefaultOptions)
     StringifyAll(SomeObj, Options)
 ```
-Before 1.3.1, when `StringifyAll` was called neither the "Newline" new "QuoteNumericKeys" options would have been used because the base of `Options` would have been changed. Now, they both get used.
+Before 1.3.1, when `StringifyAll` was called neither the "Newline" nor "QuoteNumericKeys" options would have been used because the base of `Options` would have been changed. Now, they both get used.
 
 `StringifyAllConfig` is optional; it does not need to exist, same as before.
 
