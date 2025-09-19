@@ -1,7 +1,7 @@
 ﻿/*
     Github: https://github.com/Nich-Cebolla/StringifyAll
     Author: Nich-Cebolla
-    Version: 1.3.0
+    Version: 1.3.1
     License: MIT
 */
 
@@ -23,11 +23,6 @@
  * "templates\ConfigLibrary.ahk".
  * - Define a class `StringifyAllConfig` anywhere in your code.
  * - Pass an object to the `Options` parameter.
- *
- * Note that `StringifyAll` changes the base of the `StringifyAllConfig` class to
- * `StringifyAll.Options.Default`, and changes the base of the input options object to either
- * `StringifyAllConfig` if it exists, or to `StringifyAll.Options.Default` if `StringifyAllConfig`
- * does not exist.
  *
  * The options defined by the `Options` parameter supercede options defined by the `StringifyConfig`
  * class. This is convenient for setting your own defaults based on your personal preferences /
@@ -126,6 +121,17 @@
  *
  * ### Print options ------------
  *
+ * @param {Number|String} [Options.CorrectFloatingPoint = false] - If nonzero, `StringifyAll` will
+ * round numbers that appear to be effected by the floating point precision issue described in
+ * {@link https://www.autohotkey.com/docs/v2/Concepts.htm#float-imprecision AHK's documentation}.
+ * This process is facilitated by a regex pattern that attempts to identify these occurrences.
+ * If `Options.CorrectFloatingPoint` is a nonzero number, `StringifyAll` will use the built-in
+ * default pattern "JS)(?<round>(?:0{3,}|9{3,})\d)$". You can also set `Options.CorrectFloatingPoint`
+ * with your own regex pattern as a string and `StringifyAll` will use that pattern. See the
+ * documentation for details about this options.
+ *
+ * If `Options.CorrectFloatingPoint` is zero or an empty string, no correction occurs.
+ *
  * @param {String} [Options.ItemProp = '__Item__' ] - The name that `StringifyAll` will use as a
  * faux-property for including an object's items returned by its enumerator.
  *
@@ -166,23 +172,31 @@
  * is also returned as the return value, but for very long strings receiving the string via the
  * `VarRef` will be slightly faster because the string will not need to be copied.
  *
+ * @param {Boolean} [SkipOptions = false] - If true, `StringifyAll.Options.Call` is not called. The
+ * purpose of this options is to enable the caller to avoid the overhead cost of processing the
+ * input options for repeated calls. Note that `Options` must be set with an object that has been
+ * returned from `StringifyAll.Options.Call` or must be set with an object that inherits from
+ * `StringifyAll.Options.Default`. See the documentation section "Options" for more information.
+ *
  * @returns {String}
  */
 class StringifyAll {
 
-    static Call(Obj, Options?, &OutStr?) {
+    static Call(Obj, Options?, &OutStr?, SkipOptions := false) {
         if IsSet(Options) {
-            if IsObject(Options) {
-                Options := this.Options(Options)
-            } else {
-                if IsSet(ConfigLibrary) {
-                    Options := this.Options(ConfigLibrary(Options))
+            if !SkipOptions {
+                if IsObject(Options) {
+                    Options := this.Options(Options)
                 } else {
-                    throw Error('``ConfigLibrary`` is not loaded into the project. String options are invalid.', -1)
+                    if IsSet(ConfigLibrary) {
+                        Options := this.Options(ConfigLibrary(Options))
+                    } else {
+                        throw Error('``ConfigLibrary`` is not loaded into the project. String options are invalid.', -1)
+                    }
                 }
             }
         } else {
-            Options := this.Options({})
+            Options := this.Options()
         }
         controllerBase := {
             LenContainerEnum: ''
@@ -335,6 +349,16 @@ class StringifyAll {
         itemProp := Options.ItemProp
         quoteNumericKeys := Options.QuoteNumericKeys
         unsetArrayItem := Options.UnsetArrayItem
+        if Options.CorrectFloatingPoint {
+            GetVal := _GetVal2
+            if IsNumber(Options.CorrectFloatingPoint) {
+                pattern_correctFloatingPoint := 'JS)(?<round>(?:0{3,}|9{3,})\d)$'
+            } else {
+                pattern_correctFloatingPoint := Options.CorrectFloatingPoint
+            }
+        } else {
+            GetVal := _GetVal1
+        }
 
         Recurse := _Recurse1
         OutStr := ''
@@ -592,10 +616,29 @@ class StringifyAll {
         _GetPropsInfo6(Obj) {
             return GetPropsInfo(Obj, stopAtTypeMap, excludeProps, false, , excludeMethods)
         }
-        _GetVal(&Val, flag_quote_number := false) {
+        _GetVal1(&Val, flag_quote_number := false) {
             if IsNumber(Val) {
                 if flag_quote_number {
                     Val := '"' Val '"'
+                }
+            } else {
+                Val := '"' StrReplace(StrReplace(StrReplace(StrReplace(StrReplace(Val, '\', '\\'), '`n', '\n'), '`r', '\r'), '"', '\"'), '`t', '\t') '"'
+            }
+        }
+        _GetVal2(&Val, flag_quote_number := false) {
+            if IsNumber(Val) {
+                if flag_quote_number {
+                    if RegExMatch(Val, pattern_correctFloatingPoint, &matchNum) {
+                        Val := '"' Round(Val, StrLen(Val) - InStr(Val, '.') - matchNum.Len['round']) '"'
+                    } else {
+                        Val := '"' Val '"'
+                    }
+                } else {
+                    if RegExMatch(Val, pattern_correctFloatingPoint, &matchNum) {
+                        Val := Round(Val, StrLen(Val) - InStr(Val, '.') - matchNum.Len['round'])
+                    } else {
+                        Val := Val
+                    }
                 }
             } else {
                 Val := '"' StrReplace(StrReplace(StrReplace(StrReplace(StrReplace(Val, '\', '\\'), '`n', '\n'), '`r', '\r'), '"', '\"'), '`t', '\t') '"'
@@ -659,25 +702,25 @@ class StringifyAll {
             controller.PrepareNextEnum2(&OutStr)
             if ptrList.Has(ptr := ObjPtr(Val)) {
                 if HandleMultiple(controller.PathObj, Val) {
-                    _GetVal(&Key, quoteNumericKeys)
+                    GetVal(&Key, quoteNumericKeys)
                     OutStr .= Key ',' nl() ind() '"{ ' StrReplace(StrReplace(StrReplace(StrReplace(StrReplace(ptrList.Get(ptr)[1].PathObj.Unescaped(), '\', '\\'), '`n', '\n'), '`r', '\r'), '"', '\"'), '`t', '\t') ' }"'
                 } else {
                     newController := GetController()
                     newController.PathObj := controller.PathObj.MakeItem(&Key)
                     ptrList.Get(ptr).Push(newController)
-                    _GetVal(&Key, quoteNumericKeys)
+                    GetVal(&Key, quoteNumericKeys)
                     OutStr .= Key ',' nl() ind()
                     Recurse(newController, Val, &OutStr)
                 }
             } else if depth >= maxDepth || Val is ComObject || Val is ComValue {
                 placeholder := GetPlaceholder(controller.PathObj, Val, , &Key)
-                _GetVal(&Key, quoteNumericKeys)
+                GetVal(&Key, quoteNumericKeys)
                 OutStr .= Key ',' nl() ind() placeholder
             } else {
                 newController := GetController()
                 newController.PathObj := controller.PathObj.MakeItem(&Key)
                 ptrList.Set(ptr, [newController])
-                _GetVal(&Key, quoteNumericKeys)
+                GetVal(&Key, quoteNumericKeys)
                 OutStr .= Key ',' nl() ind()
                 Recurse(newController, Val, &OutStr)
             }
@@ -686,14 +729,14 @@ class StringifyAll {
             if ptrList.Has(ptr := ObjPtr(Val)) {
                 if HandleMultiple(controller.PathObj, Val) {
                     controller.PrepareNextEnum2(&OutStr)
-                    _GetVal(&Key, quoteNumericKeys)
+                    GetVal(&Key, quoteNumericKeys)
                     OutStr .= Key ',' nl() ind() '"{ ' StrReplace(StrReplace(StrReplace(StrReplace(StrReplace(ptrList.Get(ptr)[1].PathObj.Unescaped(), '\', '\\'), '`n', '\n'), '`r', '\r'), '"', '\"'), '`t', '\t') ' }"'
                     return
                 }
             } else if depth >= maxDepth || Val is ComObject || Val is ComValue {
                 controller.PrepareNextEnum2(&OutStr)
                 placeholder := GetPlaceholder(controller.PathObj, Val, , &Key)
-                _GetVal(&Key, quoteNumericKeys)
+                GetVal(&Key, quoteNumericKeys)
                 OutStr .= Key ',' nl() ind() placeholder
                 return
             }
@@ -701,12 +744,12 @@ class StringifyAll {
                 if result := cb(controller.PathObj, Val, &OutStr, , key) {
                     if result is String {
                         controller.PrepareNextEnum2(&OutStr)
-                        _GetVal(&Key, quoteNumericKeys)
+                        GetVal(&Key, quoteNumericKeys)
                         OutStr .= Key ',' nl() ind() result
                     } else if result !== -1 {
                         controller.PrepareNextEnum2(&OutStr)
                         placeholder := GetPlaceholder(controller.PathObj, Val, , &Key)
-                        _GetVal(&Key, quoteNumericKeys)
+                        GetVal(&Key, quoteNumericKeys)
                         OutStr .= Key ',' nl() ind() placeholder
                     }
                     return
@@ -720,7 +763,7 @@ class StringifyAll {
             } else {
                 ptrList.Set(ptr, [newController])
             }
-            _GetVal(&Key, quoteNumericKeys)
+            GetVal(&Key, quoteNumericKeys)
             OutStr .= Key ',' nl() ind()
             Recurse(newController, Val, &OutStr)
         }
@@ -969,7 +1012,7 @@ class StringifyAll {
                         HandleEnum1(controller, Val, &(i := A_Index), &OutStr)
                     } else {
                         controller.PrepareNextEnum1(&OutStr)
-                        _GetVal(&Val)
+                        GetVal(&Val)
                         OutStr .= Val
                     }
                 } else {
@@ -990,9 +1033,9 @@ class StringifyAll {
                     HandleEnum2(controller, Val, &Key, &OutStr)
                 } else {
                     controller.PrepareNextEnum2(&OutStr)
-                    _GetVal(&Key, quoteNumericKeys)
+                    GetVal(&Key, quoteNumericKeys)
                     OutStr .= Key ',' nl() ind()
-                    _GetVal(&Val)
+                    GetVal(&Val)
                     OutStr .= Val
                 }
                 indentLevel--
@@ -1011,9 +1054,9 @@ class StringifyAll {
                     HandleEnum2(controller, Val, &Key, &OutStr)
                 } else {
                     controller.PrepareNextEnum2(&OutStr)
-                    _GetVal(&Key, quoteNumericKeys)
+                    GetVal(&Key, quoteNumericKeys)
                     OutStr .= Key ',' nl() ind()
-                    _GetVal(&Val)
+                    GetVal(&Val)
                     OutStr .= Val
                 }
                 indentLevel--
@@ -1102,7 +1145,7 @@ class StringifyAll {
         }
         _WriteProp1(controller, &Prop, &Val, &OutStr) {
             controller.PrepareNextProp(&OutStr)
-            _GetVal(&Val)
+            GetVal(&Val)
             OutStr .= '"' Prop '": ' Val
         }
         _WriteProp2(controller, &Prop, Val, &OutStr) {
@@ -1275,10 +1318,6 @@ class StringifyAll {
         Str := StrReplace(StrReplace(StrReplace(StrReplace(StrReplace(StrReplace(Str, '\\', Chr(n)), '\n', '`n'), '\r', '`r'), '\"', '"'), '\t', '`t'), Chr(n), '\')
     }
 
-
-    /**
-     * @classdesc - Handles the input options.
-     */
     class Options {
         static Default := {
             ; Enum options
@@ -1314,6 +1353,7 @@ class StringifyAll {
           , Singleline: false
 
             ; Print options
+          , CorrectFloatingPoint: false
           , ItemProp: '__Items__'
           , PrintErrors: false
           , QuoteNumericKeys: false
@@ -1324,23 +1364,171 @@ class StringifyAll {
           , InitialPtrListCapacity: 64
           , InitialStrCapacity: 65536
         }
-
-        /**
-         * @description - Sets the base object such that the values are used in this priority order:
-         * - 1: The input object.
-         * - 2: The configuration object (if present).
-         * - 3: The default object.
-         * @param {Object} Options - The input object.
-         * @return {Object} - The same input object.
-         */
-        static Call(Options) {
-            if IsSet(StringifyAllConfig) {
-                ObjSetBase(StringifyAllConfig, StringifyAll.Options.Default)
-                ObjSetBase(Options, StringifyAllConfig)
+        static Call(Options?) {
+            if IsSet(Options) {
+                o := {}
+                d := this.Default
+                if IsSet(StringifyAllConfig) {
+                    for prop in d.OwnProps() {
+                        if HasProp(Options, prop) {
+                            o.%prop% := Options.%prop%
+                        } else if HasProp(StringifyAllConfig, prop) {
+                            o.%prop% := StringifyAllConfig.%prop%
+                        } else if IsObject(d.%prop%) {
+                            o.%prop% := this.ObjDeepClone(d.%prop%)
+                        } else {
+                            o.%prop% := d.%prop%
+                        }
+                    }
+                } else {
+                    for prop in d.OwnProps() {
+                        if HasProp(Options, prop) {
+                            o.%prop% := Options.%prop%
+                        } else if IsObject(d.%prop%) {
+                            o.%prop% := this.ObjDeepClone(d.%prop%)
+                        } else {
+                            o.%prop% := d.%prop%
+                        }
+                    }
+                }
+                return o
+            } else if IsSet(StringifyAllConfig) {
+                o := {}
+                d := this.Default
+                for prop in d.OwnProps() {
+                    if HasProp(StringifyAllConfig, prop) {
+                        o.%prop% := StringifyAllConfig.%prop%
+                    } else if IsObject(d.%prop%) {
+                        o.%prop% := this.ObjDeepClone(d.%prop%)
+                    } else {
+                        o.%prop% := d.%prop%
+                    }
+                }
+                return o
             } else {
-                ObjSetBase(Options, StringifyAll.Options.Default)
+                return this.ObjDeepClone(this.Default)
             }
-            return Options
+        }
+        static ObjDeepClone(Self, ConstructorParams?, Depth := 0) {
+            GetTarget := IsSet(ConstructorParams) ? _GetTarget2 : _GetTarget1
+            PtrList := Map(ObjPtr(Self), Result := GetTarget(Self))
+            CurrentDepth := 0
+            return _Recurse(Result, Self)
+
+            _Recurse(Target, Subject) {
+                CurrentDepth++
+                for Prop in Subject.OwnProps() {
+                    Desc := Subject.GetOwnPropDesc(Prop)
+                    if Desc.HasOwnProp('Value') {
+                        Target.DefineProp(Prop, { Value: IsObject(Desc.Value) ? _ProcessValue(Desc.Value) : Desc.Value })
+                    } else {
+                        Target.DefineProp(Prop, Desc)
+                    }
+                }
+                if Target is Array {
+                    Target.Length := Subject.Length
+                    for item in Subject {
+                        if IsSet(item) {
+                            Target[A_Index] := IsObject(item) ? _ProcessValue(item) : item
+                        }
+                    }
+                } else if Target is Map {
+                    Target.Capacity := Subject.Capacity
+                    for Key, Val in Subject {
+                        if IsObject(Key) {
+                            Target.Set(_ProcessValue(Key), IsObject(Val) ? _ProcessValue(Val) : Val)
+                        } else {
+                            Target.Set(Key, IsObject(Val) ? _ProcessValue(Val) : Val)
+                        }
+                    }
+                }
+                CurrentDepth--
+                return Target
+            }
+            _GetTarget1(Subject) {
+                try {
+                    Target := GetObjectFromString(Subject.__Class)()
+                } catch {
+                    if Subject Is Map {
+                        Target := Map()
+                    } else if Subject is Array {
+                        Target := Array()
+                    } else {
+                        Target := Object()
+                    }
+                }
+                try {
+                    ObjSetBase(Target, Subject.Base)
+                }
+                return Target
+            }
+            _GetTarget2(Subject) {
+                if ConstructorParams.Has(Subject.__Class) {
+                    Target := GetObjectFromString(Subject.__Class)(ConstructorParams.Get(Subject.__Class)*)
+                } else {
+                    try {
+                        Target := GetObjectFromString(Subject.__Class)()
+                    } catch {
+                        if Subject Is Map {
+                            Target := Map()
+                        } else if Subject is Array {
+                            Target := Array()
+                        } else {
+                            Target := Object()
+                        }
+                    }
+                    try {
+                        ObjSetBase(Target, Subject.Base)
+                    }
+                }
+                return Target
+            }
+            _ProcessValue(Val) {
+                if Type(Val) == 'ComValue' || Type(Val) == 'ComObject' {
+                    return Val
+                }
+                if PtrList.Has(ObjPtr(Val)) {
+                    return PtrList.Get(ObjPtr(Val))
+                }
+                if CurrentDepth == Depth {
+                    return Val
+                } else {
+                    PtrList.Set(ObjPtr(Val), _Target := GetTarget(Val))
+                    return _Recurse(_Target, Val)
+                }
+            }
+
+            /**
+             * @description -
+             * Use this function when you need to convert a string to an object reference, and the object
+             * is nested within an object path. For example, we cannot get a reference to the class `Gui.Control`
+             * by setting the string in double derefs like this: `obj := %'Gui.Control'%. Instead, we have to
+             * traverse the path to get each object along the way, which is what this function does.
+             * @param {String} Path - The object path.
+             * @returns {*} - The object if it exists in the scope. Else, returns an empty string.
+             * @example
+             *  class MyClass {
+             *      class MyNestedClass {
+             *          static MyStaticProp := {prop1_1: 1, prop1_2: {prop2_1: {prop3_1: 'Hello, World!'}}}
+             *      }
+             *  }
+             *  obj := GetObjectFromString('MyClass.MyNestedClass.MyStaticProp.prop1_2.prop2_1')
+             *  OutputDebug(obj.prop3_1) ; Hello, World!
+             * @
+             */
+            GetObjectFromString(Path) {
+                Split := StrSplit(Path, '.')
+                if !IsSet(%Split[1]%)
+                    return
+                OutObj := %Split[1]%
+                i := 1
+                while ++i <= Split.Length {
+                    if !OutObj.HasOwnProp(Split[i])
+                        return
+                    OutObj := OutObj.%Split[i]%
+                }
+                return OutObj
+            }
         }
     }
 

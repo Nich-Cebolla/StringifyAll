@@ -1,3 +1,9 @@
+<h4>2025-09-19 - 1.3.1</h4>
+
+- Added `Options.CorrectFloatingPoint`.
+- Adjusted `StringifyAll.Options`. See section <a href="https://github.com/Nich-Cebolla/StringifyAll/blob/main/README.md#options">Options</a>.
+- Added parameter "SkipOptions". See section <a href="https://github.com/Nich-Cebolla/StringifyAll/blob/main/README.md#options">Options</a>.
+
 <h4>2025-07-06 - 1.3.0</h4>
 
 - Added `StringifyAll.GetPlaceholderSubstrings`.

@@ -1,9 +1,9 @@
 
-# StringifyAll - v1.3.0
+# StringifyAll - v1.3.1
 A customizable solution for serializing AutoHotkey (AHK) object properties, including inherited properties, and/or items into a 100% valid JSON string.
 
 ## AutoHotkey forum post
-https://www.autohotkey.com/boards/viewtopic.php?f=83&t=137415&p=604407#p604407
+https://www.autohotkey.com/boards/viewtopic.php?f=83&t=137415&p=604407
 
 ## Table of contents
 
@@ -30,15 +30,13 @@ https://www.autohotkey.com/boards/viewtopic.php?f=83&t=137415&p=604407#p604407
 </ol>
 
 ## Introduction
-`StringifyAll` works in conjunction with `GetPropsInfo` (https://github.com/Nich-Cebolla/AutoHotkey-LibV2/tree/main/inheritance) to allow us to include all of an object's properties in the JSON string, not just the items or own properties.
+`StringifyAll` works in conjunction with [`GetPropsInfo`](https://github.com/Nich-Cebolla/AutoHotkey-LibV2/tree/main/inheritance) to allow us to include all of an object's properties in the JSON string, not just the items or own properties.
 
 `StringifyAll` exposes many options to programmatically restrict what gets included in the JSON string. It also includes options for adjusting the spacing in the string. To set your options, you can:
 - Copy the template file into your project directory and set the options using the template.
 - Prepare the `ConfigLibrary` class and reference the configuration by name. See the file "templates\ConfigLibrary.ahk". (Added 1.0.3).
 - Define a class `StringifyAllConfig` anywhere in your code.
 - Pass an object to the `Options` parameter.
-
-Note that `StringifyAll` changes the base of the `StringifyAllConfig` class to `StringifyAll.Options.Default`, and changes the base of the input options object to either `StringifyAllConfig` if it exists, or to `StringifyAll.Options.Default` if `StringifyAllConfig` does not exist.
 
 The options defined by the `Options` parameter supercede options defined by the `StringifyAllConfig` class. This is convenient for setting your own defaults based on your personal preferences / project needs using the class object, and then passing an object to the `Options` parameter to adjust your defaults on-the-fly.
 
@@ -74,6 +72,11 @@ When `StringifyAll` encounters an object multiple times, it may skip the object 
     <li>When not using <code>ConfigLibrary</code>, the options object with zero or more options as property : value pairs.</li>
   </ul>
   <li><b>{VarRef} [OutStr]</b> - A variable that will receive the JSON string. The string is also returned as a return value, but for very long strings, or for loops that process thousands of objects, it will be slightly faster to use the `OutStr` variable since the JSON string would not need to be copied.</li>
+  <li><b>{Boolean} [SkipOptions = false]</b> - If true, <code>StringifyAll.Options.Call</code> is not called. The
+  purpose of this options is to enable the caller to avoid the overhead cost of processing the
+  input options for repeated calls. Note that <code>Options</code> must be set with an object that has been
+  returned from <code>StringifyAll.Options.Call</code> or must be set with an object that inherits from
+  <code>StringifyAll.Options.Default</code>. See the documentation section <a href="options">Options</a> for more information.</li>
 </ol>
 
 ## Returns
@@ -108,6 +111,7 @@ Jump to:
 <a href="#initialindent"><br>InitialIndent</a>
 <a href="#initialptrlistcapacity"><br>InitialPtrListCapacity</a>
 <a href="#initialstrcapacity"><br>InitialStrCapacity</a>
+<a href="#correctfloatingpoint"><br>CorrectFloatingPoint</a>
 <a href="#itemprop"><br>ItemProp</a>
 <a href="#maxdepth"><br>MaxDepth</a>
 <a href="#multiple"><br>Multple</a>
@@ -120,6 +124,30 @@ Jump to:
 <a href="#singleline"><br>Singleline</a>
 <a href="#stopattypemap"><br>StopAtTypeMap</a>
 <a href="#unsetarrayitem"><br>UnsetArrayItem</a>
+
+### New in 1.3.1
+
+Previously, `StringifyAll.Options.Call` would change the base of the input `Options` and of `StringifyAllConfig` to facilitate inheriting the defaults. This behavior has been changed. `StringifyAll.Options.Call` now copies the options onto a new object which is then used as the options object for that function call. This opens the opportunity for external code to define its own system of inheriting options while still enabling the usage of the `StringifyAllConfig` class. Old code which uses `StringifyAll` does not need to change anything. New code which uses `StringifyAll` can define options the same as before, but new code now may define options on any of the options object's base objects. For example, this used to not be possible:
+```ahk
+    MyDefaultOptions := {
+        Newline: "`r`n"
+      , QuoteNumericKeys: true
+    }
+    Options := {
+        Indent: "`s`s"
+    }
+    ObjSetBase(Options, MyDefaultOptions)
+    StringifyAll(SomeObj, Options)
+```
+Before 1.3.1, when `StringifyAll` was called neither the "Newline" new "QuoteNumericKeys" options would have been used because the base of `Options` would have been changed. Now, they both get used.
+
+`StringifyAllConfig` is optional; it does not need to exist, same as before.
+
+When `StringifyAll.Options.Call` processes the options, it copies the input (input options object) and config (`StringifyAllConfig` class) options onto a new object. If an option is not defined on either object, then it copies the default value onto the new object. When `StringifyAll.Options.Call` copies the default value, it creates a deep clone of the default value. This is to ensure that the built-in default does not get altered inadvertently. The same is not true for input or config values; the value is always copied directly onto the new object.
+
+Given that this is a more costly process than the original approach, your code can call `StringifyAll.Options.Call` with its options object (or no object) to get a fully processed options object, then pass that to `StringifyAll.Call` while passing `true` to the fourth parameter "SkipOptions". This would be slightly more efficient for repeated calls.
+
+For even greater efficiency, you could even use the old approach in your external code. Simply define the base of your options as `StringifyAll.Options.Default` and pass `true` to the fourth parameter, and that is sufficient.
 
 ### Enum options
 
@@ -526,6 +554,45 @@ OutputDebug(A_Clipboard := json)
 
 ### Print options
 
+<ul id="correctfloatingpoint"><b>{Number|String}</b> [ <b>CorrectFloatingPoint</b>  = <code>false</code> ]
+  <ul style="padding-left:24px;">
+    If nonzero, <code>StringifyAll</code> will round numbers that appear to be effected by the floating point
+    precision issue described in <a href="https://www.autohotkey.com/docs/v2/Concepts.htm#float-imprecision">AHK's documentation</a>.
+    This process is facilitated by a regex pattern that attempts to identify these occurrences.
+    If <code>Options.CorrectFloatingPoint</code> is a nonzero number, <code>StringifyAll</code> will use the built-in
+    default pattern <code>"JS)(?&lt;round>(?:0{3,}|9{3,})\d)$"</code>. You can also set
+    <code>Options.CorrectFloatingPoint</code> with your own regex pattern as a string and
+    <code>StringifyAll</code> will use that pattern.<br><br>
+    Default pattern:<br>
+    <code>"JS)(?&lt;round>(?:0{3,}|9{3,})\d)$"</code><br>
+    The pattern requires that a string ends in a sequence of three or more zeroes followed by any number, or a
+    sequence of three or more nines followed by any number. The string is then passed to <code>Round</code> and
+    rounded to the character before the beginning of the match.<br><br>
+    Using your own pattern:<br>
+    The following is the literal code that facilitates this option. <code>Val</code> is the number being
+    evaluated.<br>
+    <pre>
+if flag_quote_number {
+    if RegExMatch(Val, pattern_correctFloatingPoint, &matchNum) {
+        Val := '"' Round(Val, StrLen(Val) - InStr(Val, '.') - matchNum.Len['round']) '"'
+    } else {
+        Val := '"' Val '"'
+    }
+} else {
+    if RegExMatch(Val, pattern_correctFloatingPoint, &matchNum) {
+        Val := Round(Val, StrLen(Val) - InStr(Val, '.') - matchNum.Len['round'])
+    } else {
+        Val := Val
+    }
+}</pre>
+    I added the "round" subcapture group to make it easier to use complex logic; the default pattern
+    would not actually require any subcapture group. If using your own pattern, <code>StringifyAll</code> will
+    substract the length of the "round" subcapture group from the number of characters that follow the
+    decimal point.<br><br>
+    If <code>Options.CorrectFloatingPoint</code> is zero or an empty string, no correction occurs.
+  </ul>
+</ul>
+
 <ul id="itemprop"><b>{String}</b> [ <b>ItemProp</b>  = <code>"__Items__"</code> ]
   <ul style="padding-left:24px;">The name that <code>StringifyAll</code> will use as a faux-property for including an object's items returned by its enumerator.</ul>
 </ul>
@@ -620,6 +687,12 @@ This section needs updated.
 <!-- a copy of the previous text is in .archive -->
 
 ## Changelog
+
+<h4>2025-09-19 - 1.3.1</h4>
+
+- Added `Options.CorrectFloatingPoint`.
+- Adjusted `StringifyAll.Options`. See section <a href="#options">Options</a>.
+- Added parameter "SkipOptions". See section <a href="#options">Options</a>.
 
 <h4>2025-07-06 - 1.3.0</h4>
 

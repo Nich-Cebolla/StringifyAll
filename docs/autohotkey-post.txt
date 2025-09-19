@@ -1,4 +1,4 @@
-[color=#800000][size=165][b]StringifyAll - v1.3.0[/b][/size][/color]
+[color=#800000][size=165][b]StringifyAll - v1.3.1[/b][/size][/color]
 A customizable solution for serializing object properties, including inherited properties, and/or items into a 100% valid JSON string.
 
 [color=#800000][size=145][b]Github link[/b][/size][/color]
@@ -12,8 +12,6 @@ A customizable solution for serializing object properties, including inherited p
 [*]Prepare the [c]ConfigLibrary[/c] class and reference the configuration by name. See the file "templates\ConfigLibrary.ahk". (Added 1.0.3).
 [*]Define a class [c]StringifyAllConfig[/c] anywhere in your code.
 [*]Pass an object to the [c]Options[/c] parameter.[/list]
-
-Note that [c]StringifyAll[/c] changes the base of the [c]StringifyAllConfig[/c] class to [c]StringifyAll.Options.Default[/c], and changes the base of the input options object to either [c]StringifyAllConfig[/c] if it exists, or to [c]StringifyAll.Options.Default[/c] if [c]StringifyAllConfig[/c] does not exist.
 
 The options defined by the [c]Options[/c] parameter supercede options defined by the [c]StringifyAllConfig[/c] class. This is convenient for setting your own defaults based on your personal preferences / project needs using the class object, and then passing an object to the [c]Options[/c] parameter to adjust your defaults on-the-fly.
 
