@@ -13,6 +13,8 @@ https://www.autohotkey.com/boards/viewtopic.php?f=83&t=137415&p=604407
   <li><a href="#returns">Returns</a></li>
   <li><a href="#options">Options</a></li>
   <ol type="A">
+    <li><a href="#jump-to-category">Jump to category</a></li>
+    <li><a href="#new-in-v131">New in v1.3.1</a></li>
     <li><a href="#enum-options">Enum options</a></li>
     <li><a href="#callbacks">Callbacks</a></li>
     <li><a href="#newline-and-indent-options">Newline and indent options</a></li>
@@ -76,7 +78,7 @@ When `StringifyAll` encounters an object multiple times, it may skip the object 
   purpose of this options is to enable the caller to avoid the overhead cost of processing the
   input options for repeated calls. Note that <code>Options</code> must be set with an object that has been
   returned from <code>StringifyAll.Options.Call</code> or must be set with an object that inherits from
-  <code>StringifyAll.Options.Default</code>. See the documentation section <a href="options">Options</a> for more information.</li>
+  <code>StringifyAll.Options.Default</code>. See the documentation section <a href="#new-in-v131">New in v1.3.1</a> for more information.</li>
 </ol>
 
 ## Returns
@@ -89,7 +91,8 @@ The format for these options are:<br>
 <b>{Value type}</b> [ <b>Option name</b>  = <code>Default value</code> ]<br>
 <span style="padding-left: 24px;">Description</span>
 
-Jump to:
+### Jump to category
+
 <a href="#callbackerror"><br>CallbackError</a>
 <a href="#options-callbackgeneral"><br>CallbackGeneral</a>
 <a href="#callbackplaceholder"><br>CallbackPlaceholder</a>
@@ -125,7 +128,7 @@ Jump to:
 <a href="#stopattypemap"><br>StopAtTypeMap</a>
 <a href="#unsetarrayitem"><br>UnsetArrayItem</a>
 
-### New in 1.3.1
+### New in v1.3.1
 
 Previously, `StringifyAll.Options.Call` would change the base of the input `Options` and of `StringifyAllConfig` to facilitate inheriting the defaults. This behavior has been changed. `StringifyAll.Options.Call` now copies the options onto a new object which is then used as the options object for that function call. This opens the opportunity for external code to define its own system of inheriting options while still enabling the usage of the `StringifyAllConfig` class. Old code which uses `StringifyAll` does not need to change anything. New code which uses `StringifyAll` can define options the same as before, but new code now may define options on any of the options object's base objects. For example, this used to not be possible:
 ```ahk
