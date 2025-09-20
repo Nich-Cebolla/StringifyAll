@@ -628,13 +628,13 @@ class StringifyAll {
         _GetVal2(&Val, flag_quote_number := false) {
             if IsNumber(Val) {
                 if flag_quote_number {
-                    if RegExMatch(Val, pattern_correctFloatingPoint, &matchNum) {
+                    if InStr(Val, '.') && RegExMatch(Val, pattern_correctFloatingPoint, &matchNum) {
                         Val := '"' Round(Val, StrLen(Val) - InStr(Val, '.') - matchNum.Len['round']) '"'
                     } else {
                         Val := '"' Val '"'
                     }
                 } else {
-                    if RegExMatch(Val, pattern_correctFloatingPoint, &matchNum) {
+                    if InStr(Val, '.') && RegExMatch(Val, pattern_correctFloatingPoint, &matchNum) {
                         Val := Round(Val, StrLen(Val) - InStr(Val, '.') - matchNum.Len['round'])
                     } else {
                         Val := Val
