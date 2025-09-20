@@ -563,11 +563,11 @@ OutputDebug(A_Clipboard := json)
     precision issue described in <a href="https://www.autohotkey.com/docs/v2/Concepts.htm#float-imprecision">AHK's documentation</a>.
     This process is facilitated by a regex pattern that attempts to identify these occurrences.
     If <code>Options.CorrectFloatingPoint</code> is a nonzero number, <code>StringifyAll</code> will use the built-in
-    default pattern <code>"JS)(?&lt;round>(?:0{3,}|9{3,})\d)$"</code>. You can also set
+    default pattern <code>"S)(?&lt;round>(?:0{3,}|9{3,})\d)$"</code>. You can also set
     <code>Options.CorrectFloatingPoint</code> with your own regex pattern as a string and
     <code>StringifyAll</code> will use that pattern.<br><br>
     Default pattern:<br>
-    <code>"JS)(?&lt;round>(?:0{3,}|9{3,})\d)$"</code><br>
+    <code>"S)(?&lt;round>(?:0{3,}|9{3,})\d)$"</code><br>
     The pattern requires that a string ends in a sequence of three or more zeroes followed by any number, or a
     sequence of three or more nines followed by any number. The string is then passed to <code>Round</code> and
     rounded to the character before the beginning of the match.<br><br>

@@ -126,7 +126,7 @@
  * {@link https://www.autohotkey.com/docs/v2/Concepts.htm#float-imprecision AHK's documentation}.
  * This process is facilitated by a regex pattern that attempts to identify these occurrences.
  * If `Options.CorrectFloatingPoint` is a nonzero number, `StringifyAll` will use the built-in
- * default pattern "JS)(?<round>(?:0{3,}|9{3,})\d)$". You can also set `Options.CorrectFloatingPoint`
+ * default pattern "S)(?<round>(?:0{3,}|9{3,})\d)$". You can also set `Options.CorrectFloatingPoint`
  * with your own regex pattern as a string and `StringifyAll` will use that pattern. See the
  * documentation for details about this options.
  *
@@ -352,7 +352,7 @@ class StringifyAll {
         if Options.CorrectFloatingPoint {
             GetVal := _GetVal2
             if IsNumber(Options.CorrectFloatingPoint) {
-                pattern_correctFloatingPoint := 'JS)(?<round>(?:0{3,}|9{3,})\d)$'
+                pattern_correctFloatingPoint := 'S)(?<round>(?:0{3,}|9{3,})\d)$'
             } else {
                 pattern_correctFloatingPoint := Options.CorrectFloatingPoint
             }

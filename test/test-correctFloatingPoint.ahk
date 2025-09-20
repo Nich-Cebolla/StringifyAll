@@ -37,7 +37,7 @@ test_correctFloatingPoint() {
 
     ; Using custom pattern
     ; Requires four consecutive zeroes or nines
-    StringifyAllConfig.CorrectFloatingPoint := 'JS)(?<round>(?:0{4,}|9{4,})\d)$'
+    StringifyAllConfig.CorrectFloatingPoint := 'S)(?<round>(?:0{4,}|9{4,})\d)$'
     ; The original list should have the same result
     _Proc(list, _ConditionEnabled)
     ; A few items that should not get corrected
